@@ -5,8 +5,11 @@ import pandas as pd
 from typing import List
 from loguru import logger
 import tiktoken
+import pandas as pd
 from sentence_transformers import SentenceTransformer
 from torch import cuda
+
+
 ## Set of helper functions that support data preprocessing 
 
 class Utilities: 
@@ -44,6 +47,23 @@ class Utilities:
             lens = list(map(lambda x: len(x['content'].split()), list_of_dicts))
         return pd.DataFrame(lens, columns=['lengths'])
 
+    def load_parquet(self, file_path: str, verbose: bool=True) -> List[dict]:
+        '''
+        Loads parquet from disk, converts to pandas DataFrame as intermediate
+        step and outputs a list of dicts (docs).
+        '''
+        df = pd.read_parquet(file_path)
+        vector_labels = ['content_vector', 'image_vector', 'content_embedding']
+        for label in vector_labels:
+            if label in df.columns:
+                df[label] = df[label].apply(lambda x: x.tolist())
+        if verbose:
+            memory_usage = round(df.memory_usage().sum()/(1024*1024),2)
+            print(f'Shape of data: {df.values.shape}')
+            print(f'Memory Usage: {memory_usage}+ MB')
+        list_of_dicts = df.to_dict('records')
+        return list_of_dicts
+        
     def clean_dict(self, _dict: dict, keys_to_remove: list=['meta', 'split_id']) -> None:
         '''
         Removes keys from dict. 
@@ -173,8 +193,8 @@ class Vectorizor:
                         ) -> None:
         sentence_chunks = [d[content_field] for d in docs]
         vectors = self.model.encode(sentences=sentence_chunks,
-                                   show_progress_bar=True,
-                                   device=device)
+                                    show_progress_bar=True,
+                                    device=device)
         for i, d in enumerate(docs):
             d['vector'] = vectors[i].tolist()
          

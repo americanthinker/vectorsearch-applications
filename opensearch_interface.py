@@ -42,6 +42,7 @@ class OpenSearchClient(OpenSearch):
                          ssl_show_warn = ssl_show_warn,
                          timeout=timeout)
         self.timeout = timeout
+        self.source_fields = ['content','group_id','episode_url', 'episode_num', 'video_id','length','publish_date','thumbnail_url','title','views']
         
 
     def _create_index(self,
@@ -247,7 +248,7 @@ class OpenSearchClient(OpenSearch):
         '''
         body = {
                 # "_source": ['title', 'episode_num', 'episode_url', 'content'], 
-                "_source": ['content','group_id','show_link','video_id','length','publish_date','thumbnail_url','title','views'], 
+                "_source": self.source_fields, 
                 "size": size,
                 "query": {
                     "bool": {
@@ -279,7 +280,7 @@ class OpenSearchClient(OpenSearch):
 
         body={  
                 # "_source": ['title', 'episode_id', 'group_id', 'episode_num', 'episode_url', 'mp3_url', 'content'],
-                "_source": ['content','group_id','show_link','video_id','length','publish_date','thumbnail_url','title','views'], 
+                "_source": self.source_fields, 
                 "size": size,
                 "query": 
                 {"knn": {"content_embedding": {"vector": query_embedding, "k": k}}},
@@ -297,6 +298,7 @@ class OpenSearchClient(OpenSearch):
                         kw_size: int=25,
                         vec_size: int=25,
                         k: int=10,
+                        dedup_results: bool=True,
                         return_raw: bool=False
                         ) -> Dict[str,str]:
         '''
@@ -307,4 +309,27 @@ class OpenSearchClient(OpenSearch):
         kw_result = self.keyword_search(query, kw_index, kw_size, return_raw)
         vec_result = self.vector_search(query, vec_index, model, vec_size, k, return_raw)
         hybrid_result = kw_result + vec_result 
+        if dedup_results:
+            hybrid_result = self._deduplicate_results(hybrid_result)
         return hybrid_result
+    
+    def _deduplicate_results(self, list_of_hits: List[dict]) -> List[dict]:
+        '''
+        Given a list of hits from a hybrid search call, returns a list of unique hits.
+        '''
+        hash_table = {}
+        unique_hits = []
+        for hit in list_of_hits:
+            hash_key = str(hit['_source']['video_id']) + '-' + str(hit['_source']['group_id'])
+            if hash_key not in hash_table:
+                hash_table[hash_key] = 1
+                unique_hits.append(hit)
+            else: 
+                logger.info(f'Duplicate Hit: {hash_key} on index {hit["_index"]}')
+        return unique_hits
+    
+    def parse_content_from_response(self, list_of_hits: List[dict]) -> List[str]:
+        '''
+        Given a list of hits from a search call, returns a list of content strings.
+        '''
+        return [hit['_source']['content'] for hit in list_of_hits]

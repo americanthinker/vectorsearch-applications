@@ -29,6 +29,8 @@ youtube_body = {
                     "properties": {
                         "title": {"type": "text", "index": "true"},
 
+                        "unique_id": {"type": "keyword", "index": "false"},
+
                         "group_id": {"type": "short", "index": "false"},
 
                         "video_id": {"type": "keyword", "index": "false"},
@@ -36,6 +38,8 @@ youtube_body = {
                         "playlist_id": {"type": "keyword", "index": "false"},
 
                         "episode_url": {"type": "keyword", "index": "false"},
+
+                        "episode_num": {"type": "short", "index": "false"},
                         
                         "description" : {"type": "text", "index": "true"},
 
