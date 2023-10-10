@@ -2,16 +2,79 @@ import os
 import re
 import json
 import pandas as pd
-from typing import List
+import numpy as np
+from typing import List, Union, Dict, Tuple
 from loguru import logger
 import tiktoken
 import pandas as pd
+from tqdm import tqdm
+from collections import defaultdict
+from llama_index.text_splitter import SentenceSplitter
 from sentence_transformers import SentenceTransformer
 from torch import cuda
+import pathlib
 
 
 ## Set of helper functions that support data preprocessing 
+class FileIO:
+    
+    def save_as_parquet(self, 
+                        file_path: str, 
+                        data: Union[List[dict], pd.DataFrame], 
+                        overwrite: bool=False) -> None:
+        '''
+        Saves DataFrame to disk as a parquet file.  Removes the index. 
+        '''
+        if isinstance(data, list):
+           data = self._convert_toDataFrame(data)
+        if not file_path.endswith('parquet'):
+            file_path = self._rename_file_extension(file_path, 'parquet')
+        self._check_file_path(file_path, overwrite=overwrite)
+        data.to_parquet(file_path, index=False)
+        logger.info(f'DataFrame saved as parquet file here: {file_path}')
+        
+    def _convert_toDataFrame(self, data: List[dict]) -> pd.DataFrame:
+        return pd.DataFrame().from_dict(data)
 
+    def _rename_file_extension(self, file_path: str, extension: str):
+        '''
+        Renames file with appropriate extension (txt or parquet) if file_path
+        does not already have correct extension.
+        '''
+        prefix = os.path.splitext(file_path)[0]
+        file_path = prefix + '.' + extension
+        return file_path
+
+    def _check_file_path(self, file_path: str, overwrite: bool) -> None:
+        '''
+        Checks for existence of file and overwrite permissions.
+        '''
+        if os.path.exists(file_path) and overwrite == False:
+            raise FileExistsError(f'File by name {file_path} already exists, try using another file name or set overwrite to True.')
+        elif os.path.exists(file_path):
+            os.remove(file_path)
+        else: 
+            file_name = os.path.basename(file_path)
+            dir_structure = file_path.replace(file_name, '')
+            pathlib.Path(dir_structure).mkdir(parents=True, exist_ok=True)
+            
+    def load_parquet(self, file_path: str, verbose: bool=True) -> List[dict]:
+        '''
+        Loads parquet from disk, converts to pandas DataFrame as intermediate
+        step and outputs a list of dicts (docs).
+        '''
+        df = pd.read_parquet(file_path)
+        vector_labels = ['content_vector', 'image_vector', 'content_embedding']
+        for label in vector_labels:
+            if label in df.columns:
+                df[label] = df[label].apply(lambda x: x.tolist())
+        if verbose:
+            memory_usage = round(df.memory_usage().sum()/(1024*1024),2)
+            print(f'Shape of data: {df.values.shape}')
+            print(f'Memory Usage: {memory_usage}+ MB')
+        list_of_dicts = df.to_dict('records')
+        return list_of_dicts
+        
 class Utilities: 
 
     def json_data_loader(self, file_path: str):
@@ -33,7 +96,8 @@ class Utilities:
         title = os.path.splitext(title)[0]
         return title
 
-    def get_content_lengths(self, list_of_dicts: List[dict], 
+    def get_content_lengths(self, 
+                            list_of_dicts: List[dict], 
                             use_tokens: bool=True, 
                             encoding: str="cl100k_base") -> pd.DataFrame:
         '''
@@ -46,23 +110,6 @@ class Utilities:
         else:
             lens = list(map(lambda x: len(x['content'].split()), list_of_dicts))
         return pd.DataFrame(lens, columns=['lengths'])
-
-    def load_parquet(self, file_path: str, verbose: bool=True) -> List[dict]:
-        '''
-        Loads parquet from disk, converts to pandas DataFrame as intermediate
-        step and outputs a list of dicts (docs).
-        '''
-        df = pd.read_parquet(file_path)
-        vector_labels = ['content_vector', 'image_vector', 'content_embedding']
-        for label in vector_labels:
-            if label in df.columns:
-                df[label] = df[label].apply(lambda x: x.tolist())
-        if verbose:
-            memory_usage = round(df.memory_usage().sum()/(1024*1024),2)
-            print(f'Shape of data: {df.values.shape}')
-            print(f'Memory Usage: {memory_usage}+ MB')
-        list_of_dicts = df.to_dict('records')
-        return list_of_dicts
         
     def clean_dict(self, _dict: dict, keys_to_remove: list=['meta', 'split_id']) -> None:
         '''
@@ -76,31 +123,8 @@ class Utilities:
             except KeyError:
                 continue
 
-        # @classmethod
-        # def split_data(cls, 
-        #                data: List[dict], 
-        #                split_length: int, 
-        #                semantic_splitting: bool=False) -> List[dict]:
-        #     '''
-        #     Helper function primarily desinged to avoid making another pass through the 
-        #     data/corpus to create a data list in smaller or larger chunk sizes new indexes.  
-        #     '''
-        #     fresh_data = deepcopy(data)
-        #     docprocessor = DocumentProcessor('fake_folder', split_length=split_length)
-        #     data_splits = []
-        #     progress = tqdm(unit=": Splitting Data", total=len(data))
-        #     with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor: 
-        #         futures = [executor.submit(docprocessor.split, d, split_length) for d in fresh_data]
-        #         for future in as_completed(futures):
-        #             data_splits.append(future.result())
-        #             progress.update(1)
-
-        #     # #remove None data_splits 
-        #     data_splits = [item for item in data_splits if item]
-        #     #flatten list of dicts
-        #     data_splits = [d for group in data_splits for d in group if len(d['content'].split()) >= 2 if semantic_splitting]
-        #     return data_splits
-
+class Splitters:
+    
     def sentence_splitter(self, text: str) -> List[str]:
         '''
         Given a piece of text, returns text split into a list of sentences at 
@@ -167,7 +191,26 @@ class Utilities:
                 sentences.append(last_sentence)
 
         return sentences
-    
+
+    def split_corpus(self,
+                     corpus: List[dict], 
+                     text_splitter: SentenceSplitter, 
+                     create_dict: bool=True
+                     ) -> List[dict]:
+        text_chunks = []
+        doc_idxs = []
+        for i, doc in enumerate(tqdm(corpus, 'Docs')):
+            splits = text_splitter.split_text(doc.get('content', ''))
+            text_chunks.extend(splits)
+            doc_idxs.extend([i] * len(splits))
+        if create_dict: 
+            split_dict = defaultdict(list)
+            data = zip(doc_idxs, text_chunks)
+            for i, chunk in data:
+                split_dict[i].append(chunk)
+            return split_dict
+        return doc_idxs, text_chunks
+        
 class Vectorizor:
 
     def __init__(self, model_name_or_path: str='all-MiniLM-L6-v2'):
@@ -199,3 +242,31 @@ class Vectorizor:
             d['vector'] = vectors[i].tolist()
          
         return docs
+
+    def encode_from_dict(self, split_dict: dict, device: str='cuda:0') -> Dict[int, Tuple[str, np.array]]:
+        '''
+        Encode text to vectors from a dictionary where digits are keys, 
+        with each key representing an entire document (podcast)
+        '''
+        merged = defaultdict(list)
+        for key in tqdm(split_dict.keys(), "Docs"):
+            chunks = split_dict[key]
+            vectors = self.model.encode(sentences=chunks, show_progress_bar=False, device=device)
+            merged[key] = list(zip(chunks, vectors))
+        return merged
+
+    def join_metadata(self, corpus: List[dict], merged_dict: dict) -> List[dict]:
+        '''
+        For each text-chunk/vector pair in merged_dict, create a single 
+        dictionary that joins text, vector, and podcast metadata from the
+        original corpus of documents
+        '''
+        joined_documents = []
+        for index in merged_dict:
+            meta = corpus[index]
+            for _tuple in merged_dict[index]:
+                doc = {k:v for k,v in meta.items() if k != 'content'}
+                doc['content'] = _tuple[0]
+                doc['content_embedding'] = _tuple[1].tolist()
+                joined_documents.append(doc)
+        return joined_documents

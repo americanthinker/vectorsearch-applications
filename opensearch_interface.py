@@ -1,9 +1,11 @@
 from typing import Tuple, List, IO, Union, Dict
 from opensearchpy import OpenSearch
-from opensearchpy.helpers import bulk
+from opensearchpy.helpers import bulk, parallel_bulk
 from loguru import logger
+from tqdm import tqdm
 from sentence_transformers import SentenceTransformer
 import json
+import os
 
 class OpenSearchClient(OpenSearch):
     '''
@@ -61,7 +63,7 @@ class OpenSearchClient(OpenSearch):
             Name of document index to create. For reference see:
             https://www.elastic.co/blog/how-many-shards-should-i-have-in-my-elasticsearch-cluster
 
-        number_of_shards : int=5
+        number_of_shards : int=3
             Number of shards to create for index. 
 
         image_index : bool=False
@@ -181,9 +183,9 @@ class OpenSearchClient(OpenSearch):
         
         '''
         
-        if semantic_index:
-            if chunk_size > 1000:
-                chunk_size = 1000
+        # if semantic_index:
+        #     if chunk_size > 1000:
+        #         chunk_size = 1000
 
         if isinstance(data, str):
             with open(data) as f:
@@ -205,43 +207,33 @@ class OpenSearchClient(OpenSearch):
                                    semantic_vector_dims=semantic_vector_dims,
                                    )
                 logger.info(f"The ** {index_name} ** index was created")
+
+            #TODO: Find OpenSearch Exceptions 
             except Exception as e:
                 logger.info(e)
-
-                #TODO: Find OpenSearch Exceptions 
-
-                # s.RequestError as RE:
-                # logger.info(RE)
-                #raise ValueError("Index already exists, either change update param to True (if you want to update index) or change index_name.")
 
         NUM_DOCS_INDEXED = len(index_data)
         logger.info(f"The # of documents to be indexed = {NUM_DOCS_INDEXED}")
 
-        #TODO: Replace with proper generator to prevent holding all data in memory
-        # progress = tqdm(unit="Docs", total=NUM_DOCS_INDEXED)
-        # successes = 0
-        bulk_data = []
-        for doc in self._doc_generator(index_data=data, 
-                                       index_name=index_name, 
-                                       semantic_index=semantic_index):
-            bulk_data.append(doc)
-        bulk(self, bulk_data, stats_only=True)
-        # for ok, _ in bulk(client=self, 
-        #                   chunk_size=chunk_size,
-        #                   actions=self._doc_generator(index_data=index_data, 
-        #                                               index_name=index_name,
-        #                                               semantic_index=semantic_index,
-        #                                               udf_mapping=udf_mapping)
-        #                   ):
- 
-
-        # logger.info(f"Completed indexing...Indexed {successes}:{NUM_DOCS_INDEXED} documents")
+        progress = tqdm(unit="Docs Indexed", total=NUM_DOCS_INDEXED)
+        count = 0
+        for success, _ in parallel_bulk(client=self, 
+                                        actions=self._doc_generator(index_data=data,
+                                                                    index_name=index_name,
+                                                                    semantic_index=semantic_index),
+                                        thread_count=os.cpu_count()*2, 
+                                        chunk_size=chunk_size):
+            try:
+                progress.update(success)
+                count += success
+            except Exception as e:
+                logger.info(e)
+                
+        logger.info(f'Number of docs indexed: {count}')
         
-    
     def show_indexes(self, index_name: str=None):
         print(self.cat.indices(index=index_name, params={'v':'true'}))
     
-
     def keyword_search(self, query: str, index: str, size: int=10, return_raw: bool=False):
         '''
         Executes basic keyword search functionality.
@@ -255,7 +247,7 @@ class OpenSearchClient(OpenSearch):
                         "must": {
                             "match": {"content": query,}
                                 },
-                            "filter": {"bool": {"must_not": {"match_phrase": {"content": "Vishal"}}}},
+                            # "filter": {"bool": {"must_not": {"match_phrase": {"content": "Vishal"}}}},
                         },
                     },            
                 }
