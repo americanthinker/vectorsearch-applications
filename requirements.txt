@@ -1,5 +1,6 @@
-pandas
-pyarrow
-sentence-transformers
 llama-index
 openai
+opensearch-py
+pandas
+pyarrow
+python-dotenv
