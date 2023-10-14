@@ -1,6 +1,7 @@
 from sentence_transformers import CrossEncoder
 from typing import List, Union
 import numpy as np
+from loguru import logger
 
 class ReRanker:
     '''
@@ -41,9 +42,15 @@ class ReRanker:
 
         if return_scores:return cross_scores
 
-    def rerank(self, results: List[dict], query: str, top_k: int=10) -> List[dict]:
+    def rerank(self, results: List[dict], query: str, top_k: int=10, threshold: float=None) -> List[dict]:
         # Sort results by the cross-encoder scores
         self._cross_encoder_score(results=results, query=query)
 
         sorted_hits = sorted(results, key=lambda x: x[self.score_field], reverse=True)
+        if threshold or threshold == 0:
+            filtered_hits = [hit for hit in sorted_hits if hit[self.score_field] >= threshold]
+            if not any(filtered_hits):
+                logger.warning(f'No hits above threshold {threshold}. Returning top {top_k} hits.')
+                return sorted_hits[:top_k]
+            return filtered_hits
         return sorted_hits[:top_k]

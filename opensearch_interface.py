@@ -29,6 +29,7 @@ class OpenSearchClient(OpenSearch):
 
     '''
     def __init__(self,
+                 model_name_or_path: str=None,
                  hosts: List[dict]=[{"host": "localhost", "port": 9200}],
                  http_auth: Tuple[str, str]=('admin', 'admin'),
                  use_ssl: bool = True,
@@ -44,7 +45,9 @@ class OpenSearchClient(OpenSearch):
                          ssl_show_warn = ssl_show_warn,
                          timeout=timeout)
         self.timeout = timeout
-        self.source_fields = ['content','group_id','episode_url', 'episode_num', 'video_id','length','publish_date','thumbnail_url','title','views']
+        self.model_name_or_path = model_name_or_path
+        self.model = SentenceTransformer(self.model_name_or_path) if self.model_name_or_path else None
+        self.source_fields = ['content','group_id','doc_id','episode_url', 'episode_num', 'video_id','length','publish_date','thumbnail_url','title','views']
         
 
     def _create_index(self,
@@ -259,7 +262,6 @@ class OpenSearchClient(OpenSearch):
     def vector_search(  self,
                         query: str, 
                         index: str, 
-                        model: Union[str, SentenceTransformer], 
                         size: int=10,
                         k: int=10,
                         return_raw: bool=False
@@ -267,8 +269,8 @@ class OpenSearchClient(OpenSearch):
         '''
         Executes basic vector search functionality.
         '''
-        if isinstance(model, SentenceTransformer):
-            query_embedding = model.encode(query).tolist()
+        if isinstance(self.model, SentenceTransformer):
+            query_embedding = self.model.encode(query).tolist()
 
         body={  
                 # "_source": ['title', 'episode_id', 'group_id', 'episode_num', 'episode_url', 'mp3_url', 'content'],
@@ -286,39 +288,51 @@ class OpenSearchClient(OpenSearch):
                         query: str, 
                         kw_index: str, 
                         vec_index: str,
-                        model: Union[str, SentenceTransformer], 
                         kw_size: int=25,
                         vec_size: int=25,
-                        k: int=10,
                         dedup_results: bool=True,
                         return_raw: bool=False
                         ) -> Dict[str,str]:
         '''
-        Executes a keyword search call and a vector search call.  Results are 
-        naively combined into a single list. 
+        Executes a keyword search and a vector search.  Results are 
+        naively combined into a single list and results are deduplicated.
         '''
 
         kw_result = self.keyword_search(query, kw_index, kw_size, return_raw)
-        vec_result = self.vector_search(query, vec_index, model, vec_size, k, return_raw)
-        hybrid_result = kw_result + vec_result 
+        vec_result = self.vector_search(query, vec_index, vec_size, return_raw=return_raw)
+
+        #interleave results of both searches into a single list
+        hybrid_result = self._interleave_results(kw_result, vec_result)
+        
+        #remove duplicate results if dedup is True (default)
         if dedup_results:
             hybrid_result = self._deduplicate_results(hybrid_result)
+
+        return hybrid_result
+    
+    def _interleave_results(self, 
+                            kw_result: List[dict], 
+                            vec_result: List[dict]
+                            ) -> List[dict]:
+        hybrid_result = []
+        max_len = max(len(kw_result), len(vec_result))
+        for i in range(max_len):
+            if i < len(kw_result):
+                hybrid_result.append(kw_result[i])
+            if i < len(vec_result):
+                hybrid_result.append(vec_result[i])
         return hybrid_result
     
     def _deduplicate_results(self, list_of_hits: List[dict]) -> List[dict]:
         '''
         Given a list of hits from a hybrid search call, returns a list of unique hits.
         '''
-        hash_table = {}
-        unique_hits = []
+        unique_hits = {}
         for hit in list_of_hits:
-            hash_key = str(hit['_source']['video_id']) + '-' + str(hit['_source']['group_id'])
-            if hash_key not in hash_table:
-                hash_table[hash_key] = 1
-                unique_hits.append(hit)
-            else: 
-                logger.info(f'Duplicate Hit: {hash_key} on index {hit["_index"]}')
-        return unique_hits
+            doc_id = hit['_source']['doc_id']
+            if doc_id not in unique_hits:
+                unique_hits[doc_id] = hit
+        return list(unique_hits.values())
     
     def parse_content_from_response(self, list_of_hits: List[dict]) -> List[str]:
         '''

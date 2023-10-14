@@ -255,7 +255,7 @@ class Vectorizor:
             merged[key] = list(zip(chunks, vectors))
         return merged
 
-    def join_metadata(self, corpus: List[dict], merged_dict: dict) -> List[dict]:
+    def join_metadata(self, corpus: List[dict], merged_dict: dict, create_doc_id: bool=True) -> List[dict]:
         '''
         For each text-chunk/vector pair in merged_dict, create a single 
         dictionary that joins text, vector, and podcast metadata from the
@@ -264,9 +264,12 @@ class Vectorizor:
         joined_documents = []
         for index in merged_dict:
             meta = corpus[index]
-            for _tuple in merged_dict[index]:
+            for i, _tuple in enumerate(merged_dict[index]):
                 doc = {k:v for k,v in meta.items() if k != 'content'}
                 doc['content'] = _tuple[0]
                 doc['content_embedding'] = _tuple[1].tolist()
+                if create_doc_id:
+                    if doc.get('video_id'):
+                        doc['doc_id'] = doc['video_id'] + '_' + str(i)
                 joined_documents.append(doc)
         return joined_documents

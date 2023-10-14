@@ -1,7 +1,8 @@
 import os
 import openai
-from typing import List, Any
+from typing import List, Any, Tuple
 from dotenv import load_dotenv
+from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 _ = load_dotenv('./.env', override=True) # read local .env file
 
@@ -49,6 +50,41 @@ class GPT_Turbo:
                         data.append(result)
                         self.write_to_file(file_handle=f, data=result)
         return [res for res in data if res]
+    
+    def generate_question_context_pairs(self, 
+                                        context_tuple: Tuple[str, str], 
+                                        num_questions_per_chunk: int=2, 
+                                        max_words_per_question: int=10
+                                        ) -> List[str]:
+        
+        doc_id, context = context_tuple
+        prompt = f'Context information is included below enclosed in triple backticks. Given the context information and not prior knowledge, generate questions based on the below query.\n\nYou are an end user querying for information about your favorite podcast. \
+                   Your task is to setup {num_questions_per_chunk} questions that can be answered using only the given context. The questions should be diverse in nature across the document and be no longer than {max_words_per_question} words. \
+                   Restrict the questions to the context information provided.\n\
+                   ```{context}```\n\n'
+        
+        response = self.get_completion_from_messages(prompt=prompt, temperature=0, max_tokens=500, show_response=True)
+        questions = response.choices[0].message["content"]
+        return (doc_id, questions)
+
+    def batch_generate_question_context_pairs(self,
+                                              context_tuple_list: List[Tuple[str, str]],
+                                              filepath: str,
+                                              num_questions_per_chunk: int=2,
+                                              max_words_per_question: int=10
+                                              ) -> List[Tuple[str, str]]:
+        data = []
+        progress = tqdm(unit="Generated Questions", total=len(context_tuple_list))
+        with ThreadPoolExecutor(max_workers=2*os.cpu_count()) as exec:
+            futures = [exec.submit(self.generate_question_context_pairs, context_tuple, num_questions_per_chunk, max_words_per_question) for context_tuple in context_tuple_list]
+            with open(filepath, 'a') as f:
+                for future in as_completed(futures):
+                    result = future.result()
+                    if result:
+                        data.append(result)
+                        self.write_to_file(file_handle=f, data=str(result))
+                        progress.update(1)
+        return data
     
     def write_to_file(self, file_handle, data: str) -> None:
             file_handle.write(data)

@@ -8,7 +8,7 @@ __pycache__/
 
 # Large Files
 models/
-data/
+practice_data/
 
 # Distribution / packaging
 .Python

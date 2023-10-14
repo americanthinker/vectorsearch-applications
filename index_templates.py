@@ -51,7 +51,9 @@ youtube_body = {
 
                         "thumbnail_url" : {"type": "keyword", "index": "false"},
 
-                        "content": {"type": "text", "index": "true"}
+                        "content": {"type": "text", "index": "true"}, 
+
+                        "doc_id": {"type": "keyword", "index": "false"}
                                 }
                             }
                 }
