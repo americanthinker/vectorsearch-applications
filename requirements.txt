@@ -1,0 +1,5 @@
+pandas
+pyarrow
+sentence-transformers
+llama-index
+openai
