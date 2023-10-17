@@ -211,6 +211,22 @@ class Splitters:
             return split_dict
         return doc_idxs, text_chunks
         
+    def easy_split_corpus( self,
+                  corpus: List[dict], 
+                  text_splitter: SentenceSplitter, 
+                  content_key: str='content'
+                  ) -> List[dict]:
+        '''
+        Given a corpus of "documents" with text content, this function splits the 
+        content field into chunks sizes as specified by the text_splitter param. 
+        '''
+        text_chunks = {}
+        for doc in tqdm(corpus, 'Docs'):
+            video_id = doc['video_id']
+            splits = text_splitter.split_text(doc.get(content_key, ''))
+            text_chunks[video_id] = splits
+        return text_chunks
+    
 class Vectorizor:
 
     def __init__(self, model_name_or_path: str='all-MiniLM-L6-v2'):
@@ -273,3 +289,5 @@ class Vectorizor:
                         doc['doc_id'] = doc['video_id'] + '_' + str(i)
                 joined_documents.append(doc)
         return joined_documents
+    
+
