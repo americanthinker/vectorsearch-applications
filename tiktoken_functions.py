@@ -15,5 +15,5 @@ class Tokenizer:
         else:
             total_tokens = sum([len(chunk) for chunk in tokens])
             cost = (total_tokens/self.bundle) * self.price
-            print(f'Total Tokens: {total_tokens}\tCost: {cost:.3f}') 
+            print(f'Total Tokens: {total_tokens:,}\tCost: {cost:.3f}') 
             return (total_tokens, cost)

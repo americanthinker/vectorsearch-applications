@@ -69,7 +69,6 @@ class GPT_Turbo:
 
     def batch_generate_question_context_pairs(self,
                                               context_tuple_list: List[Tuple[str, str]],
-                                              filepath: str,
                                               num_questions_per_chunk: int=2,
                                               max_words_per_question: int=10
                                               ) -> List[Tuple[str, str]]:
@@ -77,13 +76,11 @@ class GPT_Turbo:
         progress = tqdm(unit="Generated Questions", total=len(context_tuple_list))
         with ThreadPoolExecutor(max_workers=2*os.cpu_count()) as exec:
             futures = [exec.submit(self.generate_question_context_pairs, context_tuple, num_questions_per_chunk, max_words_per_question) for context_tuple in context_tuple_list]
-            with open(filepath, 'a') as f:
-                for future in as_completed(futures):
-                    result = future.result()
-                    if result:
-                        data.append(result)
-                        self.write_to_file(file_handle=f, data=str(result))
-                        progress.update(1)
+            for future in as_completed(futures):
+                result = future.result()
+                if result:
+                    data.append(result)
+                    progress.update(1)
         return data
     
     def write_to_file(self, file_handle, data: str) -> None:
