@@ -334,6 +334,24 @@ class OpenSearchClient(OpenSearch):
                 unique_hits[doc_id] = hit
         return list(unique_hits.values())
     
+    def multi_index_search(self, query: str, index_list: List[str], size: int=10, return_raw: bool=False):
+        body = {
+                    # "_source": ['title', 'episode_num', 'episode_url', 'content'], 
+                    "_source": self.source_fields, 
+                    "size": size,
+                    "query": {
+                        "bool": {
+                            "must": {
+                                "match": {"content": query,}
+                                    },
+                            },
+                        },            
+                    }
+        response = self.msearch(body=body, index=index_list)
+        if return_raw: 
+            return response 
+        else: return response['response']['hits']['hits']
+        
     def parse_content_from_response(self, list_of_hits: List[dict]) -> List[str]:
         '''
         Given a list of hits from a search call, returns a list of content strings.
