@@ -9,6 +9,7 @@ __pycache__/
 # Large Files
 models/
 practice_data/
+llamadocs/
 
 # Distribution / packaging
 .Python

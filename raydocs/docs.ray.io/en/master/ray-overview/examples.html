@@ -1,0 +1,2395 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Ray Examples &#8212; Ray 3.0.0.dev0</title>
+    
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" href="../_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/autodoc_pydantic.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/termynal.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/tabs.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="/_/static/css/badge_only.css" />
+    
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script src="../_static/js/versionwarning.js"></script>
+    <script src="../_static/togglebutton.js"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.js"></script>
+    <script defer="defer" src="../_static/js/docsearch.js"></script>
+    <script defer="defer" src="../_static/js/csat.js"></script>
+    <script defer="defer" src="../_static/js/termynal.js"></script>
+    <script defer="defer" src="../_static/js/custom.js"></script>
+    <script defer="defer" src="../_static/js/assistant.js"></script>
+    <script defer="defer" src="../_static/js/top-navigation.js"></script>
+    <script src="../_static/js/tags.js"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script src="../_static/design-tabs.js"></script>
+    <script async="async" src="/_/static/javascript/readthedocs-doc-embed.js"></script>
+    <link rel="canonical" href="https://docs.ray.io/en/latest/ray-overview/examples.html" />
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The Ray Ecosystem" href="ray-libraries.html" />
+    <link rel="prev" title="Ray for ML Infrastructure" href="../ray-air/getting-started.html" />
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.3/purify.min.js"></script>
+
+<!-- Fathom - beautiful, simple website analytics -->
+<script src="https://deer.ray.io/script.js" data-site="WYYANYOS" defer></script>
+<!-- / Fathom -->
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-110413294-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-110413294-1');
+</script>
+
+<script>
+(function(apiKey){
+    (function(p,e,n,d,o){var v,w,x,y,z;o=p[d]=p[d]||{};o._q=o._q||[];
+    v=['initialize','identify','updateOptions','pageLoad','track'];for(w=0,x=v.length;w<x;++w)(function(m){
+        o[m]=o[m]||function(){o._q[m===v[0]?'unshift':'push']([m].concat([].slice.call(arguments,0)));};})(v[w]);
+        y=e.createElement(n);y.async=!0;y.src='https://cdn.pendo.io/agent/static/'+apiKey+'/pendo.js';
+        z=e.getElementsByTagName(n)[0];z.parentNode.insertBefore(y,z);})(window,document,'script','pendo');
+
+        pendo.initialize({
+            visitor: {
+                id: 'VISITOR-UNIQUE-ID'
+            },
+            account: {
+                id: 'ACCOUNT-UNIQUE-ID'
+            }
+        });
+})('f89fa48a-6dd7-4d7c-67cf-a8051ed891f2');
+</script>
+
+
+
+  
+<!-- RTD Extra Head -->
+
+<link rel="stylesheet" href="/_/static/css/readthedocs-doc-embed.css" type="text/css" />
+
+<script type="application/json" id="READTHEDOCS_DATA">{"ad_free": false, "api_host": "https://readthedocs.com", "builder": "sphinx", "canonical_url": null, "docroot": "/doc/source/", "features": {"docsearch_disabled": false}, "global_analytics_code": "UA-17997319-2", "language": "en", "page": "ray-overview/examples", "programming_language": "py", "project": "anyscale-ray", "proxied_api_host": "/_", "source_suffix": ".rst", "subprojects": {}, "theme": "sphinx_book_theme", "user_analytics_code": "", "version": "master"}</script>
+
+<!--
+Using this variable directly instead of using `JSON.parse` is deprecated.
+The READTHEDOCS_DATA global variable will be removed in the future.
+-->
+<script type="text/javascript">
+READTHEDOCS_DATA = JSON.parse(document.getElementById('READTHEDOCS_DATA').innerHTML);
+</script>
+
+<script type="text/javascript" src="/_/static/javascript/readthedocs-analytics.js" async="async"></script>
+
+<!-- end RTD <extrahead> -->
+</head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay overlay-navbar" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<!-- Checkboxes to toggle the in-page toc -->
+<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
+<label class="overlay overlay-pagetoc" for="__page-toc">
+    <div class="visually-hidden">Toggle in-page Table of Contents</div>
+</label>
+<!-- Headers at the top -->
+<div class="announcement header-item noprint"><div class='topnav'></div></div>
+<div class="header header-item noprint"></div>
+
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Sidebar -->
+<div class="bd-sidebar noprint" id="site-navigation">
+    <div class="bd-sidebar__content">
+        <div class="bd-sidebar__top"><div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../index.html">
+      
+      
+      
+      <h1 class="site-logo" id="site-title">Ray 3.0.0.dev0</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main Navigation">
+    <div class="bd-toc-item active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../index.html">
+                    Welcome to Ray!
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading">
+ <span class="caption-text">
+  Ray
+ </span>
+</p>
+<ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="index.html">
+   Overview
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="getting-started.html">
+   Getting Started
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="installation.html">
+   Installation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="use-cases.html">
+   Use Cases
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Example Gallery
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="ray-libraries.html">
+   Ecosystem
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../ray-core/walkthrough.html">
+   Ray Core
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../data/data.html">
+   Ray Data
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../train/train.html">
+   Ray Train
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../tune/index.html">
+   Ray Tune
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../serve/index.html">
+   Ray Serve
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../rllib/index.html">
+   Ray RLlib
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../ray-more-libs/index.html">
+   More Libraries
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../cluster/getting-started.html">
+   Ray Clusters
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../ray-observability/index.html">
+   Monitoring and Debugging
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../ray-contribute/index.html">
+   Developer Guides
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../ray-references/glossary.html">
+   Glossary
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../ray-security/index.html">
+   Security
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav></div>
+        <div class="bd-sidebar__bottom">
+             <!-- To handle the deprecated key -->
+            
+            <div class="navbar_extra_footer">
+            Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+            </div>
+            
+        </div>
+    </div>
+    <div id="rtd-footer-container"></div>
+</div>
+
+
+          
+
+
+          
+<!-- A tiny helper pixel to detect if we've scrolled -->
+<div class="sbt-scroll-pixel-helper"></div>
+<!-- Main content -->
+<div class="col py-0 content-container">
+    
+    <div class="header-article row sticky-top noprint">
+        
+
+
+
+<div class="col py-1 d-flex header-article-main">
+    <div class="header-article__left">
+        
+        <label for="__navigation"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="right"
+title="Toggle navigation"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-bars"></i>
+  </span>
+
+</label>
+
+        
+    </div>
+    <div class="header-article__right">
+<button onclick="toggleFullScreen()"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="bottom"
+title="Fullscreen mode"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+<div class="menu-dropdown menu-dropdown-repository-buttons">
+  <button class="headerbtn menu-dropdown__trigger"
+      aria-label="Source repositories">
+      <i class="fab fa-github"></i>
+  </button>
+  <div class="menu-dropdown__content">
+    <ul>
+      <li>
+        <a href="https://github.com/ray-project/ray"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="left"
+title="Source repository"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="headerbtn__text-container">repository</span>
+</a>
+
+      </li>
+      
+      <li>
+        <a href="https://github.com/ray-project/ray/issues/new?title=Issue%20on%20page%20%2Fray-overview/examples.html&body=Your%20issue%20content%20here."
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="left"
+title="Open an issue"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="headerbtn__text-container">open issue</span>
+</a>
+
+      </li>
+      
+      <li>
+        <a href="https://github.com/ray-project/ray/edit/master/doc/source/ray-overview/examples.rst"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="left"
+title="Edit this page"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="headerbtn__text-container">suggest edit</span>
+</a>
+
+      </li>
+      
+    </ul>
+  </div>
+</div>
+
+<div class="menu-dropdown menu-dropdown-download-buttons">
+  <button class="headerbtn menu-dropdown__trigger"
+      aria-label="Download this page">
+      <i class="fas fa-download"></i>
+  </button>
+  <div class="menu-dropdown__content">
+    <ul>
+      <li>
+        <a href="../_sources/ray-overview/examples.rst.txt"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="left"
+title="Download source file"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="headerbtn__text-container">.rst</span>
+</a>
+
+      </li>
+      
+      <li>
+        
+<button onclick="printPdf(this)"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="left"
+title="Print to PDF"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="headerbtn__text-container">.pdf</span>
+</button>
+
+      </li>
+      
+    </ul>
+  </div>
+</div>
+
+    </div>
+</div>
+
+<!-- Table of contents -->
+<div class="col-md-3 bd-toc show noprint">
+</div>
+    </div>
+    <div class="article row">
+        <div class="col pl-md-3 pl-lg-5 content-container">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>Ray Examples</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                    </div>
+                </div>
+            </div>
+            <main id="main-content" role="main">
+                
+              <div>
+                
+  <section id="ray-examples">
+<span id="ref-ray-examples"></span><h1>Ray Examples<a class="headerlink" href="#ray-examples" title="Permalink to this headline">#</a></h1>
+<link rel="stylesheet" type="text/css" href="../_static/css/examples.css">
+
+<div>
+   <div class="searchDiv">
+      <input type="text" id="searchInput" class="searchTerm"
+       placeholder='Search "serving"'>
+   </div>
+   <div id="noMatches" class="hidden">
+      <div id="noMatchesInnerContent">
+          <svg width="119" height="119" viewBox="0 0 119 119" fill="none" xmlns="http://www.w3.org/2000/svg"> <circle cx="59.5" cy="59.5" r="59.5" fill="url(#paint0_linear_362_3841)" fill-opacity="0.2"/> <path d="M19.1665 6.66663C19.1665 5.8382 19.8381 5.16663 20.6665 5.16663H58.9165H78.0702C78.5301 5.16663 78.9647 5.37767 79.2491 5.73919L88.8648 17.9624L88.8658 17.9637L98.3484 30.0984C98.5545 30.3622 98.6665 30.6873 98.6665 31.0221V56V105.333C98.6665 106.162 97.9949 106.833 97.1665 106.833H20.6665C19.8381 106.833 19.1665 106.162 19.1665 105.333V6.66663Z" fill="#FBFEFF" stroke="#D0EAF9"/> <path d="M77.485 29.4856C76.3051 29.4097 75.4482 28.3324 75.6397 27.1657L79.2591 5.11847C79.2874 4.94627 79.5072 4.89033 79.6143 5.02808L99.477 30.5658C99.5829 30.702 99.4784 30.8993 99.3063 30.8882L77.485 29.4856Z" fill="#11608D"/> <rect x="25.6665" y="15.1666" width="46.6667" height="3.5" rx="1.75" fill="#D6EEFC"/> <rect x="25.6665" y="31.5" width="46.6667" height="3.5" rx="1.75" fill="#D6EEFC"/> <rect x="25.6665" y="23.3334" width="16.3333" height="3.5" rx="1.75" fill="#D6EEFC"/> <rect x="25.6665" y="39.6666" width="16.3333" height="3.5" rx="1.75" fill="#D6EEFC"/> <rect x="45.5" y="23.3334" width="26.8333" height="3.5" rx="1.75" fill="#D6EEFC"/> <rect x="22.1665" y="98" width="30.3333" height="3.5" rx="1.75" fill="#D6EEFC"/> <g clip-path="url(#clip0_362_3841)"> <path d="M90.5158 91.8128L104.257 105.551L99.7173 110.091L85.9792 96.3494C80.8675 100.447 74.5094 102.676 67.958 102.667C52.019 102.667 39.083 89.7306 39.083 73.7916C39.083 57.8526 52.019 44.9166 67.958 44.9166C83.897 44.9166 96.833 57.8526 96.833 73.7916C96.8423 80.343 94.6135 86.7011 90.5158 91.8128ZM84.0799 89.4323C88.1516 85.245 90.4255 79.6322 90.4163 73.7916C90.4163 61.3818 80.3646 51.3333 67.958 51.3333C55.5482 51.3333 45.4997 61.3818 45.4997 73.7916C45.4997 86.1982 55.5482 96.25 67.958 96.25C73.7985 96.2592 79.4114 93.9852 83.5986 89.9135L84.0799 89.4323Z" fill="#60ABD7"/> </g> <ellipse cx="61.8335" cy="71.1667" rx="3.5" ry="4.66667" fill="#60ABD7"/> <ellipse cx="73.5" cy="71.1667" rx="3.5" ry="4.66667" fill="#60ABD7"/> <path d="M60.6665 84.5834V84.5834C65.0731 82.3801 70.2599 82.3801 74.6665 84.5834V84.5834" stroke="#60ABD7" stroke-width="2"/> <defs> <linearGradient id="paint0_linear_362_3841" x1="59.5" y1="0" x2="59.5" y2="119" gradientUnits="userSpaceOnUse"> <stop stop-color="#19B1E2"/> <stop offset="1" stop-color="#3D89E9"/> </linearGradient> <clipPath id="clip0_362_3841"> <rect width="77" height="77" fill="white" transform="translate(32.6665 38.5)"/> </clipPath> </defs> </svg>
+          <h4>Sorry! We could not find an example matching that filter.</h4>
+          <a id="newExampleIssueLink" href="https://github.com/ray-project/ray/issues/new?assignees=&labels=docs%2Ctriage&projects=&template=documentation-issue.yml&title=%5B%3CRay+component%3A+Core%7CRLlib%7Cetc...%3E%5D+"
+              <span id="newExampleIssueText">
+                Help us improve our examples by suggesting one. Tell us what example you would like to
+                have.
+              </span>
+          </a>
+      </div>
+   </div>
+<div><div class="sd-container-fluid sd-sphinx-override sd-mb-4 gallery-container container pb-3 docutils">
+<div class="sd-row sd-row-cols-1 sd-row-cols-xs-1 sd-row-cols-sm-2 sd-row-cols-md-2 sd-row-cols-lg-2 sd-g-1 sd-g-xs-1 sd-g-sm-1 sd-g-md-1 sd-g-lg-1 docutils">
+<div class="sd-col sd-d-flex-row gallery-item llm gen-ai docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-primary sd-bg-text-primary">Blog</span></div>
+<p class="sd-card-text">How Ray solves common production challenges for generative AI infrastructure</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.anyscale.com/blog/ray-common-production-challenges-for-generative-ai-infrastructure"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item training llm nlp gen-ai docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-primary sd-bg-text-primary">Blog</span></div>
+<p class="sd-card-text">Training 175B Parameter Language Models at 1000 GPU scale with Alpa and Ray</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.anyscale.com/blog/training-175b-parameter-language-models-at-1000-gpu-scale-with-alpa-and-ray"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item gen-ai cv training docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-primary sd-bg-text-primary">Blog</span></div>
+<p class="sd-card-text">Faster stable diffusion fine-tuning with Ray Train</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.anyscale.com/blog/faster-stable-diffusion-fine-tuning-with-ray-air"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item training serving huggingface llm gen-ai docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-primary sd-bg-text-primary">Blog</span></div>
+<p class="sd-card-text">How to fine tune and serve LLMs simply, quickly and cost effectively using Ray + DeepSpeed + HuggingFace</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.anyscale.com/blog/how-to-fine-tune-and-serve-llms"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item llm gen-ai docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-primary sd-bg-text-primary">Blog</span></div>
+<p class="sd-card-text">How OpenAI Uses Ray to Train Tools like ChatGPT</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.businessinsider.com/openai-chatgpt-trained-on-anyscale-ray-generative-lifelike-ai-models-2022-12"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item llm gen-ai huggingface training nlp docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">GPT-J-6B Fine-Tuning with Ray Train and DeepSpeed</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../train/examples/deepspeed/gptj_deepspeed_fine_tuning.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item llm gen-ai docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Aviary toolkit serving live traffic for LLMs</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/aviary/"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item pytorch training docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-success sd-bg-text-success">Tutorial</span></div>
+<p class="sd-card-text">Get started with Ray Train from an existing PyTorch codebase</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../train/examples/pytorch/convert_existing_pytorch_code_to_ray_train.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item training docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Distributed training with LightGBM</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../train/examples/lightgbm/lightgbm_example.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item training docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-success sd-bg-text-success">Tutorial</span></div>
+<p class="sd-card-text">Distributed training with XGBoost</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../train/examples/xgboost/xgboost_example.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item llm nlp gen-ai inference docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">How to use Ray Data to do batch prediction with the Hugging Face Transformers GPT-J model</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../data/examples/gptj_batch_prediction.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item serving llm gen-ai docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">How to use Ray Serve to do online serving with the Hugging Face Transformers GPT-J model</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../ray-air/examples/gptj_serving.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item cv training gen-ai docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">How to fine-tune a DreamBooth text-to-image model with your own images.</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../train/examples/pytorch/dreambooth_finetuning.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item training train llm nlp gen-ai docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Fine-tune dolly-v2-7b with Ray Train, PyTorch Lightning and FSDP</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../train/examples/lightning/dolly_lightning_fsdp_finetuning.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item pytorch cv docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Torch Object Detection Example with Ray Train</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../train/examples/pytorch/torch_detection.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item pytorch docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Image Classification Batch Inference with PyTorch ResNet152</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../data/examples/pytorch_resnet_batch_prediction.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item cv gen-ai inference docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">How to use Ray Data to do batch prediction with the Stable Diffusion text-to-image model</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../data/examples/stablediffusion_batch_prediction.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item cv pytorch inference docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Object Detection Batch Inference with PyTorch FasterRCNN_ResNet50</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../data/examples/batch_inference_object_detection.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item cv pytorch inference docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Image Classification Batch Inference with PyTorch ResNet18</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../data/examples/pytorch_resnet_batch_prediction.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item cv inference huggingface docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Image Classification Batch Inference with Huggingface Vision Transformer</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../data/examples/huggingface_vit_batch_prediction.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item pytorch tensorflow serving docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Serving ML models with Ray Serve (Tensorflow, PyTorch, Scikit-Learn, others)</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../serve/tutorials/serve-ml-models.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item serving docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Batching tutorial for Ray Serve</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../serve/tutorials/batch.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl serving docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Serving RLlib Models with Ray Serve</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../serve/tutorials/rllib.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item serving docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Scaling your Gradio app with Ray Serve</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../serve/tutorials/gradio-integration.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item serving docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Java tutorial for Ray Serve</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../serve/tutorials/java.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item serving cv docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Serving a Stable Diffusion Model</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../serve/tutorials/stable-diffusion.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item serving nlp docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Serving a Distilbert Model</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../serve/tutorials/text-classification.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item serving inference aws-neuron-core docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Serving a Bert Model on AWS NeuronCore</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../serve/tutorials/aws-neuron-core-inference.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item cv serving docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Serving an Object Detection Model</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../serve/tutorials/object-detection.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item inference docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-primary sd-bg-text-primary">Blog</span></div>
+<p class="sd-card-text">Offline Batch Inference: Comparing Ray, Apache Spark, and SageMaker</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.anyscale.com/blog/offline-batch-inference-comparing-ray-apache-spark-and-sagemaker"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-primary sd-bg-text-primary">Blog</span></div>
+<p class="sd-card-text">Streaming distributed execution across CPUs and GPUs</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.anyscale.com/blog/streaming-distributed-execution-across-cpus-and-gpus"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item llm nlp data-processing inference gen-ai docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-primary sd-bg-text-primary">Blog</span></div>
+<p class="sd-card-text">Using Ray Data to parallelize LangChain inference</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.anyscale.com/blog/turbocharge-langchain-now-guide-to-20x-faster-embedding"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item data-processing inference docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-primary sd-bg-text-primary">Blog</span></div>
+<p class="sd-card-text">Batch Prediction using Ray Data</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../data/batch_inference.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item training docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-primary sd-bg-text-primary">Blog</span></div>
+<p class="sd-card-text">Training One Million ML Models in Record Time with Ray</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.anyscale.com/blog/training-one-million-machine-learning-models-in-record-time-with-ray"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item training docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-primary sd-bg-text-primary">Blog</span></div>
+<p class="sd-card-text">Many Models Batch Training at Scale with Ray Core</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.anyscale.com/blog/many-models-batch-training-at-scale-with-ray-core"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item training docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Batch Training with Ray Core</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../ray-core/examples/batch_training.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item data-processing training docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Batch Training with Ray Data</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../data/examples/batch_training.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-success sd-bg-text-success">Tutorial</span></div>
+<p class="sd-card-text">Tune Basic Parallel Experiments</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/tutorials/tune-run.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item training tuning docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Batch Training and Tuning using Ray Tune</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/batch_tuning.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-warning sd-bg-text-warning">Video</span></div>
+<p class="sd-card-text">Scaling Instacart fulfillment ML on Ray</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.youtube.com/watch?v=3t26ucTy0Rs"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Using Aim with Ray Tune For Experiment Management</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/tune-aim.html#tune-aim-ref"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Using Comet with Ray Tune For Experiment Management</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/tune-comet.html#tune-comet-ref"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tracking monitoring tuning docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Tracking Your Experiment Process Weights &amp; Biases</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/tune-wandb.html#tune-wandb-ref"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tracking tuning docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Using MLflow Tracking &amp; AutoLogging with Tune</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/tune-mlflow.html#tune-mlflow-ref"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">How To Use Tune With Ax</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/ax_example.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">How To Use Tune With Dragonfly</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/dragonfly_example.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">How To Use Tune With HyperOpt</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/hyperopt_example.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">How To Use Tune With BayesOpt</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/bayesopt_example.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">How To Use Tune With BlendSearch and CFO</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/flaml_example.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">How To Use Tune With TuneBOHB</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/bohb_example.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">How To Use Tune With Nevergrad</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/nevergrad_example.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">How To Use Tune With Optuna</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/optuna_example.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">How To Use Tune With SigOpt</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/sigopt_example.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning serving docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-warning sd-bg-text-warning">Video</span></div>
+<p class="sd-card-text">Productionizing ML at Scale with Ray Serve</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.youtube.com/watch?v=UtH-CMpmxvI"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning serving docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-primary sd-bg-text-primary">Blog</span></div>
+<p class="sd-card-text">Simplify your MLOps with Ray &amp; Ray Serve</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.anyscale.com/blog/simplify-your-mlops-with-ray-and-ray-serve"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning serving docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-success sd-bg-text-success">Tutorial</span></div>
+<p class="sd-card-text">Getting Started with Ray Serve</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../serve/getting_started.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning serving docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-success sd-bg-text-success">Tutorial</span></div>
+<p class="sd-card-text">Model Composition in Serve</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../serve/model_composition.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-success sd-bg-text-success">Tutorial</span></div>
+<p class="sd-card-text">Getting Started with Ray Tune</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/getting-started.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-primary sd-bg-text-primary">Blog</span></div>
+<p class="sd-card-text">How to distribute hyperparameter tuning with Ray Tune</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.anyscale.com/blog/how-to-distribute-hyperparameter-tuning-using-ray-tune"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-warning sd-bg-text-warning">Video</span></div>
+<p class="sd-card-text">Simple Distributed Hyperparameter Optimization</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.youtube.com/watch?v=KgYZtlbFYXE"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning nlp huggingface docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-primary sd-bg-text-primary">Blog</span></div>
+<p class="sd-card-text">Hyperparameter Search with 🤗 Transformers</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.anyscale.com/blog/hyperparameter-search-hugging-face-transformers-ray-tune"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tensorflow tuning tune docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">How To Use Tune With Keras &amp; TF Models</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/tune_mnist_keras.html#tune-mnist-keras"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item pytorch tuning tune serve docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">How To Use Tune With PyTorch Models</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/tune-pytorch-cifar.html#tune-pytorch-cifar-ref"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item pytorch tuning tune serve docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">How To Tune PyTorch Lightning Models</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/tune-pytorch-lightning.html#tune-pytorch-lightning-ref"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning serving tune serve docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Model Selection &amp; Serving With Ray Serve</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/tune-serve-integration-mnist.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl tuning serving tune serve docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Tuning RL Experiments With Ray Tune &amp; Ray Serve</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/pbt_ppo_example.html#tune-rllib-example"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning tune serve docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">A Guide To Tuning XGBoost Parameters With Tune</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/tune-xgboost.html#tune-xgboost-ref"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning tune serve docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">A Guide To Tuning LightGBM Parameters With Tune</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/lightgbm_example.html#tune-lightgbm-example"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning tune serve docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">A Guide To Tuning Horovod Parameters With Tune</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/horovod_simple.html#tune-horovod-example"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning huggingface tune serve nlp docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">A Guide To Tuning Huggingface Transformers With Tune</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/pbt_transformers.html#tune-huggingface-example"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tuning docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">More Tune use cases on the Blog</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.anyscale.com/blog?tag=ray-tune"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item pytorch docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-warning sd-bg-text-warning">Video</span></div>
+<p class="sd-card-text">Ray Train, PyTorch, TorchX, and distributed deep learning</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.youtube.com/watch?v=e-A93QftCfc"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-success sd-bg-text-success">Tutorial</span></div>
+<p class="sd-card-text">Getting Started with Ray Train</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../train/train.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item training huggingface nlp docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Fine-tune a 🤗 Transformers model on GLUE benchmark</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../train/examples/transformers/huggingface_text_classification.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item pytorch training train cv docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">PyTorch Fashion MNIST Training Example</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../train/examples/pytorch/torch_fashion_mnist_example.html#torch-fashion-mnist-ex"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tensorflow training train cv docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">TensorFlow MNIST Training Example</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../train/examples/tf/tensorflow_mnist_example.html#tensorflow-mnist-example"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item training train docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">End-to-end Horovod Training Example</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../train/examples/horovod/horovod_example.html#horovod-example"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item pytorch training cv docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">End-to-end PyTorch Lightning Training Example</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../train/examples/lightning/lightning_mnist_example.html#lightning-mnist-example"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item data-processing training nlp docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Fine-tune a PyTorch Lightning Text Classifier with Ray Data</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../train/examples/lightning/lightning_cola_advanced.html#lightning-advanced-example"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tensorflow tuning docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">End-to-end Example for Tuning a TensorFlow Model</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../train/examples/tf/tune_tensorflow_mnist_example.html#tune-train-tf-example"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item pytorch tuning docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">End-to-end Example for Tuning a PyTorch Model with PBT</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../train/examples/pytorch/tune_cifar_torch_pbt_example.html#tune-train-torch-example"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-info sd-bg-text-info">Course</span></div>
+<p class="sd-card-text">Applied Reinforcement Learning with RLlib</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://applied-rl-course.netlify.app/"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-primary sd-bg-text-primary">Blog</span></div>
+<p class="sd-card-text">Intro to RLlib: Example Environments</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://medium.com/distributed-computing-with-ray/intro-to-rllib-example-environments-3a113f532c70"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl tuning docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">A collection of tuned hyperparameters by RLlib algorithm</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/tuned_examples"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<blockquote>
+<div><p class="sd-card-text">A collection of reasonably optimized Atari and MuJoCo results for RLlib</p>
+</div></blockquote>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/rl-experiments"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">RLlib’s trajectory view API and how it enables implementations of GTrXL (attention net) architectures</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://medium.com/distributed-computing-with-ray/attention-nets-and-more-with-rllibs-trajectory-view-api-d326339a6e65"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">A how-to on connecting RLlib with the Unity3D game engine for running visual- and physics-based RL experiments</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://medium.com/distributed-computing-with-ray/reinforcement-learning-with-rllib-in-the-unity-game-engine-1a98080a7c0d"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item pytorch tensorflow rl docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<blockquote>
+<div><p class="sd-card-text">How we ported 12 of RLlib’s algorithms from TensorFlow to PyTorch and what we learnt on the way</p>
+</div></blockquote>
+</div>
+<a class="sd-stretched-link reference external" href="https://medium.com/distributed-computing-with-ray/lessons-from-implementing-12-deep-rl-algorithms-in-tf-and-pytorch-1b412009297d"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">This blog post is a brief tutorial on multi-agent RL and its design in RLlib</p>
+</div>
+<a class="sd-stretched-link reference external" href="http://bair.berkeley.edu/blog/2018/12/12/rllib"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tensorflow rl docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Exploration of a functional paradigm for implementing reinforcement learning (RL) algorithms</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://medium.com/riselab/functional-rl-with-keras-and-tensorflow-eager-7973f81d6345"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of defining and registering a gym env and model for use with RLlib</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/custom_env.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of how to setup an RLlib algorithm against a locally running Unity3D editor</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/tree/master/rllib/examples/unity3d_env_local.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Rendering and recording of an environment</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/env_rendering_and_recording.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Coin game example with RLlib</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/coin_game_env.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example for how to use a DMLab environment (Watermaze)</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/dmlab_watermaze.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">RecSym environment example (for recommender systems) using the SlateQ algorithm</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/recommender_system_with_recsim_and_slateq.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example demonstrating how to use the SUMO simulator in connection with RLlib.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/sumo_env_local.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">VizDoom example script using RLlib’s auto-attention wrapper</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/vizdoom_with_attention_net.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of how to ensure subprocesses spawned by envs are killed when RLlib exits.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/env/tests/test_env_with_subprocess.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Attention Net (GTrXL) learning the “repeat-after-me” environment</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/attention_net.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example showing how to use the auto-LSTM wrapper for your default- and custom models in RLlib.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/lstm_auto_wrapping.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib pytorch tensorflow docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of using a custom Keras- or PyTorch RNN model.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/custom_rnn_model.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of defining and registering a custom model with a supervised loss.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/custom_model_loss_and_metrics.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of adding batch norm layers to a custom model.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/batch_norm_model.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of how to leverage TensorFlow eager to simplify debugging and design of custom models and policies.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/eager_execution.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of a “fast” Model learning only one parameter for tf and torch.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/custom_fast_model.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Shows how to define a custom Model API in RLlib, such that it can be used inside certain algorithms.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/custom_model_api.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">An example on how a model can use the trajectory view API to specify its own input.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/trajectory_view_api.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Implementations of <code class="xref py py-obj docutils literal notranslate"><span class="pre">MobileNetV2</span></code> and <code class="xref py py-obj docutils literal notranslate"><span class="pre">torch.hub</span> <span class="pre">(mobilenet_v2)</span></code>-wrapping example models.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/mobilenet_v2_with_lstm.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of DeepMind’s Differentiable Neural Computer for partially-observable environments.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/models/neural_computer.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib training docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of how to use Tune’s support for custom training functions to implement custom training workflows.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/custom_train_fn.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of how to advance the environment through different phases (tasks) over time.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/curriculum_learning.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">How to setup a custom Logger object in RLlib.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/custom_logger.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib tensorflow docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of how to output custom training metrics to TensorBoard.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/custom_metrics_and_callbacks.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib tensorflow docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">How to setup a custom TFPolicy.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/custom_tf_policy.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib pytorch docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">How to setup a custom TorchPolicy.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/custom_torch_policy.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of how to use RLlib’s lower-level building blocks to implement a fully customized training workflow.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/rollout_worker_custom_workflow.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of how to use the exec. plan of an Algorithm to trin two different policies in parallel (also using multi-agent API).</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/two_trainer_workflow.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">How to run a custom Ray Tune experiment with RLlib with custom training- and evaluation phases.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/custom_experiment.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of how to write a custom evaluation function that is called instead of the default behavior, which is running with the evaluation worker set through n episodes.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/custom_eval.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example showing how the evaluation workers and the “normal” rollout workers can run (to some extend) in parallel to speed up training.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/parallel_evaluation_and_training.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib serving docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example showing how to run an offline RL training job using a historic-data json file.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/tree/master/rllib/examples/offline_rl.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib serving docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of using Ray Serve to serve RLlib models with HTTP and JSON interface</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../serve/tutorials/rllib.html#serve-rllib-tutorial"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib serving docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">This script offers a simple workflow for 1) training a policy with RLlib first, 2) creating a new policy 3) restoring its weights from the trained one and serving the new policy via Ray Serve.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/tree/master/rllib/examples/inference_and_serving/serve_and_rllib.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib serving docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of how to setup n distributed Unity3D (compiled) games in the cloud that function as data collecting clients against a central RLlib Policy server learning how to play the game.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/tree/master/rllib/examples/serving/unity3d_server.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib serving docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of online serving of predictions for a simple CartPole policy.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/tree/master/rllib/examples/serving/cartpole_server.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib serving docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of how to externally generate experience batches in RLlib-compatible format.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/saving_experiences.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib serving docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of how to find a checkpoint after a <code class="xref py py-obj docutils literal notranslate"><span class="pre">Tuner.fit()</span></code> via some custom defined criteria.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/checkpoint_by_custom_criteria.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Setup RLlib to run any algorithm in (independent) multi-agent mode against a multi-agent environment.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/multi_agent_independent_learning.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Setup RLlib to run any algorithm in (shared-parameter) multi-agent mode against a multi-agent environment.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/multi_agent_parameter_sharing.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of different heuristic and learned policies competing against each other in rock-paper-scissors.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/rock_paper_scissors_multiagent.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of the two-step game from the QMIX paper.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/two_step_game.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example on how to use RLlib to learn in PettingZoo multi-agent environments.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/Farama-Foundation/PettingZoo/blob/master/tutorials/Ray/rllib_pistonball.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of customizing PPO to leverage a centralized value function.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/centralized_critic.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">A simpler method of implementing a centralized critic by augmentating agent observations with global information.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/centralized_critic_2.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of running a custom hand-coded policy alongside trainable policies.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/multi_agent_custom_policy.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of how to define weight-sharing layers between two different policies.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/multi_agent_cartpole.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of alternating training between DQN and PPO.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/multi_agent_two_trainers.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of hierarchical training using the multi-agent API.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/hierarchical_training.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of an iterated prisoner’s dilemma environment solved by RLlib.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/iterated_prisoners_dilemma_env.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of how to setup fractional GPUs for learning (driver) and environment rollouts (remote workers).</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/partial_gpus.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Learning in arbitrarily nested action spaces.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/nested_action_spaces.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of how to handle variable-length or parametric action spaces</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/parametric_actions_cartpole.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">How to filter raw observations coming from the environment for further processing by the Agent’s model(s).</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/custom_observation_filters.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">How to use RLlib’s <code class="xref py py-obj docutils literal notranslate"><span class="pre">Repeated</span></code> space to handle variable length observations.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/complex_struct_space.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Learning with auto-regressive action dependencies (e.g. 2 action components; distribution for 2nd component depends on the 1st component’s actually sampled value).</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/autoregressive_action_dist.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">A General Evaluation Platform and Building Toolkit for Single/Multi-Agent Intelligence with RLlib-generated baselines.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://sites.google.com/view/arena-unity/home"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of training autonomous vehicles with RLlib and CARLA simulator.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/layssi/Carla_Ray_Rlib"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Using Graph Neural Networks and RLlib to train multiple cooperative and adversarial agents to solve the “cover the area”-problem, thereby learning how to best communicate (or - in the adversarial case - how to disturb communication).</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://arxiv.org/pdf/2008.02616.pdf"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">A dense traffic simulating environment with RLlib-generated baselines.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://flatland.aicrowd.com/intro.html"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of setting up a multi-agent version of GFootball with RLlib.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/google-research/football/blob/master/gfootball/examples/run_multiagent_rllib.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">A multiagent AI research environment inspired by Massively Multiplayer Online (MMO) role playing games</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/NeuralMMO/environment"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of building packet classification trees using RLlib / multi-agent in a bandit-like setting.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/neurocuts/neurocuts"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of learning optimal LLVM vectorization compiler pragmas for loops in C and C++ codes using RLlib.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ucb-bar/NeuroVectorizer"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of using the multi-agent API to model several social dilemma games.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/eugenevinitsky/sequential_social_dilemma_games"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Create a custom environment and train a single agent RL using Ray 2.0 with Tune.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/lcipolina/Ray_tutorials/blob/main/RLLIB_Ray2_0.ipynb"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of training in StarCraft2 maps with RLlib / multi-agent.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/oxwhirl/smac"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl rllib docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of optimizing mixed-autonomy traffic simulations with RLlib / multi-agent.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://berkeleyflow.readthedocs.io/en/latest/flow_setup.html"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tensorflow rl docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Working with custom Keras models in RLlib</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://github.com/ray-project/ray/blob/master/rllib/examples/custom_keras_model.py"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl training docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-success sd-bg-text-success">Tutorial</span></div>
+<p class="sd-card-text">Getting Started with RLlib</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../rllib/rllib-training.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item rl docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-warning sd-bg-text-warning">Video</span></div>
+<p class="sd-card-text">Deep reinforcement learning at Riot Games</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.anyscale.com/events/2022/03/29/deep-reinforcement-learning-at-riot-games"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-primary sd-bg-text-primary">Blog</span></div>
+<p class="sd-card-text">The Magic of Merlin - Shopify’s New ML Platform</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://shopify.engineering/merlin-shopify-machine-learning-platform"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item training docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-success sd-bg-text-success">Tutorial</span></div>
+<p class="sd-card-text">Large Scale Deep Learning Training and Tuning with Ray</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://drive.google.com/file/d/1BS5lfXfuG5bnI8UM6FdUrR7CiSuWqdLn/view"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-primary sd-bg-text-primary">Blog</span></div>
+<p class="sd-card-text">Griffin: How Instacart’s ML Platform Tripled in a year</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.instacart.com/company/how-its-made/griffin-how-instacarts-ml-platform-tripled-ml-applications-in-a-year/"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-warning sd-bg-text-warning">Video</span></div>
+<p class="sd-card-text">Predibase - A low-code deep learning platform built for scale</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.youtube.com/watch?v=B5v9B5VSI7Q"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-primary sd-bg-text-primary">Blog</span></div>
+<p class="sd-card-text">Building a ML Platform with Kubeflow and Ray on GKE</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://cloud.google.com/blog/products/ai-machine-learning/build-a-ml-platform-with-kubeflow-and-ray-on-gke"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-warning sd-bg-text-warning">Video</span></div>
+<p class="sd-card-text">Ray Summit Panel - ML Platform on Ray</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.youtube.com/watch?v=_L0lsShbKaY"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item ts docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">AutoML for Time Series with Ray</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../ray-core/examples/automl_for_time_series.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-primary sd-bg-text-primary">Blog</span></div>
+<p class="sd-card-text">Highly Available and Scalable Online Applications on Ray at Ant Group</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.anyscale.com/blog/building-highly-available-and-scalable-online-applications-on-ray-at-ant"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-primary sd-bg-text-primary">Blog</span></div>
+<p class="sd-card-text">Ray Forward 2022 Conference: Hyper-scale Ray Application Use Cases</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.anyscale.com/blog/ray-forward-2022"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-primary sd-bg-text-primary">Blog</span></div>
+<p class="sd-card-text">A new world record on the CloudSort benchmark using Ray</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://www.anyscale.com/blog/ray-breaks-the-usd1-tb-barrier-as-the-worlds-most-cost-efficient-sorting"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Speed up your web crawler by parallelizing it with Ray</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../ray-core/examples/web-crawler.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item huggingface cv data inference docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-success sd-bg-text-success">Tutorial</span></div>
+<p class="sd-card-text">Image Classification Batch Inference with Huggingface Vision Transformer</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../data/examples/huggingface_vit_batch_prediction.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item pytorch cv data inference docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-success sd-bg-text-success">Tutorial</span></div>
+<p class="sd-card-text">Image Classification Batch Inference with PyTorch ResNet152</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../data/examples/pytorch_resnet_batch_prediction.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item pytorch cv data inference docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-success sd-bg-text-success">Tutorial</span></div>
+<p class="sd-card-text">Object Detection Batch Inference with PyTorch FasterRCNN_ResNet50</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../data/examples/batch_inference_object_detection.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item data data-processing training docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-success sd-bg-text-success">Tutorial</span></div>
+<p class="sd-card-text">Many Model Training with Ray Data</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../data/examples/batch_training.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item core inference docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Build Batch Prediction Using Ray</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../ray-core/examples/batch_prediction.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item core serve docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Build a Simple Parameter Server Using Ray</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../ray-core/examples/plot_parameter_server.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item core docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Simple Parallel Model Selection</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../ray-core/examples/plot_hyperparameter.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item core training docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Fault-Tolerant Fairseq Training</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../ray-core/examples/plot_example-lm.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item core rl docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Learning to Play Pong</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../ray-core/examples/plot_pong_example.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item core docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">A Gentle Introduction to Ray Core by Example</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../ray-core/examples/gentle_walkthrough.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item core docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Using Ray for Highly Parallelizable Tasks</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../ray-core/examples/highly_parallel.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item core docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Running a Simple MapReduce Example with Ray Core</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../ray-core/examples/map_reduce.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item core pytorch docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Benchmark example for the PyTorch data transfer auto pipeline</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../train/examples/pytorch/torch_data_prefetch_benchmark/benchmark_example.html#train-benchmark"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tune docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-success sd-bg-text-success">Tutorial</span></div>
+<p class="sd-card-text">How To Use Tune’s Scikit-Learn Adapters?</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/tune-sklearn.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tune docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Simple example for doing a basic random and grid search.</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/includes/tune_basic_example.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tune docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of using a simple tuning function with AsyncHyperBandScheduler.</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/includes/async_hyperband_example.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tune docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of using a Trainable function with HyperBandScheduler. Also uses the AsyncHyperBandScheduler.</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/includes/hyperband_function_example.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tune docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-success sd-bg-text-success">Tutorial</span></div>
+<p class="sd-card-text">Configuring and running (synchronous) PBT and understanding the underlying algorithm behavior with a simple example.</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/pbt_visualization/pbt_visualization.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tune docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-success sd-bg-text-success">Tutorial</span></div>
+<p class="sd-card-text">Example of using the function API with a PopulationBasedTraining scheduler.</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/includes/pbt_function.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tune docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of using the Population-based Bandits (PB2) scheduler.</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/includes/pb2_example.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tune docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Example of custom loggers and custom trial directory naming.</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../tune/examples/includes/logging_example.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tune notebook tensorflow docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Basics of using Tune</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://colab.research.google.com/github/ray-project/tutorial/blob/master/tune_exercises/exercise_1_basics.ipynb"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tune notebook pytorch docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Using Search algorithms and Trial Schedulers to optimize your model.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://colab.research.google.com/github/ray-project/tutorial/blob/master/tune_exercises/exercise_2_optimize.ipynb"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tune notebook pytorch docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Using Population-Based Training (PBT).</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://colab.research.google.com/github/ray-project/tutorial/blob/master/tune_exercises/exercise_3_pbt.ipynb"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tune notebook huggingface pytorch docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Fine-tuning Huggingface Transformers with PBT.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://colab.research.google.com/drive/1tQgAKgcKQzheoh503OzhS4N9NtfFgmjF?usp=sharing"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item tune notebook comet docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Logging Tune Runs to Comet ML.</p>
+</div>
+<a class="sd-stretched-link reference external" href="https://colab.research.google.com/drive/1dp3VwVoAH1acn_kG7RuT62mICnOqxU1z?usp=sharing"></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item serve docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-success sd-bg-text-success">Tutorial</span></div>
+<p class="sd-card-text">Using Ray Serve to deploy a chatbot</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../serve/tutorials/streaming.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item training llm gen-ai docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Fine-tune vicuna-13b-v1.3 with DeepSpeed, PyTorch Lightning and Ray Train</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../train/examples/lightning/vicuna_13b_lightning_deepspeed_finetune.html"><span class="doc"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item training llm pytorch nlp docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Distributed Training with DeepSpeed ZeRO-3 and TorchTrainer</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../train/examples/deepspeed/deepspeed_example.html#deepspeed-example"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item training llm pytorch huggingface nlp docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">Distributed Training with Hugging Face Accelelate and TorchTrainer</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../train/examples/deepspeed/deepspeed_example.html#deepspeed-example"><span class="std std-ref"></span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row gallery-item inference huggingface cv docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="sd-sphinx-override sd-badge sd-bg-secondary sd-bg-text-secondary">Code example</span></div>
+<p class="sd-card-text">RayJob Batch Inference Example on Kubernetes with Ray</p>
+</div>
+<a class="sd-stretched-link reference internal" href="../cluster/kubernetes/examples/rayjob-batch-inference-example.html#kuberay-batch-inference-example"><span class="std std-ref"></span></a></div>
+</div>
+</div>
+</div>
+</section>
+
+
+              </div>
+              
+            </main>
+            <footer class="footer-article noprint">
+                
+    <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+    <a class='left-prev' id="prev-link" href="../ray-air/getting-started.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">Ray for ML Infrastructure</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="ray-libraries.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">The Ray Ecosystem</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+            </footer>
+        </div>
+    </div>
+    <div class="footer-content row">
+        <footer class="col footer"><!-- Override the footer area for the sphinx-book-theme to include the CSAT widget -->
+<div id="csat">
+  <div id="csat-feedback-received" class="csat-hidden">
+    <span>Thanks for the feedback!</span>
+  </div>
+  <div id="csat-inputs">
+    <span>Was this helpful?</span>
+    <div id="csat-yes" class="csat-button">
+      <svg id="csat-yes-icon" class="csat-hidden csat-icon" width="18" height="13" viewBox="0 0 18 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M7.00023 10.172L16.1922 0.979004L17.6072 2.393L7.00023 13L0.63623 6.636L2.05023 5.222L7.00023 10.172Z" fill="black"/>
+      </svg>
+      <span>Yes<span>
+    </div>
+    <div id="csat-no" class="csat-button">
+      <svg id="csat-no-icon" class="csat-hidden csat-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M7.00023 5.58599L11.9502 0.635986L13.3642 2.04999L8.41423 6.99999L13.3642 11.95L11.9502 13.364L7.00023 8.41399L2.05023 13.364L0.63623 11.95L5.58623 6.99999L0.63623 2.04999L2.05023 0.635986L7.00023 5.58599Z" fill="black"/>
+      </svg>
+      <span>No<span>
+    </div>
+  </div>
+  <div id="csat-textarea-group" class="csat-hidden">
+    <span id="csat-feedback-label">Feedback</span>
+    <textarea id="csat-textarea"></textarea>
+    <div id="csat-submit">Submit</div>
+  </div>
+</div><p>
+  
+    By The Ray Team<br/>
+  
+      &copy; Copyright 2023, The Ray Team.<br/>
+</p>
+        </footer>
+    </div>
+    
+</div>
+
+
+      </div>
+    </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+
+
+  </body>
+</html>
