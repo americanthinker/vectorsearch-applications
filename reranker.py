@@ -25,12 +25,10 @@ class ReRanker:
                              return_scores: bool=False
                              ) -> Union[np.array, None]:
         '''
-        Given a list of hits from a semantic retriever:
-            1. Scores hits by passing through CrossEncoder model. 
-            2. Adds cross-score key to hits dictionary.
-            3. Converts all negative (-) cross-score scores to 0.  
-        Negative scores are flattened to 0 to ensure that highly negative Cross
-        Encoder scores do not inadvertently skew high scoring hits.
+        Given a list of hits from a Retriever:
+            1. Scores hits by passing query and results through CrossEncoder model. 
+            2. Adds cross-score key to hits dictionary. 
+            3. If desired returns np.array of Cross Encoder scores.
         '''
         
         #build query/content list

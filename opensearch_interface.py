@@ -29,7 +29,7 @@ class OpenSearchClient(OpenSearch):
 
     '''
     def __init__(self,
-                 model_name_or_path: str=None,
+                 model_name_or_path: str='sentence-transformers/all-MiniLM-L6-v2',
                  hosts: List[dict]=[{"host": "localhost", "port": 9200}],
                  http_auth: Tuple[str, str]=('admin', 'admin'),
                  use_ssl: bool = True,
