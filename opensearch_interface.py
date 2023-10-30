@@ -237,18 +237,17 @@ class OpenSearchClient(OpenSearch):
     def show_indexes(self, index_name: str=None):
         print(self.cat.indices(index=index_name, params={'v':'true'}))
     
-    def keyword_search(self, query: str, index: str, size: int=10, return_raw: bool=False):
+    def keyword_search(self, query: str, index: str, search_field: str="content", size: int=10, return_raw: bool=False):
         '''
         Executes basic keyword search functionality.
         '''
         body = {
-                # "_source": ['title', 'episode_num', 'episode_url', 'content'], 
                 "_source": self.source_fields, 
                 "size": size,
                 "query": {
                     "bool": {
                         "must": {
-                            "match": {"content": query,}
+                            "match": {search_field: query,}
                                 },
                             # "filter": {"bool": {"must_not": {"match_phrase": {"content": "Vishal"}}}},
                         },
@@ -298,7 +297,7 @@ class OpenSearchClient(OpenSearch):
         naively combined into a single list and results are deduplicated.
         '''
 
-        kw_result = self.keyword_search(query, kw_index, kw_size, return_raw)
+        kw_result = self.keyword_search(query=query, index=kw_index, size=kw_size, return_raw=return_raw)
         vec_result = self.vector_search(query, vec_index, vec_size, return_raw=return_raw)
 
         #interleave results of both searches into a single list
