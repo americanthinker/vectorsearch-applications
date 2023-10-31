@@ -15,18 +15,23 @@ class GPT_Turbo:
 
     def get_completion_from_messages(self, 
                                      prompt: str, 
+                                     system_message: str='You are a helpful assistant.',
                                      temperature: int=0, 
                                      max_tokens: int=500,
+                                     stream: bool=False,
                                      show_response: bool=False
                                      ) -> str:
-        message = {'role': 'user',
-                   'content': prompt}
+        messages =  [
+            {'role': 'system', 'content': system_message},
+            {'role': 'assistant', 'content': prompt}
+                    ]
         
         response = openai.ChatCompletion.create(
                                                 model=self.model,
-                                                messages=[message],
+                                                messages=messages,
                                                 temperature=temperature,
-                                                max_tokens=max_tokens)
+                                                max_tokens=max_tokens,
+                                                stream=stream)
         if show_response:
             return response
         return response.choices[0].message["content"]
