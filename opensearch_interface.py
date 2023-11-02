@@ -1,6 +1,6 @@
 from typing import Tuple, List, IO, Union, Dict
 from opensearchpy import OpenSearch
-from opensearchpy.helpers import bulk, parallel_bulk
+from opensearchpy.helpers import parallel_bulk
 from loguru import logger
 from tqdm import tqdm
 from sentence_transformers import SentenceTransformer
@@ -29,9 +29,9 @@ class OpenSearchClient(OpenSearch):
 
     '''
     def __init__(self,
-                 model_name_or_path: str='sentence-transformers/all-MiniLM-L6-v2',
-                 hosts: List[dict]=[{"host": "localhost", "port": 9200}],
+                 hosts: Union[str, List[dict]]=[{"host": "localhost", "port": 9200}],
                  http_auth: Tuple[str, str]=('admin', 'admin'),
+                 model_name_or_path: str='sentence-transformers/all-MiniLM-L6-v2',
                  use_ssl: bool = True,
                  verify_certs = False,
                  ssl_assert_hostname = False,
@@ -225,7 +225,8 @@ class OpenSearchClient(OpenSearch):
                                                                     index_name=index_name,
                                                                     semantic_index=semantic_index),
                                         thread_count=os.cpu_count()*2, 
-                                        chunk_size=chunk_size):
+                                        chunk_size=chunk_size,
+                                        ignore_status=400):
             try:
                 progress.update(success)
                 count += success

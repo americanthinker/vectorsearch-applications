@@ -30,10 +30,10 @@ response = retrieve_pipeline(query=query,
                              retriever=osclient,
                              reranker=reranker,
                              tokenizer=tokenizer,
-                            kw_size=50,
-                            vec_size=50,
-                            top_k=5,
-                            return_text=False)
+                             kw_size=50,
+                             vec_size=50,
+                             top_k=5,
+                             return_text=False)
 
 prompt = generate_prompt(base_prompt=question_answering_prompt, query=query, results=response)
 

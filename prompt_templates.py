@@ -6,10 +6,11 @@ Bilyeu’s insatiable hunger for knowledge gives the show urgency, relevance, an
 '''
 
 question_answering_prompt = '''
-Answer the following question by reviewing the blocks of context surrounded by triple back ticks:\n
+Use the below context enclosed in triple back ticks to answer the question. If the context does not provide enough information to answer the question, then use any knowledge you have to answer the question.\n
+```{context}```\n
 Question:\n
 {question}.\n
-```{context}```
+Answer: 
 '''
 
 test_prompt = '''

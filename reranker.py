@@ -40,7 +40,12 @@ class ReRanker:
 
         if return_scores:return cross_scores
 
-    def rerank(self, results: List[dict], query: str, top_k: int=10, threshold: float=None) -> List[dict]:
+    def rerank(self, 
+               results: List[dict], 
+               query: str, 
+               top_k: int=10, 
+               threshold: float=None
+               ) -> List[dict]:
         # Sort results by the cross-encoder scores
         self._cross_encoder_score(results=results, query=query)
 

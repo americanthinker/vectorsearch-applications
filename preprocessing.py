@@ -96,6 +96,12 @@ class Utilities:
         title = os.path.splitext(title)[0]
         return title
 
+    def create_video_url(self, video_id: str, playlist_id: str):
+        '''
+        Creates a hyperlink to a video episode given a video_id and playlist_id.
+        '''
+        return f'https://www.youtube.com/watch?v={video_id}&list={playlist_id}'
+        
     def get_content_lengths(self, 
                             list_of_dicts: List[dict], 
                             use_tokens: bool=True, 
@@ -124,73 +130,6 @@ class Utilities:
                 continue
 
 class Splitters:
-    
-    def sentence_splitter(self, text: str) -> List[str]:
-        '''
-        Given a piece of text, returns text split into a list of sentences at 
-        defined sentence breaks. 
-
-        Args
-        -----
-        text : str
-            Piece of text or document in string format. 
-
-        Returns
-        --------
-            List of sentences demarcated by sentence boundaries (period, ? !).
-
-        '''
-        #Adding a period at the end of the string to account for text (such as found in Powerpoint presentations)
-        #that do not end with sentence boundaries i.e. periods, question marks, etc.
-        text = text + '.'
-        alphabets= "([A-Za-z])"
-        prefixes = "(Mr|St|Mrs|Ms|Dr|Col|Gen|Pfc|Spc|Maj|Lt|Adm|Capt)[.]"
-        suffixes = "(Inc|Ltd|Jr|Sr|Co)"
-        starters = "(Mr|Mrs|Ms|Dr|He\s|She\s|It\s|They\s|Their\s|Our\s|We\s|But\s|However\s|That\s|This\s|Wherever)"
-        acronyms = "([A-Z][.][A-Z][.](?:[A-Z][.])?)"
-        websites = "[.](com|net|org|io|gov)"
-        digits = "([0-9])"
-        text = " " + text + "  "
-        text = text.replace("\n"," ")
-        text = re.sub(digits + "[.]" + digits, "\\1<prd>\\2", text)
-        text = re.sub(digits + "[.]" + " " + digits, "\\1<prd>\\2", text)
-        text = re.sub(prefixes,"\\1<prd>",text)
-        text = re.sub(websites,"<prd>\\1",text)
-        if "Ph.D" in text: text = text.replace("Ph.D","Ph<prd>D<prd>")
-        if "e.g." in text: text = text.replace("e.g.","e<prd>g<prd>")
-        if "e. g." in text: text = text.replace("e. g.","e<prd>g<prd>")
-        if "i.e." in text: text = text.replace("i.e.","i<prd>e<prd>") 
-        if "i. e." in text: text = text.replace("i. e.","i<prd>e<prd>") 
-        if "et. al." in text: text = text.replace("et. al.", 'et<prd>al<prd>')
-        if "Fig. " in text: text = text.replace("Fig. ", "Fig.<prd>")
-        text = re.sub("\s" + alphabets + "[.] "," \\1<prd> ",text)
-        text = re.sub(acronyms+" "+starters,"\\1<stop> \\2",text)
-        text = re.sub(alphabets + "[.]" + alphabets + "[.]" + alphabets + "[.]","\\1<prd>\\2<prd>\\3<prd>",text)
-        text = re.sub(alphabets + "[.]" + alphabets + "[.]","\\1<prd>\\2<prd>",text)
-        text = re.sub(" "+suffixes+"[.] "+starters," \\1<stop> \\2",text)
-        text = re.sub(" "+suffixes+"[.]"," \\1<prd>",text)
-        text = re.sub(" " + alphabets + "[.]"," \\1<prd>",text)
-        if "”" in text: text = text.replace(".”","”.")
-        if "\"" in text: text = text.replace(".\"","\".")
-        if "!" in text: text = text.replace("!\"","\"!")
-        if "?" in text: text = text.replace("?\"","\"?")
-        text = text.replace(".",".<stop>")
-        text = text.replace("?","?<stop>")
-        text = text.replace("!","!<stop>")
-        text = text.replace("<prd>",".")
-        sentences = text.split("<stop>")
-        sentences = sentences[:-1]
-        sentences = [s.strip() for s in sentences]
-        sentences = [re.sub('\s+', ' ', sent) for sent in sentences]
-
-        #remove the period at the end of the last sentence, that was inserted at the beginning of this function
-        if sentences:
-            last_sentence = sentences[-1][:-1]
-            sentences = sentences[:-1]
-            if last_sentence:
-                sentences.append(last_sentence)
-
-        return sentences
 
     def split_corpus(self,
                      corpus: List[dict], 
