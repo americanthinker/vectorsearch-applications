@@ -17,7 +17,11 @@ import pathlib
 
 ## Set of helper functions that support data preprocessing 
 class FileIO:
-    
+    '''
+    Convenience class for saving and loading data in various formats to/from disk.
+    Currently supports parquet and json formats.
+    '''
+
     def save_as_parquet(self, 
                         file_path: str, 
                         data: Union[List[dict], pd.DataFrame], 
@@ -57,7 +61,7 @@ class FileIO:
             file_name = os.path.basename(file_path)
             dir_structure = file_path.replace(file_name, '')
             pathlib.Path(dir_structure).mkdir(parents=True, exist_ok=True)
-            
+    
     def load_parquet(self, file_path: str, verbose: bool=True) -> List[dict]:
         '''
         Loads parquet from disk, converts to pandas DataFrame as intermediate
@@ -74,7 +78,20 @@ class FileIO:
             print(f'Memory Usage: {memory_usage}+ MB')
         list_of_dicts = df.to_dict('records')
         return list_of_dicts
-        
+    
+    def save_as_json(self, 
+                     file_path: str, 
+                     data: List[dict], 
+                     indent: int=4,
+                     overwrite: bool=False
+                     ) -> None:
+        if not file_path.endswith('json'):
+            file_path = self._rename_file_extension(file_path, 'json')
+        self._check_file_path(file_path, overwrite=overwrite)
+        with open(file_path, 'w') as f:
+            json.dump(data, f, indent=indent)
+        logger.info(f'Data saved as json file here: {file_path}')
+
 class Utilities: 
 
     def json_data_loader(self, file_path: str):
