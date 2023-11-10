@@ -85,9 +85,9 @@ def run_evaluation( dataset: Dict[str, List[str]],
                     'Retriever': retriever.model_name_or_path, 
                     'Ranker': reranker_name,
                     'chunk_size': chunk_size,
-                    'kw_recall': 0,
-                    'vector_recall': 0,
-                    'hybrid_recall':0,
+                    'kw_hit_rate': 0,
+                    'vector_hit_rate': 0,
+                    'hybrid_hit_rate':0,
                     'total_questions':0
                     }
     for doc_id, questions in tqdm(dataset.items(), 'Questions'):
@@ -110,22 +110,22 @@ def run_evaluation( dataset: Dict[str, List[str]],
             vector_doc_ids = [res['_source']['doc_id'] for res in vector_response][:top_k]
             hybrid_doc_ids = [res['_source']['doc_id'] for res in hybrid_response][:top_k]
             
-            #increment recall counters as appropriate
+            #increment hit_rate counters as appropriate
             if doc_id in kw_doc_ids:
-                results_dict['kw_recall'] += 1
+                results_dict['kw_hit_rate'] += 1
             if doc_id in vector_doc_ids:
-                results_dict['vector_recall'] += 1
+                results_dict['vector_hit_rate'] += 1
             if doc_id in hybrid_doc_ids:
-                results_dict['hybrid_recall'] += 1
+                results_dict['hybrid_hit_rate'] += 1
 
     #use raw counts to calculate final scores
-    calc_recall_scores(results_dict)
+    calc_hit_rate_scores(results_dict)
     
     return results_dict
 
-def calc_recall_scores(results_dict: Dict[str, Union[str, int]]):
+def calc_hit_rate_scores(results_dict: Dict[str, Union[str, int]]):
     for prefix in ['kw', 'vector', 'hybrid']:
-        results_dict[f'{prefix}_score'] = round(results_dict[f'{prefix}_recall']/results_dict['total_questions'],2)
+        results_dict[f'{prefix}_score'] = round(results_dict[f'{prefix}_hit_rate']/results_dict['total_questions'],2)
 
 def record_results(results_dict: Dict[str, Union[str, int]], dir_outpath: str=None) -> None:
     #write results to output file

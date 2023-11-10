@@ -1,4 +1,3 @@
-import streamlit as st
 from tiktoken import get_encoding
 from opensearch_interface import OpenSearchClient
 from retriever_pipeline import retrieve_pipeline, generate_prompt
@@ -6,17 +5,19 @@ from prompt_templates import question_answering_prompt, question_answering_syste
 from openai_interface import GPT_Turbo
 from reranker import ReRanker
 from loguru import logger 
+import streamlit as st
 import templates
 import time
  
 def convert_seconds(seconds: int):
     return time.strftime("%H:%M:%S", time.gmtime(seconds))
 
-st.set_page_config(page_title="Chat With Your Data", page_icon=":shark:", layout="wide")
-
+logger.info(convert_seconds(62))
 ## RETRIEVER
 model_name = 'sentence-transformers/all-MiniLM-L6-v2'
-osclient = OpenSearchClient(model_name)
+osclient = OpenSearchClient(model_name_or_path=model_name)
+logger.info(osclient.show_indexes())
+
 ## RERANKER
 reranker = ReRanker()
 ## QA MODEL
@@ -24,7 +25,7 @@ gpt = GPT_Turbo()
 ## TOKENIZER
 encoding = get_encoding("cl100k_base")
 
-logger.info(osclient.show_indexes())
+
 indexes = ['impact-theory-minilm-196', 'wands-products']
 index_name_mapper = {indexes[0]:'Impact Theory podcast', indexes[1]:'Wayfair Dataset'}
 
@@ -56,11 +57,12 @@ def main():
 
         prompt = generate_prompt(base_prompt=question_answering_prompt, query=query, results=hybrid_response)
         #execute chat call to OpenAI
-        st.subheader("Response from ChatGPT-3.5-Turbo")
+        st.subheader("Response from Impact Theory (context)")
         with st.spinner('Generating Response...'):
             st.markdown("----")
             res_box = st.empty()
             report = []
+            col_1, col_2 = st.columns([4, 3], gap='large')
             for resp in gpt.get_completion_from_messages(prompt=prompt,
                                                         system_message=question_answering_system,
                                                         max_tokens=250, 
@@ -68,10 +70,12 @@ def main():
                                                         show_response=True
                                                         ):
                 try:
-                    report.append(resp.choices[0].delta.get('content', '\n'))
-                    result = "".join(report).strip()
-                    # result = result.replace("\n", "")    
-                    res_box.markdown(f'*{result}*') 
+                    with col_1:
+                        with res_box:
+                            report.append(resp.choices[0].delta.get('content', '\n'))
+                            result = "".join(report).strip()
+                            # result = result.replace("\n", "")    
+                            res_box.markdown(f'*{result}*')
                 except Exception as e:
                     print(e)
                     continue

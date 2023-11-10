@@ -81,7 +81,7 @@ class FileIO:
     
     def save_as_json(self, 
                      file_path: str, 
-                     data: List[dict], 
+                     data: Union[List[dict], dict], 
                      indent: int=4,
                      overwrite: bool=False
                      ) -> None:
