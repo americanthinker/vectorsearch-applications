@@ -1,8 +1,9 @@
 from weaviate import Client, AuthApiKey
+from sentence_transformers import SentenceTransformer
 from typing import List, Union
 
 
-class Weaviate(Client):
+class WeaviateClient(Client):
     '''
     A python native Weaviate Client class that encapsulates Weaviate functionalities 
     in one object. Several convenience methods are added for ease of use.
@@ -15,16 +16,24 @@ class Weaviate(Client):
 
     endpoint: str
         The url endpoint for the Weaviate Cloud Service instance.
+
+    model_name_or_path: str='sentence-transformers/all-MiniLM-L6-v2'
+        The name or path of the SentenceTransformer model to use for vector search.
+        Models are hard-coded as SentenceTransformers only for now (works for most 
+        leading models on MTEB Leaderboard): https://huggingface.co/spaces/mteb/leaderboard
     '''    
     def __init__(self, 
                  api_key: str,
                  endpoint: str,
+                 model_name_or_path: str='sentence-transformers/all-MiniLM-L6-v2',
                  **kwargs
                 ):
         auth_config = AuthApiKey(api_key=api_key)
         super().__init__(auth_client_secret=auth_config,
                          url=endpoint,
                          **kwargs)    
+        self.model_name_or_path = model_name_or_path
+        self.model = SentenceTransformer(self.model_name_or_path) if self.model_name_or_path else None
         self.fields = ["title", "content", "docid"]
         
     def show_classes(self):
@@ -95,6 +104,35 @@ class Weaviate(Client):
         else: 
             return self._format_response(response, class_)
 
+    def vector_search(self,
+                      query: str,
+                      class_: str,
+                      properties: List[str]=['content'],
+                      limit: int=10,
+                      return_raw: bool=False
+                     ) -> Union[dict, List[dict]]:
+        '''
+        Executes Hybrid (BM25 + Vector) search.
+        
+        Args
+        ----
+        query: str
+            User query.
+
+        class_: str
+            Class (index) to search.
+        
+        properties: List[str]
+            List of properties to search across.
+        
+        limit: int=10
+            Number of results to return.
+        
+        return_raw: bool=False
+            If True, returns raw response from Weaviate.
+        '''
+        pass
+
     def hybrid_search(self,
                       query: str,
                       class_: str,
@@ -122,3 +160,4 @@ class Weaviate(Client):
         return_raw: bool=False
             If True, returns raw response from Weaviate.
         '''
+        pass
