@@ -22,6 +22,7 @@ class ReRanker:
     def _cross_encoder_score(self, 
                              results: List[dict], 
                              query: str, 
+                             hit_field: str='content',
                              return_scores: bool=False
                              ) -> Union[np.array, None]:
         '''
@@ -32,7 +33,7 @@ class ReRanker:
         '''
         
         #build query/content list
-        cross_inp = [[query, hit['_source']['content']] for hit in results]
+        cross_inp = [[query, hit[hit_field]] for hit in results]
         #get scores
         cross_scores = self.model.predict(cross_inp)
         for i, result in enumerate(results):
