@@ -208,3 +208,18 @@ class WeaviateClient(Client):
             return response
         else: 
             return self._format_response(response, class_name)
+        
+
+
+class Indexer(WeaviateClient):
+
+    def __init__(self,
+                 client: WeaviateClient,
+                 batch_size=150,
+                 dynamic=True,
+                 creation_time=5,
+                 timeout_retries=3,
+                 connection_error_retries=3,
+                 callback='check_batch_result',
+                 num_workers=4):
+        pass

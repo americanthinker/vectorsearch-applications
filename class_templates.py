@@ -15,10 +15,6 @@ impact_theory_class_properties = [
                                         'dataType': ['number'],
                                         'indexFilterable': True,
                                         'indexSearchable': False},
-                                    {'name': 'publish_date',
-                                        'dataType': ['date'],
-                                        'indexFilterable': True,
-                                        'indexSearchable': False},
                                     {'name': 'thumbnail_url',
                                         'dataType': ['text'],
                                         'indexFilterable': False,
@@ -40,3 +36,7 @@ impact_theory_class_properties = [
                                         'indexFilterable': False,
                                         'indexSearchable': True},
                                 ]
+                                    # {'name': 'publish_date',
+                                    #     'dataType': ['date'],
+                                    #     'indexFilterable': True,
+                                    #     'indexSearchable': False},

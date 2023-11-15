@@ -49,6 +49,6 @@ def retrieve_pipeline(query: str,
     return reranked
 
 def generate_prompt(base_prompt: str, query: str, results: List[dict]) -> str:
-    contexts = '\n\n'.join([r['_source']['content'] for r in results])
+    contexts = '\n\n'.join([r['content'] for r in results])
     prompt = base_prompt.format(question=query, context=contexts)
     return prompt
