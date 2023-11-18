@@ -1,4 +1,5 @@
 from weaviate import Client, AuthApiKey
+from dataclasses import dataclass
 from sentence_transformers import SentenceTransformer
 from typing import List, Union, Callable
 from torch import cuda
@@ -122,7 +123,7 @@ class WeaviateClient(Client):
                          ) -> List[dict]:
         '''
         Formats json response from Weaviate into a list of dictionaries.
-        Expands _additional fields if present into primary dictionary.
+        Expands _additional fields if present into top-level dictionary.
         '''
         if response.get('errors'):
             return response['errors'][0]['message']
@@ -141,6 +142,8 @@ class WeaviateClient(Client):
                        class_name: str,
                        properties: List[str]=['content'],
                        limit: int=10,
+                       where_filter: dict=None,
+                       display_properties: List[str]=None,
                        return_raw: bool=False) -> Union[dict, List[dict]]:
         '''
         Executes Keyword (BM25) search. 
@@ -149,26 +152,26 @@ class WeaviateClient(Client):
         ----
         query: str
             User query.
-
         class_name: str
             Class (index) to search.
-        
         properties: List[str]
             List of properties to search across.
-        
         limit: int=10
             Number of results to return.
-        
+        display_properties: List[str]=None
+            List of properties to return in response.
+            If None, returns all properties.
         return_raw: bool=False
             If True, returns raw response from Weaviate.
         '''
+        display_properties = display_properties if display_properties else self.properties
         response = (self.query
-                    .get(class_name,self.properties)
+                    .get(class_name, display_properties)
                     .with_bm25(query=request, properties=properties)
                     .with_additional(['score', "id"])
                     .with_limit(limit)
-                    .do()
                     )
+        response = response.with_where(where_filter).do() if where_filter else response.do()
         if return_raw:
             return response
         else: 
@@ -178,6 +181,8 @@ class WeaviateClient(Client):
                       request: str,
                       class_name: str,
                       limit: int=10,
+                      where_filter: dict=None,
+                      display_properties: List[str]=None,
                       return_raw: bool=False,
                       device: str='cuda:0' if cuda.is_available() else 'cpu'
                      ) -> Union[dict, List[dict]]:
@@ -189,25 +194,26 @@ class WeaviateClient(Client):
         ----
         query: str
             User query.
-
         class_name: str
             Class (index) to search.
-        
         limit: int=10
             Number of results to return.
-        
+        display_properties: List[str]=None
+            List of properties to return in response.
+            If None, returns all properties.
         return_raw: bool=False
             If True, returns raw response from Weaviate.
         '''
+        display_properties = display_properties if display_properties else self.properties
         query_vector = self.model.encode(request, device=device).tolist()
         response = (
                     self.query
-                    .get(class_name, self.properties)
+                    .get(class_name, display_properties)
                     .with_near_vector({"vector": query_vector})
                     .with_limit(limit)
                     .with_additional(['distance'])
-                    .do()
                     )
+        response = response.with_where(where_filter).do() if where_filter else response.do()
         if return_raw:
             return response
         else: 
@@ -220,6 +226,7 @@ class WeaviateClient(Client):
                       alpha: float=0.5,
                       limit: int=10,
                       where_filter: dict=None,
+                      display_properties: List[str]=None,
                       return_raw: bool=False,
                       device: str='cuda:0' if cuda.is_available() else 'cpu'
                      ) -> Union[dict, List[dict]]:
@@ -230,30 +237,29 @@ class WeaviateClient(Client):
         ----
         query: str
             User query.
-
         class_name: str
             Class (index) to search.
-        
         properties: List[str]
-            List of properties to search across.
-        
+            List of properties to search across (using BM25)
         alpha: float=0.5
             Weighting factor for BM25 and Vector search.
             alpha can be any number from 0 to 1, defaulting to 0.5:
                 alpha = 0 executes a pure keyword search method (BM25)
                 alpha = 0.5 weighs the BM25 and vector methods evenly
                 alpha = 1 executes a pure vector search method
-
         limit: int=10
             Number of results to return.
-        
+        display_properties: List[str]=None
+            List of properties to return in response.
+            If None, returns all properties.
         return_raw: bool=False
             If True, returns raw response from Weaviate.
         '''
+        display_properties = display_properties if display_properties else self.properties
         query_vector = self.model.encode(request, device=device).tolist()
         response = (
                     self.query
-                    .get(class_name, self.properties)
+                    .get(class_name, display_properties)
                     .with_hybrid(query=request,
                                  alpha=alpha,
                                  vector=query_vector,
@@ -348,3 +354,23 @@ class WeaviateIndexer:
             if c['class'] == class_name:
                 print(class_info[i])
         self._client.batch.shutdown()
+
+@dataclass
+class WhereFilter:
+    path: List[str]
+    operator: str
+    valueInt: int=None
+    valueBoolean: bool=None
+    valueText: str=None
+    valueNumber: float=None
+    valueDate = None
+
+    def post_init(self):
+        values = [self.valueInt, self.valueBoolean, self.valueText, self.valueNumber, self.valueDate]
+        if not any(values):
+            raise ValueError('At least one value must be provided.')
+        if len(values) > 1:
+            raise ValueError('At most one value can be provided.')
+    
+    def todict(self):
+        return {k:v for k,v in self.__dict__.items() if v is not None}
