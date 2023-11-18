@@ -10,7 +10,7 @@ openai.api_key  = os.environ['OPENAI_API_KEY']
 
 class GPT_Turbo:
 
-    def __init__(self, model: str="gpt-3.5-turbo-1106"):
+    def __init__(self, model: str="gpt-3.5-turbo-0613"):
         self.model = model
 
     def get_completion_from_messages(self, 

@@ -1,0 +1,2 @@
+250 questions = 125 calls, 3 mins, 25 cents
+100 questions = 50 calls, 7 cents

@@ -116,7 +116,7 @@ class WeaviateClient(Client):
         else: 
             return f'No Classes found on host'
         
-    def _format_response(self, 
+    def format_response(self, 
                          response: dict,
                          class_name: str
                          ) -> List[dict]:
@@ -137,7 +137,7 @@ class WeaviateClient(Client):
         return results
         
     def keyword_search(self,
-                       query: str,
+                       request: str,
                        class_name: str,
                        properties: List[str]=['content'],
                        limit: int=10,
@@ -164,7 +164,7 @@ class WeaviateClient(Client):
         '''
         response = (self.query
                     .get(class_name,self.properties)
-                    .with_bm25(query=query, properties=properties)
+                    .with_bm25(query=request, properties=properties)
                     .with_additional(['score', "id"])
                     .with_limit(limit)
                     .do()
@@ -172,10 +172,10 @@ class WeaviateClient(Client):
         if return_raw:
             return response
         else: 
-            return self._format_response(response, class_name)
+            return self.format_response(response, class_name)
 
     def vector_search(self,
-                      query: str,
+                      request: str,
                       class_name: str,
                       limit: int=10,
                       return_raw: bool=False,
@@ -199,7 +199,7 @@ class WeaviateClient(Client):
         return_raw: bool=False
             If True, returns raw response from Weaviate.
         '''
-        query_vector = self.model.encode(query, device=device).tolist()
+        query_vector = self.model.encode(request, device=device).tolist()
         response = (
                     self.query
                     .get(class_name, self.properties)
@@ -211,10 +211,10 @@ class WeaviateClient(Client):
         if return_raw:
             return response
         else: 
-            return self._format_response(response, class_name)
+            return self.format_response(response, class_name)
 
     def hybrid_search(self,
-                      query: str,
+                      request: str,
                       class_name: str,
                       properties: List[str]=['content'],
                       alpha: float=0.5,
@@ -250,11 +250,11 @@ class WeaviateClient(Client):
         return_raw: bool=False
             If True, returns raw response from Weaviate.
         '''
-        query_vector = self.model.encode(query, device=device).tolist()
+        query_vector = self.model.encode(request, device=device).tolist()
         response = (
                     self.query
                     .get(class_name, self.properties)
-                    .with_hybrid(query=query,
+                    .with_hybrid(query=request,
                                  alpha=alpha,
                                  vector=query_vector,
                                  properties=properties,
@@ -267,7 +267,7 @@ class WeaviateClient(Client):
         if return_raw:
             return response
         else: 
-            return self._format_response(response, class_name)
+            return self.format_response(response, class_name)
 
 
 class WeaviateIndexer:
@@ -283,15 +283,10 @@ class WeaviateIndexer:
                  callback: Callable=None,
                  ):
         '''
-        Class designed to batch index documents into Weaviate.
+        Class designed to batch index documents into Weaviate. Instantiating
+        this class will automatically configure the Weaviate batch client.
         '''
         self._client = client
-        # self.batch_size = batch_size
-        # self.num_workers = num_workers
-        # self.dynamic = dynamic
-        # self.creation_time = creation_time
-        # self.timeout_retries = timeout_retries
-        # self.connection_error_retries = connection_error_retries
         self._callback = callback if callback else self._default_callback
         
         self._client.batch.configure(batch_size=batch_size,
@@ -322,9 +317,11 @@ class WeaviateIndexer:
     def batch_index_data(self,
                          data: List[dict], 
                          class_name: str,
-                         vector_property: str='content_embedding'):
+                         vector_property: str='content_embedding'
+                         ) -> None:
         '''
         Batch function for fast indexing of data onto Weaviate cluster. 
+        This method assumes that self._client.batch is already configured.
         '''
         start = time.perf_counter()
         with self._client.batch as batch:
@@ -346,5 +343,8 @@ class WeaviateIndexer:
         end = time.perf_counter() - start
     
         print(f'Batch job completed in {round(end/60, 2)} minutes.')
-        print(self._client.show_class_info())
+        class_info = self._client.show_class_info()
+        for i, c in enumerate(class_info):
+            if c['class'] == class_name:
+                print(class_info[i])
         self._client.batch.shutdown()
