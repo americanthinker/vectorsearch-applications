@@ -225,6 +225,57 @@ class WeaviateClient(Client):
                       properties: List[str]=['content'],
                       alpha: float=0.5,
                       limit: int=10,
+                      display_properties: List[str]=None,
+                      return_raw: bool=False,
+                      device: str='cuda:0' if cuda.is_available() else 'cpu'
+                      ) -> Union[dict, List[dict]]:
+        '''
+        Executes Hybrid (BM25 + Vector) search.
+        
+        Args
+        ----
+        query: str
+            User query.
+        class_name: str
+            Class (index) to search.
+        properties: List[str]
+            List of properties to search across (using BM25)
+        alpha: float=0.5
+            Weighting factor for BM25 and Vector search.
+            alpha can be any number from 0 to 1, defaulting to 0.5:
+                alpha = 0 executes a pure keyword search method (BM25)
+                alpha = 0.5 weights the BM25 and vector methods evenly
+                alpha = 1 executes a pure vector search method
+        limit: int=10
+            Number of results to return.
+        display_properties: List[str]=None
+            List of properties to return in response.
+            If None, returns all properties.
+        return_raw: bool=False
+            If True, returns raw response from Weaviate.
+        '''
+
+        # refer to the Weaviate docs on hybrid search: https://weaviate.io/developers/weaviate/search/hybrid#basic-hybrid-search
+        # also feel free to refer to the vector_search method above as a guide
+        # finally, in case you missed the note above be sure to hard code the fusion_type parameter as 'relativeScoreFusion'
+
+        ##################
+        # YOUR CODE HERE #
+        ##################
+        response = self.query(None)
+
+        if return_raw:
+            return response
+        else: 
+            return self.format_response(response, class_name)
+        
+
+    def _hybrid_search(self,
+                      request: str,
+                      class_name: str,
+                      properties: List[str]=['content'],
+                      alpha: float=0.5,
+                      limit: int=10,
                       where_filter: dict=None,
                       display_properties: List[str]=None,
                       return_raw: bool=False,
@@ -274,8 +325,8 @@ class WeaviateClient(Client):
             return response
         else: 
             return self.format_response(response, class_name)
-
-
+        
+        
 class WeaviateIndexer:
 
     def __init__(self,
