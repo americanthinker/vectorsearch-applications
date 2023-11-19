@@ -408,6 +408,22 @@ class WeaviateIndexer:
 
 @dataclass
 class WhereFilter:
+
+    '''
+    Simplified interface for constructing a WhereFilter object.
+
+    Args
+    ----
+    path: List[str]
+        List of properties to filter on.
+    operator: str
+        Operator to use for filtering. Options: 'And', 'Or', 'Equal', 'NotEqual', 
+        'GreaterThan', 'GreaterThanEqual', 'LessThan', 'LessThanEqual', 'Like', 
+        'WithinGeoRange', 'IsNull', 'ContainsAny', 'ContainsAll'
+    value[dataType]: Union[int, bool, str, float, datetime]
+        Value to filter on. The dataType suffix must match the data type of the 
+        property being filtered on. At least and only one value type must be provided. 
+    '''
     path: List[str]
     operator: str
     valueInt: int=None
@@ -417,6 +433,10 @@ class WhereFilter:
     valueDate = None
 
     def post_init(self):
+        operators = ['And', 'Or', 'Equal', 'NotEqual','GreaterThan', 'GreaterThanEqual', 'LessThan',\
+                      'LessThanEqual', 'Like', 'WithinGeoRange', 'IsNull', 'ContainsAny', 'ContainsAll']
+        if self.operator not in operators:
+            raise ValueError(f'operator must be one of: {operators}, got {self.operator}')
         values = [self.valueInt, self.valueBoolean, self.valueText, self.valueNumber, self.valueDate]
         if not any(values):
             raise ValueError('At least one value must be provided.')
