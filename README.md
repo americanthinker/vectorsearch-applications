@@ -18,9 +18,10 @@ Students are expected to have the following technical skills prior to enrolling.
     - An account with [weaviate.io](https://weaviate.io).  The current iteration of this course will use Weaviate as a sparse and dense vector database.  Weaviate offers free cloud instance cluster resources for 21 days (as of November 2023).  **Students are advised to NOT CREATE** a Weaviate cloud cluster until the course officially starts.  
 
 # Setup
-1. Fork this course repo. 
-2. Clone a copy of the forked repo into the dev environment of your choice.  Navigate into the cloned `vectorsearch-applications` directory. 
-3. Create a python virtual environment using your library of choice.  Here's an example using [`conda`](https://docs.conda.io/projects/miniconda/en/latest/):  
+1. Fork this course repo (see upper right hand corner of the repo web page).
+   ![fork button]('assets/forkbutton.png')
+3. Clone a copy of the forked repo into the dev environment of your choice.  Navigate into the cloned `vectorsearch-applications` directory. 
+4. Create a python virtual environment using your library of choice.  Here's an example using [`conda`](https://docs.conda.io/projects/miniconda/en/latest/):  
 ```
 conda create --name impactenv -y python=3.10
 ```
