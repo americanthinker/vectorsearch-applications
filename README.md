@@ -19,7 +19,7 @@ Students are expected to have the following technical skills prior to enrolling.
 
 # Setup
 1. Fork this course repo (see upper right hand corner of the repo web page).
-   ![fork button]('assets/forkbutton.png')
+    <img src="assets/forkbutton.png" alt="fork button" width="300" height="auto">
 3. Clone a copy of the forked repo into the dev environment of your choice.  Navigate into the cloned `vectorsearch-applications` directory. 
 4. Create a python virtual environment using your library of choice.  Here's an example using [`conda`](https://docs.conda.io/projects/miniconda/en/latest/):  
 ```
@@ -38,3 +38,5 @@ HF_TOKEN= "your HuggingFace account token"  <--- Optional: not required if using
 WEAVIATE_API_KEY= "your Weaviate cluster API Key"   <--- you will get this on Day One of the course
 WEAVIATE_ENDPOINT= "your Weaviate cluster endpoint"  <--- you will get this on Day One of the course
 ```
+6. If you've made it this far, you are ready to start the course.  Enjoy the process!
+<img src="assets/getsome.jpg" alt="jocko" width="500" height="auto">
