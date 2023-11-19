@@ -28,7 +28,7 @@ conda create --name impactenv -y python=3.10
 ```
 4. Once the environment is created, activate the environment and install dependencies.
 ```
-conda activate impact env
+conda activate impactenv
 
 pip install -r requirements.txt
 ```
