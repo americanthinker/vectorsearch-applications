@@ -1,5 +1,5 @@
 # Welcome to Vector Search Applications with LLMs
-This repo is the course repository for Vector Search Applications with LLMs taught by Chris Sanchez.
+This is the course repository for Vector Search Applications with LLMs taught by Chris Sanchez.
 The course is desgined to teach search and discovery industry best practices culminating in a demo Retrieval Augmented Generation (RAG) application.  Along the way students will learn all of the components of a RAG system to include data preprocessing, embedding creation, vector database selection, indexing, retrieval systems, reranking, retrieval evaluation, question answering through an LLM and UI implementation through Streamlit.  
 
 # Prerequisites - Technical Experience
