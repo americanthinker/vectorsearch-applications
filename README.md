@@ -15,7 +15,8 @@ Students are expected to have the following technical skills prior to enrolling.
 1. Students will need access to their own compute environment, whether locally or remote.  There are no hard requirements for RAM or CPU processing power, but in general the more punch the better. 
 2. Students will need accounts with the following organizations:
     - Either an [OpenAI](https://openai.com) account **(RECOMMENDED)** or a [HuggingFace](https://huggingface.co/join) account.  Students have the option of either using a paid LLM service (OpenAI) or using the open source `meta-llama/Llama-2-7b-chat-hf` model.  Students choosing the latter option will first need to [register with Meta](https://ai.meta.com/resources/models-and-libraries/llama-downloads/) to request access to the Llama-2 model. 
-    - An account with [weaviate.io](https://weaviate.io).  The current iteration of this course will use Weaviate as a sparse and dense vector database.  Weaviate offers free cloud instance cluster resources for 21 days (as of November 2023).  **Students are advised to NOT CREATE** a Weaviate cloud cluster until the course officially starts.  
+    - An account with [weaviate.io](https://weaviate.io).  The current iteration of this course will use Weaviate as a sparse and dense vector database.  Weaviate offers free cloud instance cluster resources for 21 days (as of November 2023).  **Students are advised to NOT CREATE** a Weaviate cloud cluster until the course officially starts.
+    - A standard [Github](https://github.com/) account in order to fork this repo, clone a copy, and submit commits to the fork as needed throughout the course. 
 
 # Setup
 1. Fork this course repo (see upper right hand corner of the repo web page).
