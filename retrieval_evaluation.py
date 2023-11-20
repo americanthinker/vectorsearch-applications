@@ -134,8 +134,12 @@ def execute_evaluation( dataset: Dict[str, List[str]],
     
     return results_dict
 def calc_hit_rate_scores(results_dict: Dict[str, Union[str, int]]) -> None:
-    for prefix in ['kw', 'vector', 'hybrid', 'combined']:
-        results_dict[f'{prefix}_score'] = round(results_dict[f'{prefix}_hit_rate']/results_dict['total_questions'],2)
+    for prefix in ['kw', 'vector', 'hybrid']:
+        results_dict[f'{prefix}_hit_rate'] = round(results_dict[f'{prefix}_hit_rate']/results_dict['total_questions'],2)
+
+def calc_mrr_scores(results_dict: Dict[str, Union[str, int]]) -> None:
+    for prefix in ['kw', 'vector', 'hybrid']:
+        results_dict[f'{prefix}_mrr'] = round(results_dict[f'{prefix}_mrr']/results_dict['total_questions'],2)
 
 def record_results(results_dict: Dict[str, Union[str, int]], chunk_size: int, dir_outpath: str=None) -> None:
     #write results to output file
