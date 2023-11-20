@@ -1,41 +1,45 @@
 from tiktoken import get_encoding
-from opensearch_interface import OpenSearchClient
-from retriever_pipeline import retrieve_pipeline, generate_prompt
+from weaviate_interface import WeaviateClient
 from prompt_templates import question_answering_prompt, question_answering_system
 from openai_interface import GPT_Turbo
+from app_features import convert_seconds, generate_prompt
 from reranker import ReRanker
 from loguru import logger 
 import streamlit as st
-import templates
-import time
- 
-def convert_seconds(seconds: int):
-    return time.strftime("%H:%M:%S", time.gmtime(seconds))
+import css_templates
+import os
 
-logger.info(convert_seconds(62))
+from dotenv import load_dotenv
+load_dotenv('.env', override=True)
+ 
+## PAGE CONFIGURATION
+st.set_page_config(page_title="Impact Theory", 
+                   page_icon=None, 
+                   layout="wide", 
+                   initial_sidebar_state="auto", 
+                   menu_items=None)
 ## RETRIEVER
-model_name = 'sentence-transformers/all-MiniLM-L6-v2'
-osclient = OpenSearchClient(model_name_or_path=model_name)
-logger.info(osclient.show_indexes())
+client = WeaviateClient(os.environ['WEAVIATE_API_KEY'], os.environ['WEAVIATE_ENDPOINT'])
+if client.is_ready():
+    logger.info('Weaviate is ready!')
 
 ## RERANKER
 reranker = ReRanker()
 ## QA MODEL
-gpt = GPT_Turbo()
+gpt = GPT_Turbo('gpt-3.5-turbo-16k')
 ## TOKENIZER
 encoding = get_encoding("cl100k_base")
 
-
-indexes = ['impact-theory-minilm-196', 'wands-products']
+indexes = ['Impact_theory_minilm_256', 'wands-products']
 index_name_mapper = {indexes[0]:'Impact Theory podcast', indexes[1]:'Wayfair Dataset'}
 
 def main():
-    st.write(templates.load_css(), unsafe_allow_html=True)
+    st.write(css_templates.load_css(), unsafe_allow_html=True)
     
     with st.sidebar:
         index_options =  st.selectbox('Select Search Index', indexes)
         st.write('You selected:', index_options)
-    # st.title('Chat with the 538 YouTube Podcast:')
+
     subheader_entry = index_name_mapper[index_options]
     st.image('./assets/impact-theory-logo.png', width=400)
     st.subheader(f"Chat with the {subheader_entry}: ")
@@ -46,16 +50,13 @@ def main():
         st.write('\n\n\n\n\n')
 
     if query:
-        #execute kw and vector search call to OpenSearch 
         # with st.spinner('Searching...'):
-        hybrid_response = retrieve_pipeline(query=query, index_name=index_options, search_type='hybrid',\
-                                            retriever=osclient, reranker=reranker, tokenizer=encoding,\
-                                            kw_size=50, vec_size=50, top_k=5, return_text=False)
-
-        # for debugging purposes
-        # logger.info(hybrid_response[0])
-
-        prompt = generate_prompt(base_prompt=question_answering_prompt, query=query, results=hybrid_response)
+        hybrid_response = client._hybrid_search(query, class_name=index_options, alpha=0.3, limit=160)
+        ranked_response = reranker.rerank(hybrid_response, query, top_k=6)
+        prompt = generate_prompt(base_prompt=question_answering_prompt, query=query, results=ranked_response)
+        print(prompt)
+        import sys
+        sys.exit()
         #execute chat call to OpenAI
         st.subheader("Response from Impact Theory (context)")
         with st.spinner('Generating Response...'):
@@ -64,11 +65,11 @@ def main():
             report = []
             col_1, col_2 = st.columns([4, 3], gap='large')
             for resp in gpt.get_completion_from_messages(prompt=prompt,
-                                                        system_message=question_answering_system,
-                                                        max_tokens=250, 
-                                                        stream = True,
-                                                        show_response=True
-                                                        ):
+                                                         system_message=question_answering_system,
+                                                         max_tokens=250, 
+                                                         stream = True,
+                                                         show_response=True
+                                                         ):
                 try:
                     with col_1:
                         with res_box:
@@ -107,9 +108,9 @@ def main():
             title = (hit['title'])
             show_length = hit['length']
             time_string = convert_seconds(show_length)
-            logger.info(hit)
+
             with col1:
-                st.write(templates.search_result(i=i, 
+                st.write(css_templates.search_result(i=i, 
                                                 url=episode_url,
                                                 episode_num=hit['episode_num'],
                                                 title=title,
@@ -121,7 +122,6 @@ def main():
                 # st.write(f"<a href={episode_url} <img src={image} width='200'></a>", 
                 #             unsafe_allow_html=True)
                 st.image(image, caption=title.split('|')[0], width=200, use_column_width=False)
-            
 
 if __name__ == '__main__':
     main()

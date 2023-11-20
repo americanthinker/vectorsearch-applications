@@ -37,7 +37,8 @@ class WeaviateClient(Client):
                          **kwargs)    
         self.model_name_or_path = model_name_or_path
         self.model = SentenceTransformer(self.model_name_or_path) if self.model_name_or_path else None
-        self.properties = ['title', 'video_id', 'length', 'thumbnail_url', 'views', 'episode_url', 'doc_id', 'guest', 'content']  # 'playlist_id', 'channel_id', 'author'
+        self.properties = ['title', 'video_id', 'length', 'thumbnail_url', 'views', 'episode_url', \
+                           'doc_id', 'guest', 'content']  # 'playlist_id', 'channel_id', 'author'
         
     def show_classes(self) -> Union[List[dict], str]:
         '''
@@ -185,7 +186,7 @@ class WeaviateClient(Client):
                       display_properties: List[str]=None,
                       return_raw: bool=False,
                       device: str='cuda:0' if cuda.is_available() else 'cpu'
-                     ) -> Union[dict, List[dict]]:
+                      ) -> Union[dict, List[dict]]:
         '''
         Executes vector search using embedding model defined on instantiation 
         of WeaviateClient instance.
