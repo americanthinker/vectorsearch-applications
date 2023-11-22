@@ -37,8 +37,8 @@ class WeaviateClient(Client):
                          **kwargs)    
         self.model_name_or_path = model_name_or_path
         self.model = SentenceTransformer(self.model_name_or_path) if self.model_name_or_path else None
-        self.properties = ['title', 'video_id', 'length', 'thumbnail_url', 'views', 'episode_url', \
-                           'doc_id', 'guest', 'content']  # 'playlist_id', 'channel_id', 'author'
+        self.display_properties = ['title', 'video_id', 'length', 'thumbnail_url', 'views', 'episode_url', \
+                                    'doc_id', 'guest', 'content']  # 'playlist_id', 'channel_id', 'author'
         
     def show_classes(self) -> Union[List[dict], str]:
         '''
@@ -165,7 +165,7 @@ class WeaviateClient(Client):
         return_raw: bool=False
             If True, returns raw response from Weaviate.
         '''
-        display_properties = display_properties if display_properties else self.properties
+        display_properties = display_properties if display_properties else self.display_properties
         response = (self.query
                     .get(class_name, display_properties)
                     .with_bm25(query=request, properties=properties)
@@ -205,7 +205,7 @@ class WeaviateClient(Client):
         return_raw: bool=False
             If True, returns raw response from Weaviate.
         '''
-        display_properties = display_properties if display_properties else self.properties
+        display_properties = display_properties if display_properties else self.display_properties
         query_vector = self.model.encode(request, device=device).tolist()
         response = (
                     self.query
@@ -307,7 +307,7 @@ class WeaviateClient(Client):
         return_raw: bool=False
             If True, returns raw response from Weaviate.
         '''
-        display_properties = display_properties if display_properties else self.properties
+        display_properties = display_properties if display_properties else self.display_properties
         query_vector = self.model.encode(request, device=device).tolist()
         response = (
                     self.query

@@ -1,12 +1,13 @@
 from tiktoken import get_encoding
 from weaviate_interface import WeaviateClient
-from prompt_templates import question_answering_prompt, question_answering_system
+from prompt_templates import question_answering_prompt_series, question_answering_system
 from openai_interface import GPT_Turbo
-from app_features import convert_seconds, generate_prompt
+from app_features import convert_seconds, generate_prompt_series, validate_token_threshold
 from reranker import ReRanker
 from loguru import logger 
 import streamlit as st
 import css_templates
+import json
 import os
 
 from dotenv import load_dotenv
@@ -29,9 +30,16 @@ reranker = ReRanker()
 gpt = GPT_Turbo('gpt-3.5-turbo-16k')
 ## TOKENIZER
 encoding = get_encoding("cl100k_base")
+## Display properties
+display_properties = client.display_properties + ['summary']
 
 indexes = ['Impact_theory_minilm_256', 'wands-products']
 index_name_mapper = {indexes[0]:'Impact Theory podcast', indexes[1]:'Wayfair Dataset'}
+data_path = './data/impact_theory_data.json'
+with open(data_path, 'r') as f:
+    data = json.load(f)
+titles = [d['title'] for d in data]
+more_titles = titles * 3
 
 def main():
     st.write(css_templates.load_css(), unsafe_allow_html=True)
@@ -50,26 +58,31 @@ def main():
         st.write('\n\n\n\n\n')
 
     if query:
-        # with st.spinner('Searching...'):
-        hybrid_response = client._hybrid_search(query, class_name=index_options, alpha=0.3, limit=160)
-        ranked_response = reranker.rerank(hybrid_response, query, top_k=6)
-        prompt = generate_prompt(base_prompt=question_answering_prompt, query=query, results=ranked_response)
-        print(prompt)
-        import sys
-        sys.exit()
+        with st.spinner('Searching...'):
+            hybrid_response = client._hybrid_search(query, class_name=index_options, alpha=0.3,\
+                                                    display_properties=display_properties, limit=160)
+            ranked_response = reranker.rerank(hybrid_response, query, top_k=5)
+            valid_response = validate_token_threshold(ranked_response, 
+                                                    question_answering_prompt_series, 
+                                                    query=query,
+                                                    tokenizer=encoding,
+                                                    token_threshold=6000, 
+                                                    verbose=True)
+        prompt = generate_prompt_series(query, valid_response)
+        logger.info('Prompt generated!')
         #execute chat call to OpenAI
         st.subheader("Response from Impact Theory (context)")
         with st.spinner('Generating Response...'):
             st.markdown("----")
             res_box = st.empty()
             report = []
-            col_1, col_2 = st.columns([4, 3], gap='large')
+            col_1, _ = st.columns([4, 3], gap='large')
             for resp in gpt.get_completion_from_messages(prompt=prompt,
-                                                         system_message=question_answering_system,
-                                                         max_tokens=250, 
-                                                         stream = True,
-                                                         show_response=True
-                                                         ):
+                                                        system_message=question_answering_system,
+                                                        max_tokens=250, 
+                                                        stream = True,
+                                                        show_response=True
+                                                        ):
                 try:
                     with col_1:
                         with res_box:
@@ -81,28 +94,10 @@ def main():
                     print(e)
                     continue
 
-            # for i, resp in enumerate(response, 1):
-            #     title = resp['_source']['title']
-            #     st.text_area(label=title, value=resp['_source']['content'], height=250)
-            #     st.write('---')
-
-            # parsed_response = osclient.parse_content_from_response(final_response)
-            # context = ' '.join(parsed_response)
-            # prompt = f'''
-            #          Using the following context enclosed in triple backticks, generate a response to the following question:
-            #          Question: {query}
-            #          Context: ```{context}```
-            #          '''
-            # response = gpt.get_completion_from_messages(prompt=prompt, temperature=0, max_tokens=500)
-            # col1, _ = st.columns([7,3])
-            # with col1:
-            #     st.text_area('ChatGPT Response', response, height=150)
-            #     st.write('\n\n\n')
-        #display results using imported css templates
         st.subheader("Search Results")
-        for i, res in enumerate(hybrid_response):
+        for i, hit in enumerate(valid_response):
             col1, col2 = st.columns([7, 3], gap='large')
-            hit = res['_source']
+            # hit = res['_source']
             image = hit['thumbnail_url']
             episode_url = hit['episode_url']
             title = (hit['title'])
@@ -112,7 +107,7 @@ def main():
             with col1:
                 st.write(css_templates.search_result(i=i, 
                                                 url=episode_url,
-                                                episode_num=hit['episode_num'],
+                                                episode_num=i,
                                                 title=title,
                                                 content=hit['content'], 
                                                 length=time_string),
