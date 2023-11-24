@@ -1,0 +1,7 @@
+# Problem Statement
+**How do we build an effective system that enables search and discovery across a corpus of data (documents) and then surgically extract relevant information to address an information need?**
+
+- **Sub-problem 1**: How do we enable search using both keyword matching and taking into account the semantics (meaning) of a query?  --> Hybrid search
+- **Sub-problem 2**: Given a limited context size how do we ensure that only the most relevant material is captured?  --> Document chunking / Reranking
+- **Sub-problem 3**: How do we know how well our system is performing, both relatively to itself as well as in comparison to other systems?  --> Retrieval Evaluation
+- **Sub-problem 4**: How do we reduce LLM hallucinations and ensure that only relevant answers are returned?  --> Ground the model in highly relevant contextual information
