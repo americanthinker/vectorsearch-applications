@@ -6,7 +6,7 @@ impact_theory_class_properties = [
                                     {'name': 'video_id',
                                         'dataType': ['text'],
                                         'indexFilterable': True,
-                                        'indexSearchable': True},
+                                        'indexSearchable': False},
                                     {'name': 'length',
                                         'dataType': ['number'],
                                         'indexFilterable': True,
