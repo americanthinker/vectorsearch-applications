@@ -142,13 +142,21 @@ def calc_mrr_scores(results_dict: Dict[str, Union[str, int]]) -> None:
     for prefix in ['kw', 'vector', 'hybrid']:
         results_dict[f'{prefix}_mrr'] = round(results_dict[f'{prefix}_mrr']/results_dict['total_questions'],2)
 
+def create_dir(dir_path: str) -> None:
+    '''
+    Checks if directory exists, and creates new directory
+    if it does not exist
+    '''
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+
 def record_results(results_dict: Dict[str, Union[str, int]], 
                    chunk_size: int, 
-                   dir_outpath: str,
+                   dir_outpath: str='./eval_results',
                    as_text: bool=False
                    ) -> None:
     '''
-    Write results to output file
+    Write results to output file in either txt or json format
 
     Args:
     -----
@@ -162,14 +170,14 @@ def record_results(results_dict: Dict[str, Union[str, int]],
     as_text: bool
         If True, write results as text file.  If False, write as json file.
     '''
-    time_marker = datetime.now().strftime("%Y-%m-%d:%H:%M:%S")
-    path = os.path.join(dir_outpath, f'retrieval_eval_{chunk_size}_{time_marker}')
+    create_dir(dir_outpath)
+    time_marker = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    ext = 'txt' if as_text else 'json'
+    path = os.path.join(dir_outpath, f'retrieval_eval_{chunk_size}_{time_marker}.{ext}')
     if as_text:
-        path = path + '.txt'
         with open(path, 'a') as f:
             f.write(f"{results_dict}\n")
     else: 
-        path = path + '.json'
         with open(path, 'w') as f:
             json.dump(results_dict, f, indent=4)
 
