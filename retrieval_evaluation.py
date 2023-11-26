@@ -133,6 +133,7 @@ def execute_evaluation( dataset: Dict[str, List[str]],
     calc_hit_rate_scores(results_dict)
     
     return results_dict
+
 def calc_hit_rate_scores(results_dict: Dict[str, Union[str, int]]) -> None:
     for prefix in ['kw', 'vector', 'hybrid']:
         results_dict[f'{prefix}_hit_rate'] = round(results_dict[f'{prefix}_hit_rate']/results_dict['total_questions'],2)
@@ -141,11 +142,34 @@ def calc_mrr_scores(results_dict: Dict[str, Union[str, int]]) -> None:
     for prefix in ['kw', 'vector', 'hybrid']:
         results_dict[f'{prefix}_mrr'] = round(results_dict[f'{prefix}_mrr']/results_dict['total_questions'],2)
 
-def record_results(results_dict: Dict[str, Union[str, int]], chunk_size: int, dir_outpath: str=None) -> None:
-    #write results to output file
-    if dir_outpath:
-        time_marker = datetime.now().strftime("%Y-%m-%d:%H:%M:%S")
-        path = os.path.join(dir_outpath, f'retrieval_eval_{chunk_size}_{time_marker}.json')
+def record_results(results_dict: Dict[str, Union[str, int]], 
+                   chunk_size: int, 
+                   dir_outpath: str,
+                   as_text: bool=False
+                   ) -> None:
+    '''
+    Write results to output file
+
+    Args:
+    -----
+    results_dict: Dict[str, Union[str, int]]
+        Dictionary containing results of evaluation
+    chunk_size: int
+        Size of text chunks in tokens
+    dir_outpath: str
+        Path to output directory.  Directory only, filename is hardcoded
+        as part of this function.
+    as_text: bool
+        If True, write results as text file.  If False, write as json file.
+    '''
+    time_marker = datetime.now().strftime("%Y-%m-%d:%H:%M:%S")
+    path = os.path.join(dir_outpath, f'retrieval_eval_{chunk_size}_{time_marker}')
+    if as_text:
+        path = path + '.txt'
+        with open(path, 'a') as f:
+            f.write(f"{results_dict}\n")
+    else: 
+        path = path + '.json'
         with open(path, 'w') as f:
             json.dump(results_dict, f, indent=4)
 
