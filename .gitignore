@@ -13,7 +13,7 @@ practice_data/
 llamadocs/
 llamadocs_requests/
 anthropic/
-retrieval_eval_256*
+eval_results/
 
 # Distribution / packaging
 .Python
