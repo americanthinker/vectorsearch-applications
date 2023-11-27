@@ -1,6 +1,7 @@
 #external files
 from openai_interface import GPT_Turbo
 from weaviate_interface import WeaviateClient
+from llama_index.finetuning import EmbeddingQAFinetuneDataset
 from reranker import ReRanker
 
 #standard library imports
@@ -10,7 +11,7 @@ import os
 import random
 from math import ceil
 from datetime import datetime
-from typing import List, Any, Dict, Tuple, Union
+from typing import List, Any, Dict, Tuple, Union, Literal
 
 #misc
 from tqdm import tqdm
@@ -65,81 +66,106 @@ def generate_dataset(data: List[dict], dir_path: str, num_questions: int=100, ba
         json.dump(processed_questions, f, indent=4)
     return processed_questions
 
-def execute_evaluation( dataset: Dict[str, List[str]], 
-                        retriever: WeaviateClient,
-                        reranker: ReRanker,
-                        class_name: str, 
-                        alpha: float=0.5,
-                        limit: int=10,
-                        top_k: int=5,
-                        chunk_size: int=256,
-                        rerank_all_responses: bool=False,
-                        ) -> Tuple[int, int, int, int]:
+def retrieval_evaluation(dataset: EmbeddingQAFinetuneDataset, 
+                         class_name: str, 
+                         retriever: WeaviateClient,
+                         reranker: ReRanker=None,
+                         alpha: float=0.5,
+                         retrieve_limit: int=5,
+                         results_top_k: int=5,
+                         rerank_top_k: int=5,
+                         chunk_size: int=256,
+                         display_properties: List[str]=['doc_id', 'content']
+                         ) -> Tuple[int, int, int]:
 
-    top_k = top_k if top_k else limit
-    reranker_name = reranker.model_name if rerank_all_responses else "None"
+    if results_top_k > retrieve_limit:  # we don't want to retrieve less results than the top_k that we want to see returned
+        retrieve_limit = results_top_k
+        
+    reranker_name = reranker.model_name if reranker else "None"
     
-    results_dict = {'n':limit, 
-                    'top_k': top_k, 
+    results_dict = {'n':retrieve_limit, 
+                    'top_k': results_top_k,
                     'alpha': alpha,
                     'Retriever': retriever.model_name_or_path, 
                     'Ranker': reranker_name,
                     'chunk_size': chunk_size,
                     'kw_hit_rate': 0,
+                    'kw_mrr': 0,
                     'vector_hit_rate': 0,
+                    'vector_mrr': 0,
                     'hybrid_hit_rate':0,
-                    'combined_hit_rate': 0,
+                    'hybrid_mrr': 0,
+                    'total_misses': 0,
                     'total_questions':0
                     }
-    for doc_id, questions in tqdm(dataset.items(), 'Questions'):
-        for q in questions:
-            results_dict['total_questions'] += 1
+    if reranker:
+        results_dict['rerank_top_k'] = rerank_top_k  # have to build the results_dict before we can add this information
+        
+    start = time.perf_counter()
+    for query_id, q in tqdm(dataset.queries.items(), 'Queries'):
+        results_dict['total_questions'] += 1
+        
+        #make Keyword, Vector, and Hybrid calls to Weaviate host
+        try:
+            kw_response = retriever.keyword_search(request=q, class_name=class_name, limit=retrieve_limit, display_properties=display_properties)
+            vector_response = retriever.vector_search(request=q, class_name=class_name, limit=retrieve_limit, display_properties=display_properties)
+            hybrid_response = retriever.hybrid_search(request=q, class_name=class_name, alpha=alpha, limit=retrieve_limit, display_properties=display_properties)           
+            #rerank returned responses if reranker is provided
+            if reranker:
+                kw_response = reranker.rerank(kw_response, q, top_k=rerank_top_k)
+                vector_response = reranker.rerank(vector_response, q, top_k=rerank_top_k)
+                hybrid_response = reranker.rerank(hybrid_response, q, top_k=rerank_top_k)
             
-            #make calls to Weaviate host: Keyword, Vector, and Hybrid
-            try:
-                kw_response = retriever.keyword_search(query=q, class_name=class_name, limit=limit)
-                vector_response = retriever.vector_search(query=q, class_name=class_name, limit=limit)
-                weaviate_hybrid_response = retriever.hybrid_search(query=q, class_name=class_name, alpha=alpha, limit=limit)
-                combined_hybrid_response = kw_response + vector_response                
+            #collect doc_ids to check for document matches (include only results_top_k)
+            kw_doc_ids = {result['doc_id']:i for i, result in enumerate(kw_response[:results_top_k], 1)}
+            vector_doc_ids = {result['doc_id']:i for i, result in enumerate(vector_response[:results_top_k], 1)}
+            hybrid_doc_ids = {result['doc_id']:i for i, result in enumerate(hybrid_response[:results_top_k], 1)}
             
-                #rerank returned responses if rerank_all is True
-                if rerank_all_responses:
-                    kw_response = reranker.rerank(kw_response, q, top_k=top_k)
-                    vector_response = reranker.rerank(vector_response, q, top_k=top_k)
-                    weaviate_hybrid_response = reranker.rerank(weaviate_hybrid_response, q, top_k=top_k)
-                    combined_hybrid_response = reranker.rerank(combined_hybrid_response, q, top_k=top_k)
+            #extract doc_id for scoring purposes
+            doc_id = dataset.relevant_docs[query_id][0]
+     
+            #increment hit_rate counters and mrr scores
+            if doc_id in kw_doc_ids:
+                results_dict['kw_hit_rate'] += 1
+                results_dict['kw_mrr'] += 1/kw_doc_ids[doc_id]
+            if doc_id in vector_doc_ids:
+                results_dict['vector_hit_rate'] += 1
+                results_dict['vector_mrr'] += 1/vector_doc_ids[doc_id]
+            if doc_id in hybrid_doc_ids:
+                results_dict['hybrid_hit_rate'] += 1
+                results_dict['hybrid_mrr'] += 1/hybrid_doc_ids[doc_id]
+
+            # if no hits, let's capture that
+            else:
+                results_dict['total_misses'] += 1
                 
-                #collect doc_ids to check for document matches (include only top_k if top_k > 0)
-                kw_doc_ids = [res['doc_id'] for res in kw_response][:top_k]
-                vector_doc_ids = [res['doc_id'] for res in vector_response][:top_k]
-                hybrid_doc_ids = [res['doc_id'] for res in weaviate_hybrid_response][:top_k]
-                combined_doc_ids = [res['doc_id'] for res in combined_hybrid_response][:top_k]
-                
-                #increment hit_rate counters as appropriate
-                if doc_id in kw_doc_ids:
-                    results_dict['kw_hit_rate'] += 1
-                if doc_id in vector_doc_ids:
-                    results_dict['vector_hit_rate'] += 1
-                if doc_id in hybrid_doc_ids:
-                    results_dict['hybrid_hit_rate'] += 1
-                if doc_id in combined_doc_ids:
-                    results_dict['combined_hit_rate'] += 1
-                    
-            except Exception as e:
-                print(e)
-                continue
+        except Exception as e:
+            print(e)
+            continue
 
     #use raw counts to calculate final scores
     calc_hit_rate_scores(results_dict)
+    calc_mrr_scores(results_dict)
     
+    end = time.perf_counter() - start
+    print(f'Total Processing Time: {round(end/60, 2)} minutes')
+    record_results(results_dict, chunk_size, './eval_results', as_text=True)
     return results_dict
 
-def calc_hit_rate_scores(results_dict: Dict[str, Union[str, int]]) -> None:
-    for prefix in ['kw', 'vector', 'hybrid']:
+def calc_hit_rate_scores(results_dict: Dict[str, Union[str, int]], 
+                         search_type: Literal['kw', 'vector', 'hybrid', 'all']=['kw', 'vector']
+                         ) -> None:
+    if search_type == 'all':
+        search_type = ['kw', 'vector', 'hybrid']
+    for prefix in search_type:
         results_dict[f'{prefix}_hit_rate'] = round(results_dict[f'{prefix}_hit_rate']/results_dict['total_questions'],2)
 
-def calc_mrr_scores(results_dict: Dict[str, Union[str, int]]) -> None:
-    for prefix in ['kw', 'vector', 'hybrid']:
+def calc_mrr_scores(results_dict: Dict[str, Union[str, int]],
+                    search_type: Literal['kw', 'vector', 'hybrid', 'all']=['kw', 'vector']
+                    ) -> None:
+    if search_type == 'all':
+        search_type = ['kw', 'vector', 'hybrid']
+    for prefix in search_type:
         results_dict[f'{prefix}_mrr'] = round(results_dict[f'{prefix}_mrr']/results_dict['total_questions'],2)
 
 def create_dir(dir_path: str) -> None:
