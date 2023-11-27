@@ -1,37 +1,36 @@
 import os
-import openai
+from openai import OpenAI
 from typing import List, Any, Tuple
 from dotenv import load_dotenv
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 _ = load_dotenv('./.env', override=True) # read local .env file
 
-openai.api_key  = os.environ['OPENAI_API_KEY']
 
 class GPT_Turbo:
 
-    def __init__(self, model: str="gpt-3.5-turbo-0613"):
+    def __init__(self, model: str="gpt-3.5-turbo-0613", api_key: str=os.environ['OPENAI_API_KEY']):
         self.model = model
+        self.client = OpenAI(api_key=api_key)
 
-    def get_completion_from_messages(self, 
-                                     prompt: str, 
-                                     system_message: str='You are a helpful assistant.',
-                                     temperature: int=0, 
-                                     max_tokens: int=500,
-                                     stream: bool=False,
-                                     show_response: bool=False
-                                     ) -> str:
+    def get_chat_completion(self, 
+                            prompt: str, 
+                            system_message: str='You are a helpful assistant.',
+                            temperature: int=0, 
+                            max_tokens: int=500,
+                            stream: bool=False,
+                            show_response: bool=False
+                            ) -> str:
         messages =  [
             {'role': 'system', 'content': system_message},
             {'role': 'assistant', 'content': prompt}
                     ]
         
-        response = openai.ChatCompletion.create(
-                                                model=self.model,
-                                                messages=messages,
-                                                temperature=temperature,
-                                                max_tokens=max_tokens,
-                                                stream=stream)
+        response = self.client.chat.completions.create( model=self.model,
+                                                        messages=messages,
+                                                        temperature=temperature,
+                                                        max_tokens=max_tokens,
+                                                        stream=stream)
         if show_response:
             return response
         return response.choices[0].message["content"]

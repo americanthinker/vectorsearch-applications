@@ -57,27 +57,22 @@ def main():
             ##############
             # START CODE #
             ##############
+
             st.write('Hmmm...this app does not seem to be working yet.  Please check back later.')
             # make hybrid call to weaviate
             hybrid_response = None
             # rerank results
             ranked_response = None
             # validate token count is below threshold
-            
-            ################################################################
-            ### UNCOMMENT BELOW TO USE VALIDATE_TOKEN_THRESHOLD FUNCTION ###
-            ################################################################
-
             # valid_response = validate_token_threshold(ranked_response, 
-            #                                           question_answering_prompt_series, 
-            #                                           query=query,
-            #                                           tokenizer= # variable from ENCODING,
-            #                                           token_threshold=6000, 
-            #                                           verbose=True)
-            # ##############
-            # #  END CODE  #
-            # ##############
-
+                                                    #    question_answering_prompt_series, 
+                                                    #    query=query,
+                                                    #    tokenizer= # variable from ENCODING,
+                                                    #    token_threshold=4000, 
+                                                    #    verbose=True)
+            ##############
+            #  END CODE  #
+            ##############
 
             # # generate LLM prompt
             # prompt = generate_prompt(base_prompt=question_answering_prompt_series, query=query, results=valid_response)
@@ -94,7 +89,7 @@ def main():
             #                  ##############
             #                  # START CODE #
             #                  ##############
-            #     for resp in # code to call LLM:
+            #     
 
             #                  ##############
             #                  #  END CODE  #

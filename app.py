@@ -27,7 +27,7 @@ if client.is_ready():
 ## RERANKER
 reranker = ReRanker()
 ## QA MODEL
-gpt = GPT_Turbo('gpt-3.5-turbo-16k')
+gpt = GPT_Turbo('gpt-3.5-turbo-0613', os.environ['OPENAI_API_KEY'])
 ## TOKENIZER
 encoding = get_encoding("cl100k_base")
 ## Display properties
@@ -39,7 +39,7 @@ data_path = './data/impact_theory_data.json'
 with open(data_path, 'r') as f:
     data = json.load(f)
 titles = [d['title'] for d in data]
-more_titles = titles * 3
+summaries = [d['summary'] for d in data]
 
 def main():
     st.write(css_templates.load_css(), unsafe_allow_html=True)
@@ -59,14 +59,14 @@ def main():
 
     if query:
         with st.spinner('Searching...'):
-            hybrid_response = client._hybrid_search(query, class_name=index_options, alpha=0.3,\
+            hybrid_response = client.hybrid_search(query, class_name=index_options, alpha=0.3,\
                                                     display_properties=display_properties, limit=160)
             ranked_response = reranker.rerank(hybrid_response, query, top_k=5)
             valid_response = validate_token_threshold(ranked_response, 
                                                     question_answering_prompt_series, 
                                                     query=query,
                                                     tokenizer=encoding,
-                                                    token_threshold=6000, 
+                                                    token_threshold=4000, 
                                                     verbose=True)
         prompt = generate_prompt_series(query, valid_response)
         logger.info('Prompt generated!')
@@ -76,20 +76,20 @@ def main():
             st.markdown("----")
             res_box = st.empty()
             report = []
-            col_1, _ = st.columns([4, 3], gap='large')
-            for resp in gpt.get_completion_from_messages(prompt=prompt,
-                                                        system_message=question_answering_system,
-                                                        max_tokens=250, 
-                                                        stream = True,
-                                                        show_response=True
-                                                        ):
+            for resp in gpt.get_chat_completion(prompt=prompt,
+                                                system_message=question_answering_system,
+                                                temperature=0.15,
+                                                max_tokens=250, 
+                                                stream = True,
+                                                show_response=True
+                                                ):
                 try:
-                    with col_1:
-                        with res_box:
-                            report.append(resp.choices[0].delta.get('content', '\n'))
-                            result = "".join(report).strip()
-                            # result = result.replace("\n", "")    
-                            res_box.markdown(f'*{result}*')
+                    with res_box:
+                        report.append(resp.choices[0].delta.content)
+                        logger.info(report)
+                        result = "".join(report).strip()
+                        # result = result.replace("\n", "")    
+                        res_box.markdown(f'*{result}*')
                 except Exception as e:
                     print(e)
                     continue
@@ -97,10 +97,9 @@ def main():
         st.subheader("Search Results")
         for i, hit in enumerate(valid_response):
             col1, col2 = st.columns([7, 3], gap='large')
-            # hit = res['_source']
             image = hit['thumbnail_url']
             episode_url = hit['episode_url']
-            title = (hit['title'])
+            title = hit['title']
             show_length = hit['length']
             time_string = convert_seconds(show_length)
 
@@ -114,8 +113,6 @@ def main():
                         unsafe_allow_html=True)
                 st.write('\n\n')
             with col2:
-                # st.write(f"<a href={episode_url} <img src={image} width='200'></a>", 
-                #             unsafe_allow_html=True)
                 st.image(image, caption=title.split('|')[0], width=200, use_column_width=False)
 
 if __name__ == '__main__':
