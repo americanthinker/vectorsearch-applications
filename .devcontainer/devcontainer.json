@@ -1,9 +1,7 @@
 {
     "name": "Python 3",
-    "build": {
-		"dockerfile": "Dockerfile",
-		"context": ".."
-	},
+    "image": "mcr.microsoft.com/devcontainers/python:3.10",
+	
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	//"features": {}
 	// Configure tool-specific properties.
@@ -26,5 +24,6 @@
 			"label": "Jupyter Notebook",
 			"onAutoForward": "openBrowser"
 		}
-	}
+	},
+	"postCreateCommand": "pip install -r requirements.txt"
 }
