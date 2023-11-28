@@ -1,27 +1,16 @@
 {
-	"name": "Python 3",
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/python:3.10",
-	"waitFor": "onCreateCommand",
-	"updateContentCommand": "pip install -r requirements.txt",
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	//"features": {}
-	// Configure tool-specific properties.
-	"customizations": {
+    "name": "Python 3",
+    "image": "mcr.microsoft.com/devcontainers/python:3.10",
+    "customizations": {
 		// Configure properties specific to VS Code.
 		"vscode": {
-			"settings": {},
+			"settings": {"terminal.integrated.shell.linux": "/bin/bash"},
 			"extensions": [
 				"ms-toolsai.jupyter"
 			]
 		}
 	},
-	
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	"forwardPorts": [8501, 8888],
-
-	// Use 'portsAttributes' to set default properties for specific forwarded ports. 
-	// More info: https://containers.dev/implementors/json_reference/#port-attributes
+    "forwardPorts": [8501, 8888],
 	"portsAttributes": {
 		"8501": {
 			"label": "Streamlit App",
@@ -31,11 +20,6 @@
 			"label": "Jupyter Notebook",
 			"onAutoForward": "openBrowser"
 		}
-	}
-
-	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "pip3 install -r /workspaces/vectorsearch-applications/requirements.txt"
-
-	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "root"
+	},
+    "postCreateCommand": "pip install -r /workspaces/vectorsearch-applications/requirements.txt"
 }
