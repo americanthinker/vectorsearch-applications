@@ -3,7 +3,7 @@
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"image": "mcr.microsoft.com/devcontainers/python:3.10",
 	"waitFor": "onCreateCommand",
-	"updateContentCommand": "pip install -r requirements.txt",
+	"updateContentCommand": "pip install -r /workspaces/vectorsearch-applications/requirements.txt",
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	//"features": {}
 	// Configure tool-specific properties.
