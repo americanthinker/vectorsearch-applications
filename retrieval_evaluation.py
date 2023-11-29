@@ -77,7 +77,38 @@ def retrieval_evaluation(dataset: EmbeddingQAFinetuneDataset,
                          chunk_size: int=256,
                          display_properties: List[str]=['doc_id', 'content']
                          ) -> Tuple[int, int, int]:
+    '''
+    Given a dataset, a retriever, and a reranker, evaluate the performance of the retriever and reranker. 
+    Returns a dict of kw, vector, and hybrid hit rates and mrr scores. If inlude_miss_info is True, will
+    also return a list of kw and vector responses and their associated queries that did not return a hit.
 
+    Args:
+    -----
+    dataset: EmbeddingQAFinetuneDataset
+        Dataset to be used for evaluation
+    class_name: str
+        Name of Class on Weaviate host to be used for retrieval
+    retriever: WeaviateClient
+        WeaviateClient object to be used for retrieval 
+    reranker: ReRanker
+        ReRanker model to be used for results reranking
+    alpha: float=0.5
+        Weighting factor for BM25 and Vector search.
+        alpha can be any number from 0 to 1, defaulting to 0.5:
+            alpha = 0 executes a pure keyword search method (BM25)
+            alpha = 0.5 weighs the BM25 and vector methods evenly
+            alpha = 1 executes a pure vector search method
+    retrieve_limit: int=5
+        Number of documents to retrieve from Weaviate host
+    results_top_k: int=5
+        Number of top results to evaluate
+    rerank_top_k: int=5
+        Number of top results to rerank
+    chunk_size: int=256
+        Number of tokens used to chunk text
+    display_properties: List[str]=['doc_id', 'content']
+        List of properties to be returned from Weaviate host for display in response
+    '''
     if results_top_k > retrieve_limit:  # we don't want to retrieve less results than the top_k that we want to see returned
         retrieve_limit = results_top_k
         
