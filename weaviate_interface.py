@@ -1,5 +1,6 @@
 from weaviate import Client, AuthApiKey
 from dataclasses import dataclass
+from openai import OpenAI
 from sentence_transformers import SentenceTransformer
 from typing import List, Union, Callable
 from torch import cuda
@@ -29,6 +30,7 @@ class WeaviateClient(Client):
                  api_key: str,
                  endpoint: str,
                  model_name_or_path: str='sentence-transformers/all-MiniLM-L6-v2',
+                 openai_api_key: str=None,
                  **kwargs
                 ):
         auth_config = AuthApiKey(api_key=api_key)
@@ -36,7 +38,16 @@ class WeaviateClient(Client):
                          url=endpoint,
                          **kwargs)    
         self.model_name_or_path = model_name_or_path
-        self.model = SentenceTransformer(self.model_name_or_path) if self.model_name_or_path else None
+        self.openai_model = False
+        if self.model_name_or_path == 'text-embedding-ada-002':
+            if not openai_api_key:
+                raise ValueError(f'OpenAI API key must be provided to use this model: {self.model_name_or_path}')
+            else: 
+                self.model = OpenAI(api_key=openai_api_key)
+                self.openai_model = True
+        else: 
+            self.model = SentenceTransformer(self.model_name_or_path) if self.model_name_or_path else None
+
         self.display_properties = ['title', 'video_id', 'length', 'thumbnail_url', 'views', 'episode_url', \
                                     'doc_id', 'guest', 'content']  # 'playlist_id', 'channel_id', 'author'
         
@@ -206,7 +217,7 @@ class WeaviateClient(Client):
             If True, returns raw response from Weaviate.
         '''
         display_properties = display_properties if display_properties else self.display_properties
-        query_vector = self.model.encode(request, device=device).tolist()
+        query_vector = self._create_query_vector(request, device=device)
         response = (
                     self.query
                     .get(class_name, display_properties)
@@ -219,7 +230,23 @@ class WeaviateClient(Client):
             return response
         else: 
             return self.format_response(response, class_name)     
-
+    
+    def _create_query_vector(self, query: str, device: str) -> List[float]:
+        '''
+        Creates embedding vector from text query.
+        '''
+        return self.get_openai_embedding(query) if self.openai_model else self.model.encode(query, device=device).tolist()
+    
+    def get_openai_embedding(self, query: str) -> List[float]:
+        '''
+        Gets embedding from OpenAI API for query.
+        '''
+        embedding = self.model.embeddings.create(input=query, model='text-embedding-ada-002').model_dump()
+        if embedding:
+            return embedding['data'][0]['embedding']
+        else:
+           raise ValueError(f'No embedding found for query: {query}')
+        
     def hybrid_search(self,
                       request: str,
                       class_name: str,
@@ -257,7 +284,7 @@ class WeaviateClient(Client):
             If True, returns raw response from Weaviate.
         '''
         display_properties = display_properties if display_properties else self.display_properties
-        query_vector = self.model.encode(request, device=device).tolist()
+        query_vector = self._create_query_vector(request, device=device)
         response = (
                     self.query
                     .get(class_name, display_properties)
