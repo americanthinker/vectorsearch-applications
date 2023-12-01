@@ -175,8 +175,8 @@ def retrieval_evaluation(dataset: EmbeddingQAFinetuneDataset,
             continue
 
     #use raw counts to calculate final scores
-    calc_hit_rate_scores(results_dict)
-    calc_mrr_scores(results_dict)
+    calc_hit_rate_scores(results_dict, search_type='all')
+    calc_mrr_scores(results_dict, search_type='all')
     
     end = time.perf_counter() - start
     print(f'Total Processing Time: {round(end/60, 2)} minutes')

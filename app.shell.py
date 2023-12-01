@@ -2,7 +2,7 @@ from tiktoken import get_encoding
 from weaviate_interface import WeaviateClient
 from prompt_templates import question_answering_prompt_series, question_answering_system
 from openai_interface import GPT_Turbo
-from app_features import convert_seconds, generate_prompt, validate_token_threshold
+from app_features import convert_seconds, generate_prompt_series, validate_token_threshold
 from reranker import ReRanker
 from loguru import logger 
 import streamlit as st
@@ -75,7 +75,7 @@ def main():
             ##############
 
             # # generate LLM prompt
-            # prompt = generate_prompt(base_prompt=question_answering_prompt_series, query=query, results=valid_response)
+            # prompt = generate_prompt_series(base_prompt=question_answering_prompt_series, query=query, results=valid_response)
             
             # # prep for streaming response
             # st.subheader("Response from Impact Theory (context)")
