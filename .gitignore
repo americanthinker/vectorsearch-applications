@@ -7,12 +7,7 @@ __pycache__/
 *.so
 
 # Large Files
-test_model/
 models/
-practice_data/
-llamadocs/
-llamadocs_requests/
-anthropic/
 eval_results/
 
 # Distribution / packaging
