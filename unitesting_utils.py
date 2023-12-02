@@ -24,8 +24,3 @@ def load_impact_theory_data():
                 print('Data cannot be loaded from source, please move data file to one of these paths to run this test:\n\
     1. "/content/impact_theory_data.json"   --> if you are in Google Colab\n\
     2. "./data/impact_theory_data.json"      --> if you are in a local environment\n')
-
-if __name__ == '__main__':
-    data = load_impact_theory_data()
-    if data:
-        print(data[0])
