@@ -23,8 +23,11 @@ class WeaviateClient(Client):
 
     model_name_or_path: str='sentence-transformers/all-MiniLM-L6-v2'
         The name or path of the SentenceTransformer model to use for vector search.
-        Models are hard-coded as SentenceTransformers only for now (works for most 
-        leading models on MTEB Leaderboard): https://huggingface.co/spaces/mteb/leaderboard
+        Will also support OpenAI text-embedding-ada-002 model.  This param enables 
+        the use of most leading models on MTEB Leaderboard: 
+        https://huggingface.co/spaces/mteb/leaderboard
+    openai_api_key: str=None
+        The API key for the OpenAI API. Only required if using OpenAI text-embedding-ada-002 model.
     '''    
     def __init__(self, 
                  api_key: str,
@@ -42,9 +45,8 @@ class WeaviateClient(Client):
         if self.model_name_or_path == 'text-embedding-ada-002':
             if not openai_api_key:
                 raise ValueError(f'OpenAI API key must be provided to use this model: {self.model_name_or_path}')
-            else: 
-                self.model = OpenAI(api_key=openai_api_key)
-                self.openai_model = True
+            self.model = OpenAI(api_key=openai_api_key)
+            self.openai_model = True
         else: 
             self.model = SentenceTransformer(self.model_name_or_path) if self.model_name_or_path else None
 
