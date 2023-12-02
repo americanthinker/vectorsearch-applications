@@ -238,6 +238,20 @@ def record_results(results_dict: Dict[str, Union[str, int]],
         with open(path, 'w') as f:
             json.dump(results_dict, f, indent=4)
 
+def add_params(client: WeaviateClient, 
+               class_name: str, 
+               results_dict: dict, 
+               param_options: dict, 
+               hnsw_config_keys: List[str]
+              ) -> None:
+    hnsw_params = {k:v for k,v in client.show_class_config(class_name)['vectorIndexConfig'].items() if k in hnsw_config_keys}
+    if hnsw_params:
+        results_dict = {**results_dict, **hnsw_params}
+    if param_options and isinstance(param_options, dict):
+        results_dict = {**results_dict, **param_options}
+    return results_dict
+    
+
 
 
 
