@@ -2,6 +2,13 @@ import json
 import urllib.request
 
 def load_impact_theory_data():
+    '''
+    Loads impact_theory_data.json data by trying three options:
+    1. Assumes user is in Google Colab environment and loads file from content dir.
+    2. If 1st option doesn't work, assumes user is in course repo and loads from data dir.
+    3. If 2nd option doesn't work, assumes user does not have direct access to data so
+       downloads data direct from course repo.
+    '''
     try:
         path = '/content/impact_theory_data.json'
         with open(path) as f:
