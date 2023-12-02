@@ -132,7 +132,7 @@ def retrieval_evaluation(dataset: EmbeddingQAFinetuneDataset,
                     'total_questions':0
                     }
     #add extra params to results_dict
-    results_dict = _add_params(retriever, class_name, results_dict, user_def_params, hnsw_config_keys)
+    results_dict = add_params(retriever, class_name, results_dict, user_def_params, hnsw_config_keys)
     if reranker:
         results_dict['rerank_top_k'] = rerank_top_k  # have to build the results_dict before we can add this information
         
@@ -242,7 +242,7 @@ def record_results(results_dict: Dict[str, Union[str, int]],
         with open(path, 'w') as f:
             json.dump(results_dict, f, indent=4)
 
-def _add_params(client: WeaviateClient, 
+def add_params(client: WeaviateClient, 
                class_name: str, 
                results_dict: dict, 
                param_options: dict, 
