@@ -75,7 +75,9 @@ def retrieval_evaluation(dataset: EmbeddingQAFinetuneDataset,
                          results_top_k: int=5,
                          rerank_top_k: int=5,
                          chunk_size: int=256,
-                         display_properties: List[str]=['doc_id', 'content']
+                         hnsw_config_keys: List[str]=['maxConnections', 'efConstruction', 'ef'],
+                         display_properties: List[str]=['doc_id', 'content'],
+                         user_def_params: dict=None
                          ) -> Tuple[int, int, int]:
     '''
     Given a dataset, a retriever, and a reranker, evaluate the performance of the retriever and reranker. 
@@ -129,6 +131,8 @@ def retrieval_evaluation(dataset: EmbeddingQAFinetuneDataset,
                     'total_misses': 0,
                     'total_questions':0
                     }
+    #add extra params to results_dict
+    results_dict = _add_params(retriever, class_name, results_dict, user_def_params, hnsw_config_keys)
     if reranker:
         results_dict['rerank_top_k'] = rerank_top_k  # have to build the results_dict before we can add this information
         
@@ -238,12 +242,12 @@ def record_results(results_dict: Dict[str, Union[str, int]],
         with open(path, 'w') as f:
             json.dump(results_dict, f, indent=4)
 
-def add_params(client: WeaviateClient, 
+def _add_params(client: WeaviateClient, 
                class_name: str, 
                results_dict: dict, 
                param_options: dict, 
                hnsw_config_keys: List[str]
-              ) -> None:
+              ) -> dict:
     hnsw_params = {k:v for k,v in client.show_class_config(class_name)['vectorIndexConfig'].items() if k in hnsw_config_keys}
     if hnsw_params:
         results_dict = {**results_dict, **hnsw_params}
