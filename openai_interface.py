@@ -87,6 +87,9 @@ class GPT_Turbo:
                     progress.update(1)
         return data
     
+    def get_embedding(self):
+         pass
+    
     def write_to_file(self, file_handle, data: str) -> None:
             file_handle.write(data)
             file_handle.write('\n')
