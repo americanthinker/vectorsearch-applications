@@ -33,7 +33,7 @@ class GPT_Turbo:
                                                         stream=stream)
         if show_response:
             return response
-        return response.choices[0].message["content"]
+        return response.choices[0].message.content
     
     def multi_thread_request(self, 
                              filepath: str,
