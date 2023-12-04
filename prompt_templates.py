@@ -39,3 +39,25 @@ Show Summary: {summary}
 Show Guest: {guest}
 Transcript: {transcript}
 '''
+
+qa_generation_prompt = '''
+Impact Theory episode summary and episode guest are below:
+
+---------------------
+Summary: {summary}
+---------------------
+Guest: {guest}
+---------------------
+Given the Summary and Guest of the episode as context \
+use the following randomly selected transcript section \  
+of the episode and not prior knowledge, generate questions that can \
+be answered by the transcript section: 
+
+---------------------
+{transcript}
+---------------------
+
+Your task is to create {num_questions_per_chunk} questions that can \
+only be answered given the previous context and transcript details. \
+The question should randomly start with How, Why, or What.   
+'''

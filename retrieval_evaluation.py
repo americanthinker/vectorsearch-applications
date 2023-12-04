@@ -2,69 +2,117 @@
 from openai_interface import GPT_Turbo
 from weaviate_interface import WeaviateClient
 from llama_index.finetuning import EmbeddingQAFinetuneDataset
+from prompt_templates import qa_generation_prompt
 from reranker import ReRanker
 
 #standard library imports
 import json
 import time
+import uuid
 import os
+import re
 import random
-from math import ceil
 from datetime import datetime
-from typing import List, Any, Dict, Tuple, Union, Literal
+from typing import List, Dict, Tuple, Union, Literal
 
 #misc
 from tqdm import tqdm
 
 
-def sample_data(data: List[dict], sample_size: int):
-    sample = random.sample(data, sample_size)
-    contents = [(d['doc_id'], d['content']) for d in sample]
-    return contents
+class QueryContextGenerator:
+    '''
+    Class designed for the generation of query/context pairs using a
+    Generative LLM. The LLM is used to generate questions from a given
+    corpus of text. The query/context pairs can be used to fine-tune 
+    an embedding model using a MultipleNegativesRankingLoss loss function
+    or can be used to create evaluation datasets for retrieval models.
+    '''
+    def __init__(self, openai_key: str, model_id: str='gpt-3.5-turbo-0613'):
+        self.llm = GPT_Turbo(model=model_id, api_key=openai_key)
 
-def get_meta(sample: List[dict], key: str="doc_id") -> List[Any]:
-    return [d[key] for d in sample]
+    def clean_validate_data(self,
+                            data: List[dict], 
+                            valid_fields: List[str]=['content', 'summary', 'guest', 'doc_id'],
+                            total_chars: int=950
+                            ) -> List[dict]:
+        '''
+        Strip original data chunks so they only contain valid_fields.
+        Remove any chunks less than total_chars in size. Prevents LLM
+        from asking questions from sparse content. 
+        '''
+        clean_docs = [{k:v for k,v in d.items() if k in valid_fields} for d in data]
+        valid_docs = [d for d in clean_docs if len(d['content']) > total_chars]
+        return valid_docs
 
-def get_sample(doc_id: str, corpus: List[dict], full_dict: bool=False):
-    result = [d for d in corpus if d['doc_id'] == doc_id][0]
-    if full_dict: return result
-    else: return result['content']
+    def train_val_split(self,
+                        data: List[dict],
+                        n_train_questions: int, 
+                        n_val_questions: int, 
+                        n_questions_per_chunk: int=2,
+                        total_chars: int=950):
+        '''
+        Splits corpus into training and validation sets.  Training and 
+        validation samples are randomly selected from the corpus. total_chars
+        parameter is set based on pre-analysis of average doc length in the 
+        training corpus. 
+        '''
+        clean_data = self.clean_validate_data(data, total_chars=total_chars)
+        random.shuffle(clean_data)
+        train_index = n_train_questions//n_questions_per_chunk
+        valid_index = n_val_questions//n_questions_per_chunk
+        end_index = valid_index + train_index
+        if end_index > len(clean_data):
+            raise ValueError('Cannot create dataset with desired number of questions, try using a larger dataset')
+        train_data = clean_data[:train_index]
+        valid_data = clean_data[train_index:end_index]
+        print(f'Length Training Data: {len(train_data)}')
+        print(f'Length Validation Data: {len(valid_data)}')
+        return train_data, valid_data
 
-def strip_numbers(query: str):
-    return query[3:].strip()
+    def generate_qa_embedding_pairs(
+                                    self,
+                                    data: List[dict],
+                                    generate_prompt_tmpl: str=None,
+                                    num_questions_per_chunk: int = 2,
+                                    ) -> EmbeddingQAFinetuneDataset:
+        """
+        Generate query/context pairs from a list of documents. The query/context pairs
+        can be used for fine-tuning an embedding model using a MultipleNegativesRankingLoss
+        or can be used to create an evaluation dataset for retrieval models.
+        """
+        generate_prompt_tmpl = qa_generation_prompt if not generate_prompt_tmpl else generate_prompt_tmpl
+        queries = {}
+        relevant_docs = {}
+        corpus = {chunk['doc_id'] : chunk['content'] for chunk in data}
+        for chunk in tqdm(data):
+            summary = chunk['summary']
+            guest = chunk['guest']
+            transcript = chunk['content']
+            node_id = chunk['doc_id']
+            query = generate_prompt_tmpl.format(summary=summary, 
+                                                guest=guest,
+                                                transcript=transcript,
+                                                num_questions_per_chunk=num_questions_per_chunk)
+            try:
+                response = self.llm.get_chat_completion(prompt=query, temperature=0.1, max_tokens=100)
+            except Exception as e:
+                print(e)
+                continue
+            result = str(response).strip().split("\n")
+            questions = [
+                re.sub(r"^\d+[\).\s]", "", question).strip() for question in result
+            ]
+            questions = [question for question in questions if len(question) > 0]
 
-def process_questions(question_tuples: List[tuple]) -> Dict[str, List[str]]:
-    question_dict = {}
-    for tup in question_tuples:
-        doc_id = tup[0]
-        questions = tup[1].split('\n')
-        questions = [strip_numbers(q) for q in questions]
-        question_dict[doc_id] = questions
-    return question_dict
+            for question in questions:
+                question_id = str(uuid.uuid4())
+                queries[question_id] = question
+                relevant_docs[question_id] = [node_id]
 
-def generate_dataset(data: List[dict], dir_path: str, num_questions: int=100, batch_size: int=50):
-    gpt = GPT_Turbo()
-    if batch_size > 50:
-        raise ValueError('Due to OpenAI rate limits, batch_size cannot be greater than 50')
-
-    time_marker = datetime.now().strftime("%Y-%m-%d:%H:%M:%S")
-    filepath = os.path.join(dir_path, f"{num_questions}_questions_{time_marker}.json")
-    
-    sample = sample_data(data, num_questions)
-    batches = ceil(num_questions/batch_size)
-    all_questions = []
-    for n in range(batches):
-        batch = sample[n*batch_size:(n+1)*batch_size]
-        questions = gpt.batch_generate_question_context_pairs(batch)
-        all_questions.append(questions)
-        if n < batches - 1:
-            print('Pausing for 60 seconds due to OpenAI rate limits...')
-            time.sleep(60)
-    all_questions = [tup for batch in all_questions for tup in batch]
-    processed_questions = process_questions(all_questions)
-    with open(filepath, 'w') as f:
-        json.dump(processed_questions, f, indent=4)
-    return processed_questions
+        # construct dataset
+        return EmbeddingQAFinetuneDataset(
+            queries=queries, corpus=corpus, relevant_docs=relevant_docs
+        )
 
 def retrieval_evaluation(dataset: EmbeddingQAFinetuneDataset, 
                          class_name: str, 
@@ -76,6 +124,7 @@ def retrieval_evaluation(dataset: EmbeddingQAFinetuneDataset,
                          rerank_top_k: int=5,
                          chunk_size: int=256,
                          hnsw_config_keys: List[str]=['maxConnections', 'efConstruction', 'ef'],
+                         search_type: Literal['kw', 'vector', 'hybrid', 'all']='all',
                          display_properties: List[str]=['doc_id', 'content'],
                          user_def_params: dict=None
                          ) -> Tuple[int, int, int]:
@@ -179,8 +228,8 @@ def retrieval_evaluation(dataset: EmbeddingQAFinetuneDataset,
             continue
 
     #use raw counts to calculate final scores
-    calc_hit_rate_scores(results_dict, search_type='all')
-    calc_mrr_scores(results_dict, search_type='all')
+    calc_hit_rate_scores(results_dict, search_type=search_type)
+    calc_mrr_scores(results_dict, search_type=search_type)
     
     end = time.perf_counter() - start
     print(f'Total Processing Time: {round(end/60, 2)} minutes')
