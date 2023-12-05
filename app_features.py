@@ -1,8 +1,23 @@
 import time
+import json
+from preprocessing import FileIO
 from typing import List
 import tiktoken 
 from loguru import logger
 from prompt_templates import context_block, question_answering_prompt_series
+import streamlit as st  
+
+@st.cache_data
+def load_content_cache(data_path: str):
+    data = FileIO().load_parquet(data_path)
+    content_data = {d['doc_id']: d['content'] for d in data}
+    return content_data
+
+@st.cache_data
+def load_data(data_path: str):
+    with open(data_path, 'r') as f:
+        data = json.load(f)
+    return data
 
 def convert_seconds(seconds: int):
     """
