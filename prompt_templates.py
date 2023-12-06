@@ -54,7 +54,7 @@ of the episode and not prior knowledge, generate questions that can \
 be answered by the transcript section: 
 
 ---------------------
-{transcript}
+Transcript: {transcript}
 ---------------------
 
 Your task is to create {num_questions_per_chunk} questions that can \

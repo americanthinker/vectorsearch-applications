@@ -54,21 +54,18 @@ def number_of_results(total_hits: int, duration: float) -> str:
     """
 
 def search_result(i: int, url: str, title: str, content: str,
-                  length: str, episode_num: int, **kwargs) -> str:
+                  length: str, guest: str, **kwargs) -> str:
     """ HTML scripts to display search results. """
     return f"""
         <div style="font-size:120%;">
             {i + 1}.
-            <a href="{url}">
-                {title}
-            </a>
+            <a href="{url}">{title}</a>
         </div>
         <div style="font-size:95%;">
             <div style="color:grey;float:left;">
                 ...
-            </div>
+        </div>
             {content}
-            <p><b>Episode length: {length}</b><br><b>Episode # {episode_num}</b></p>
         </div>
     """
             # <div style="color:grey;font-size:95%;">
