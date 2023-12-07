@@ -79,6 +79,9 @@ class QueryContextGenerator:
         Generate query/context pairs from a list of documents. The query/context pairs
         can be used for fine-tuning an embedding model using a MultipleNegativesRankingLoss
         or can be used to create an evaluation dataset for retrieval models.
+
+        This function was adapted for this course from the llama_index.finetuning.common module:
+        https://github.com/run-llama/llama_index/blob/main/llama_index/finetuning/embeddings/common.py
         """
         generate_prompt_tmpl = qa_generation_prompt if not generate_prompt_tmpl else generate_prompt_tmpl
         queries = {}
@@ -114,14 +117,13 @@ class QueryContextGenerator:
             queries=queries, corpus=corpus, relevant_docs=relevant_docs
         )
 
-def retrieval_evaluation(dataset: EmbeddingQAFinetuneDataset, 
+def execute_evaluation(dataset: EmbeddingQAFinetuneDataset, 
                          class_name: str, 
                          retriever: WeaviateClient,
                          reranker: ReRanker=None,
                          alpha: float=0.5,
-                         retrieve_limit: int=5,
-                         results_top_k: int=5,
-                         rerank_top_k: int=5,
+                         retrieve_limit: int=100,
+                         top_k: int=5,
                          chunk_size: int=256,
                          hnsw_config_keys: List[str]=['maxConnections', 'efConstruction', 'ef'],
                          search_type: Literal['kw', 'vector', 'hybrid', 'all']='all',
@@ -160,13 +162,11 @@ def retrieval_evaluation(dataset: EmbeddingQAFinetuneDataset,
     display_properties: List[str]=['doc_id', 'content']
         List of properties to be returned from Weaviate host for display in response
     '''
-    if results_top_k > retrieve_limit:  # we don't want to retrieve less results than the top_k that we want to see returned
-        retrieve_limit = results_top_k
         
     reranker_name = reranker.model_name if reranker else "None"
     
     results_dict = {'n':retrieve_limit, 
-                    'top_k': results_top_k,
+                    'top_k': top_k,
                     'alpha': alpha,
                     'Retriever': retriever.model_name_or_path, 
                     'Ranker': reranker_name,
@@ -182,8 +182,6 @@ def retrieval_evaluation(dataset: EmbeddingQAFinetuneDataset,
                     }
     #add extra params to results_dict
     results_dict = add_params(retriever, class_name, results_dict, user_def_params, hnsw_config_keys)
-    if reranker:
-        results_dict['rerank_top_k'] = rerank_top_k  # have to build the results_dict before we can add this information
         
     start = time.perf_counter()
     for query_id, q in tqdm(dataset.queries.items(), 'Queries'):
@@ -196,14 +194,14 @@ def retrieval_evaluation(dataset: EmbeddingQAFinetuneDataset,
             hybrid_response = retriever.hybrid_search(request=q, class_name=class_name, alpha=alpha, limit=retrieve_limit, display_properties=display_properties)           
             #rerank returned responses if reranker is provided
             if reranker:
-                kw_response = reranker.rerank(kw_response, q, top_k=rerank_top_k)
-                vector_response = reranker.rerank(vector_response, q, top_k=rerank_top_k)
-                hybrid_response = reranker.rerank(hybrid_response, q, top_k=rerank_top_k)
+                kw_response = reranker.rerank(kw_response, q, top_k=top_k)
+                vector_response = reranker.rerank(vector_response, q, top_k=top_k)
+                hybrid_response = reranker.rerank(hybrid_response, q, top_k=top_k)
             
             #collect doc_ids to check for document matches (include only results_top_k)
-            kw_doc_ids = {result['doc_id']:i for i, result in enumerate(kw_response[:results_top_k], 1)}
-            vector_doc_ids = {result['doc_id']:i for i, result in enumerate(vector_response[:results_top_k], 1)}
-            hybrid_doc_ids = {result['doc_id']:i for i, result in enumerate(hybrid_response[:results_top_k], 1)}
+            kw_doc_ids = {result['doc_id']:i for i, result in enumerate(kw_response[:top_k], 1)}
+            vector_doc_ids = {result['doc_id']:i for i, result in enumerate(vector_response[:top_k], 1)}
+            hybrid_doc_ids = {result['doc_id']:i for i, result in enumerate(hybrid_response[:top_k], 1)}
             
             #extract doc_id for scoring purposes
             doc_id = dataset.relevant_docs[query_id][0]
