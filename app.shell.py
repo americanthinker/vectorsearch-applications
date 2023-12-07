@@ -2,7 +2,8 @@ from tiktoken import get_encoding
 from weaviate_interface import WeaviateClient
 from prompt_templates import question_answering_prompt_series, question_answering_system
 from openai_interface import GPT_Turbo
-from app_features import convert_seconds, generate_prompt_series, validate_token_threshold
+from app_features import (load_data, convert_seconds, generate_prompt_series, 
+                          validate_token_threshold)
 from reranker import ReRanker
 from loguru import logger 
 import streamlit as st
@@ -24,7 +25,7 @@ st.set_page_config(page_title="Impact Theory",
 ##############
 # START CODE #
 ##############
-
+data_path = './data/impact_theory_data.json'
 ## RETRIEVER
 
 ## RERANKER
@@ -38,12 +39,15 @@ st.set_page_config(page_title="Impact Theory",
 ##############
 #  END CODE  #
 ##############
+data = load_data(data_path)
+#creates list of guests for sidebar
+guest_list = sorted(list(set([d['guest'] for d in data])))
 
 def main():
     st.write(css_templates.load_css(), unsafe_allow_html=True)
     
     with st.sidebar:
-        None
+        guest = st.selectbox('Select Guest', options=guest_list, index=None, placeholder='Select Guest')
 
     st.image('./assets/impact-theory-logo.png', width=400)
     st.subheader(f"Chat with the Impact Theory podcast: ")
@@ -59,6 +63,8 @@ def main():
             ##############
 
             st.write('Hmmm...this app does not seem to be working yet.  Please check back later.')
+            if guest:
+                st.write(f'However, it looks like you selected {guest} as a filter.')
             # make hybrid call to weaviate
             hybrid_response = None
             # rerank results
