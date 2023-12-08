@@ -118,18 +118,20 @@ class QueryContextGenerator:
         )
 
 def execute_evaluation(dataset: EmbeddingQAFinetuneDataset, 
-                         class_name: str, 
-                         retriever: WeaviateClient,
-                         reranker: ReRanker=None,
-                         alpha: float=0.5,
-                         retrieve_limit: int=100,
-                         top_k: int=5,
-                         chunk_size: int=256,
-                         hnsw_config_keys: List[str]=['maxConnections', 'efConstruction', 'ef'],
-                         search_type: Literal['kw', 'vector', 'hybrid', 'all']='all',
-                         display_properties: List[str]=['doc_id', 'content'],
-                         user_def_params: dict=None
-                         ) -> Tuple[int, int, int]:
+                       class_name: str, 
+                       retriever: WeaviateClient,
+                       reranker: ReRanker=None,
+                       alpha: float=0.5,
+                       retrieve_limit: int=100,
+                       top_k: int=5,
+                       chunk_size: int=256,
+                       hnsw_config_keys: List[str]=['maxConnections', 'efConstruction', 'ef'],
+                       search_type: Literal['kw', 'vector', 'hybrid', 'all']='all',
+                       display_properties: List[str]=['doc_id', 'content'],
+                       dir_outpath: str='./eval_results',
+                       include_miss_info: bool=False,
+                       user_def_params: dict=None
+                       ) -> Union[dict, Tuple[dict, List[dict]]]:
     '''
     Given a dataset, a retriever, and a reranker, evaluate the performance of the retriever and reranker. 
     Returns a dict of kw, vector, and hybrid hit rates and mrr scores. If inlude_miss_info is True, will
@@ -153,14 +155,25 @@ def execute_evaluation(dataset: EmbeddingQAFinetuneDataset,
             alpha = 1 executes a pure vector search method
     retrieve_limit: int=5
         Number of documents to retrieve from Weaviate host
-    results_top_k: int=5
+    top_k: int=5
         Number of top results to evaluate
-    rerank_top_k: int=5
-        Number of top results to rerank
     chunk_size: int=256
         Number of tokens used to chunk text
+    hnsw_config_keys: List[str]=['maxConnections', 'efConstruction', 'ef']
+        List of keys to be used for retrieving HNSW Index parameters from Weaviate host
+    search_type: Literal['kw', 'vector', 'hybrid', 'all']='all'
+        Type of search to be evaluated.  Options are 'kw', 'vector', 'hybrid', or 'all'
     display_properties: List[str]=['doc_id', 'content']
         List of properties to be returned from Weaviate host for display in response
+    dir_outpath: str='./eval_results'
+        Directory path for saving results.  Directory will be created if it does not
+        already exist. 
+    include_miss_info: bool=False
+        Option to include queries and their associated search response values
+        for queries that are "total misses"
+    user_def_params : dict=None
+        Option for user to pass in a dictionary of user-defined parameters and their values.
+        Will be automatically added to the results_dict if correct type is passed.
     '''
         
     reranker_name = reranker.model_name if reranker else "None"
@@ -184,9 +197,10 @@ def execute_evaluation(dataset: EmbeddingQAFinetuneDataset,
     results_dict = add_params(retriever, class_name, results_dict, user_def_params, hnsw_config_keys)
         
     start = time.perf_counter()
+    miss_info = []
     for query_id, q in tqdm(dataset.queries.items(), 'Queries'):
         results_dict['total_questions'] += 1
-        
+        hit = False
         #make Keyword, Vector, and Hybrid calls to Weaviate host
         try:
             kw_response = retriever.keyword_search(request=q, class_name=class_name, limit=retrieve_limit, display_properties=display_properties)
@@ -210,17 +224,21 @@ def execute_evaluation(dataset: EmbeddingQAFinetuneDataset,
             if doc_id in kw_doc_ids:
                 results_dict['kw_hit_rate'] += 1
                 results_dict['kw_mrr'] += 1/kw_doc_ids[doc_id]
+                hit = True
             if doc_id in vector_doc_ids:
                 results_dict['vector_hit_rate'] += 1
                 results_dict['vector_mrr'] += 1/vector_doc_ids[doc_id]
+                hit = True
             if doc_id in hybrid_doc_ids:
                 results_dict['hybrid_hit_rate'] += 1
                 results_dict['hybrid_mrr'] += 1/hybrid_doc_ids[doc_id]
-
+                hit = True
             # if no hits, let's capture that
-            else:
+            if not hit:
                 results_dict['total_misses'] += 1
-                
+                miss_info.append({'query': q, 'kw_response': kw_response,
+                                              'vector_response': vector_response, 
+                                              'hybrid_response': hybrid_response})
         except Exception as e:
             print(e)
             continue
@@ -231,7 +249,10 @@ def execute_evaluation(dataset: EmbeddingQAFinetuneDataset,
     
     end = time.perf_counter() - start
     print(f'Total Processing Time: {round(end/60, 2)} minutes')
-    record_results(results_dict, chunk_size, './eval_results', as_text=True)
+    record_results(results_dict, chunk_size, dir_outpath=dir_outpath, as_text=True)
+    
+    if include_miss_info:
+        return results_dict, miss_info
     return results_dict
 
 def calc_hit_rate_scores(results_dict: Dict[str, Union[str, int]], 
