@@ -150,6 +150,14 @@ class WeaviateClient(Client):
                     temp[key] = d['_additional'][key]
             results.append(temp)
         return results
+    
+    def update_ef_value(self, class_name: str, ef_value: int) -> str:
+        '''
+        Updates ef_value for a class (index) on the Weaviate instance.
+        '''
+        self.schema.update_config(class_name=class_name, config={'vectorIndexConfig': {'ef': ef_value}})
+        print(f'ef_value updated to {ef_value} for class {class_name}')
+        return self.show_class_config(class_name)['vectorIndexConfig']
         
     def keyword_search(self,
                        request: str,
