@@ -236,9 +236,12 @@ def execute_evaluation(dataset: EmbeddingQAFinetuneDataset,
             # if no hits, let's capture that
             if not hit:
                 results_dict['total_misses'] += 1
-                miss_info.append({'query': q, 'kw_response': kw_response,
-                                              'vector_response': vector_response, 
-                                              'hybrid_response': hybrid_response})
+                miss_info.append({'query': q, 
+                                  'answer': dataset.corpus[doc_id],
+                                  'doc_id': doc_id,
+                                  'kw_response': kw_response,
+                                  'vector_response': vector_response, 
+                                  'hybrid_response': hybrid_response})
         except Exception as e:
             print(e)
             continue
