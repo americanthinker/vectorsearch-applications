@@ -84,3 +84,40 @@ def _get_batch_length(ranked_results: List[dict], tokenizer: tiktoken.Encoding) 
     contexts = tokenizer.encode_batch([r['content'] for r in ranked_results])
     context_len = sum(list(map(len, contexts)))
     return context_len
+
+def search_result(i: int, 
+                  url: str, 
+                  title: str, 
+                  content: str,
+                  guest: str,
+                  length: str,
+                  space: str='&nbsp; &nbsp;'
+                 ) -> str:
+    
+    '''
+    HTML to display search results.
+
+    Args:
+    -----
+    i: int
+        index of search result
+    url: str
+        url of YouTube video 
+    title: str
+        title of episode 
+    content: str
+        content chunk of episode
+    '''
+    return f"""
+        <div style="font-size:120%;">
+            {i + 1}.<a href="{url}">{title}</a>
+        </div>
+
+        <div style="font-size:95%;">
+            <p>Episode Length: {length} {space}{space} Guest: {guest}</p>
+            <div style="color:grey;float:left;">
+                ...
+            </div>
+            {content}
+        </div>
+    """
