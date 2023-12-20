@@ -46,7 +46,8 @@ def validate_token_threshold(ranked_results: List[dict],
                              base_prompt: str,
                              query: str,
                              tokenizer: tiktoken.Encoding, 
-                             token_threshold: int, 
+                             token_threshold: int,
+                             content_field: str='content', 
                              verbose: bool = False
                              ) -> List[dict]:
         """
@@ -59,7 +60,7 @@ def validate_token_threshold(ranked_results: List[dict],
         account every token passed to the LLM, but it is a good approximation.
         """
         overhead_len = len(tokenizer.encode(base_prompt.format(question=query, series='')))
-        context_len = _get_batch_length(ranked_results, tokenizer)
+        context_len = _get_batch_length(ranked_results, tokenizer, content_field=content_field)
     
         token_count = overhead_len + context_len
         if token_count > token_threshold:
@@ -71,17 +72,20 @@ def validate_token_threshold(ranked_results: List[dict],
                 # remove the last ranked (most irrelevant) result
                 ranked_results = ranked_results[:num_results-1]
                 # recalculate new token_count
-                token_count = overhead_len + _get_batch_length(ranked_results, tokenizer)
+                token_count = overhead_len + _get_batch_length(ranked_results, tokenizer, content_field=content_field)
 
         if verbose:
             logger.info(f'Total Final Token Count: {token_count}')
         return ranked_results
 
-def _get_batch_length(ranked_results: List[dict], tokenizer: tiktoken.Encoding) -> int:
+def _get_batch_length(ranked_results: List[dict], 
+                      tokenizer: tiktoken.Encoding, 
+                      content_field: str='content'
+                      ) -> int:
     '''
     Convenience function to get the length in tokens of a batch of results 
     '''
-    contexts = tokenizer.encode_batch([r['content'] for r in ranked_results])
+    contexts = tokenizer.encode_batch([r[content_field] for r in ranked_results])
     context_len = sum(list(map(len, contexts)))
     return context_len
 

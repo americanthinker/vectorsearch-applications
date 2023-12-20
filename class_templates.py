@@ -39,6 +39,10 @@ impact_theory_class_properties = [
                                         'dataType': ['text'],
                                         'indexFilterable': False,
                                         'indexSearchable': True},
+                                    {'name': 'expanded_content',
+                                        'dataType': ['text'],
+                                        'indexFilterable': False,
+                                        'indexSearchable': True},
                                 ]
                                     # {'name': 'publish_date',
                                     #     'dataType': ['date'],
