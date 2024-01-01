@@ -127,6 +127,7 @@ def execute_evaluation(dataset: EmbeddingQAFinetuneDataset,
                        chunk_size: int=256,
                        hnsw_config_keys: List[str]=['maxConnections', 'efConstruction', 'ef'],
                        search_type: Literal['kw', 'vector', 'hybrid', 'all']='all',
+                       search_properties: List[str]=['content'],
                        display_properties: List[str]=['doc_id', 'content'],
                        dir_outpath: str='./eval_results',
                        include_miss_info: bool=False,
@@ -163,6 +164,8 @@ def execute_evaluation(dataset: EmbeddingQAFinetuneDataset,
         List of keys to be used for retrieving HNSW Index parameters from Weaviate host
     search_type: Literal['kw', 'vector', 'hybrid', 'all']='all'
         Type of search to be evaluated.  Options are 'kw', 'vector', 'hybrid', or 'all'
+    search_properties: List[str]=['content']
+        List of properties to be used for search
     display_properties: List[str]=['doc_id', 'content']
         List of properties to be returned from Weaviate host for display in response
     dir_outpath: str='./eval_results'
@@ -203,9 +206,9 @@ def execute_evaluation(dataset: EmbeddingQAFinetuneDataset,
         hit = False
         #make Keyword, Vector, and Hybrid calls to Weaviate host
         try:
-            kw_response = retriever.keyword_search(request=q, class_name=class_name, limit=retrieve_limit, display_properties=display_properties)
+            kw_response = retriever.keyword_search(request=q, class_name=class_name, properties=search_properties, limit=retrieve_limit, display_properties=display_properties)
             vector_response = retriever.vector_search(request=q, class_name=class_name, limit=retrieve_limit, display_properties=display_properties)
-            hybrid_response = retriever.hybrid_search(request=q, class_name=class_name, alpha=alpha, limit=retrieve_limit, display_properties=display_properties)           
+            hybrid_response = retriever.hybrid_search(request=q, class_name=class_name, properties=search_properties, alpha=alpha, limit=retrieve_limit, display_properties=display_properties)           
             #rerank returned responses if reranker is provided
             if reranker:
                 kw_response = reranker.rerank(kw_response, q, top_k=top_k)
