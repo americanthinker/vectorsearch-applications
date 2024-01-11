@@ -30,13 +30,13 @@ class WeaviateClient(Client):
         The API key for the OpenAI API. Only required if using OpenAI text-embedding-ada-002 model.
     '''    
     def __init__(self, 
-                 api_key: str,
                  endpoint: str,
+                 api_key: str=None,
                  model_name_or_path: str='sentence-transformers/all-MiniLM-L6-v2',
                  openai_api_key: str=None,
                  **kwargs
                 ):
-        auth_config = AuthApiKey(api_key=api_key)
+        auth_config = AuthApiKey(api_key=api_key) if api_key else None
         super().__init__(auth_client_secret=auth_config,
                          url=endpoint,
                          **kwargs)    

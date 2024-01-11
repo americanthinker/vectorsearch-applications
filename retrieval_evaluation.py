@@ -126,7 +126,7 @@ def execute_evaluation(dataset: EmbeddingQAFinetuneDataset,
                        top_k: int=5,
                        chunk_size: int=256,
                        hnsw_config_keys: List[str]=['maxConnections', 'efConstruction', 'ef'],
-                       search_type: Literal['kw', 'vector', 'hybrid', 'all']='all',
+                       search_type: Literal['hybrid', 'all']='all',
                        search_properties: List[str]=['content'],
                        display_properties: List[str]=['doc_id', 'content'],
                        dir_outpath: str='./eval_results',
@@ -187,64 +187,76 @@ def execute_evaluation(dataset: EmbeddingQAFinetuneDataset,
                     'Retriever': retriever.model_name_or_path, 
                     'Ranker': reranker_name,
                     'chunk_size': chunk_size,
-                    'kw_hit_rate': 0,
-                    'kw_mrr': 0,
-                    'vector_hit_rate': 0,
-                    'vector_mrr': 0,
                     'hybrid_hit_rate':0,
                     'hybrid_mrr': 0,
-                    'total_misses': 0,
-                    'total_questions':0
                     }
     #add extra params to results_dict
+    kw_vector_metrics = {
+                         'kw_hit_rate': 0,
+                         'kw_mrr': 0,
+                         'vector_hit_rate': 0,
+                         'vector_mrr': 0
+                         }
+    if search_type == 'all':
+        results_dict = {**results_dict, **kw_vector_metrics}
+    results_dict['total_questions'] = 0
+    results_dict['total_misses'] = 0
     results_dict = add_params(retriever, class_name, results_dict, user_def_params, hnsw_config_keys)
         
     start = time.perf_counter()
-    miss_info = []
+    miss_info_list = []
     for query_id, q in tqdm(dataset.queries.items(), 'Queries'):
         results_dict['total_questions'] += 1
         hit = False
         #make Keyword, Vector, and Hybrid calls to Weaviate host
         try:
-            kw_response = retriever.keyword_search(request=q, class_name=class_name, properties=search_properties, limit=retrieve_limit, display_properties=display_properties)
-            vector_response = retriever.vector_search(request=q, class_name=class_name, limit=retrieve_limit, display_properties=display_properties)
-            hybrid_response = retriever.hybrid_search(request=q, class_name=class_name, properties=search_properties, alpha=alpha, limit=retrieve_limit, display_properties=display_properties)           
+            hybrid_response = retriever.hybrid_search(request=q, class_name=class_name, properties=search_properties, alpha=alpha, limit=retrieve_limit, display_properties=display_properties)  
+            if search_type == 'all':
+                kw_response = retriever.keyword_search(request=q, class_name=class_name, properties=search_properties, limit=retrieve_limit, display_properties=display_properties)
+                vector_response = retriever.vector_search(request=q, class_name=class_name, limit=retrieve_limit, display_properties=display_properties)         
             #rerank returned responses if reranker is provided
             if reranker:
-                kw_response = reranker.rerank(kw_response, q, top_k=top_k)
-                vector_response = reranker.rerank(vector_response, q, top_k=top_k)
                 hybrid_response = reranker.rerank(hybrid_response, q, top_k=top_k)
+                if search_type == 'all':
+                    kw_response = reranker.rerank(kw_response, q, top_k=top_k)
+                    vector_response = reranker.rerank(vector_response, q, top_k=top_k)
+                
             
             #collect doc_ids to check for document matches (include only results_top_k)
-            kw_doc_ids = {result['doc_id']:i for i, result in enumerate(kw_response[:top_k], 1)}
-            vector_doc_ids = {result['doc_id']:i for i, result in enumerate(vector_response[:top_k], 1)}
             hybrid_doc_ids = {result['doc_id']:i for i, result in enumerate(hybrid_response[:top_k], 1)}
-            
+            if search_type == 'all':
+                kw_doc_ids = {result['doc_id']:i for i, result in enumerate(kw_response[:top_k], 1)}
+                vector_doc_ids = {result['doc_id']:i for i, result in enumerate(vector_response[:top_k], 1)}
             #extract doc_id for scoring purposes
             doc_id = dataset.relevant_docs[query_id][0]
      
             #increment hit_rate counters and mrr scores
-            if doc_id in kw_doc_ids:
-                results_dict['kw_hit_rate'] += 1
-                results_dict['kw_mrr'] += 1/kw_doc_ids[doc_id]
-                hit = True
-            if doc_id in vector_doc_ids:
-                results_dict['vector_hit_rate'] += 1
-                results_dict['vector_mrr'] += 1/vector_doc_ids[doc_id]
-                hit = True
             if doc_id in hybrid_doc_ids:
                 results_dict['hybrid_hit_rate'] += 1
                 results_dict['hybrid_mrr'] += 1/hybrid_doc_ids[doc_id]
                 hit = True
+            if search_type == 'all':
+                if doc_id in kw_doc_ids:
+                    results_dict['kw_hit_rate'] += 1
+                    results_dict['kw_mrr'] += 1/kw_doc_ids[doc_id]
+                    hit = True
+                if doc_id in vector_doc_ids:
+                    results_dict['vector_hit_rate'] += 1
+                    results_dict['vector_mrr'] += 1/vector_doc_ids[doc_id]
+                    hit = True
             # if no hits, let's capture that
             if not hit:
                 results_dict['total_misses'] += 1
-                miss_info.append({'query': q, 
-                                  'answer': dataset.corpus[doc_id],
-                                  'doc_id': doc_id,
-                                  'kw_response': kw_response,
-                                  'vector_response': vector_response, 
-                                  'hybrid_response': hybrid_response})
+                miss_info = {'query': q, 
+                             'answer': dataset.corpus[doc_id],
+                             'doc_id': doc_id,
+                             'hybrid_response': hybrid_response}
+                if search_type == 'all':
+                    miss_info = {**miss_info, 
+                                 'kw_response': kw_response,
+                                 'vector_response': vector_response}
+                miss_info_list.append(miss_info)
+
         except Exception as e:
             print(e)
             continue
@@ -262,18 +274,16 @@ def execute_evaluation(dataset: EmbeddingQAFinetuneDataset,
     return results_dict
 
 def calc_hit_rate_scores(results_dict: Dict[str, Union[str, int]], 
-                         search_type: Literal['kw', 'vector', 'hybrid', 'all']=['kw', 'vector']
+                         search_type: Literal['hybrid', 'all']='all'
                          ) -> None:
-    if search_type == 'all':
-        search_type = ['kw', 'vector', 'hybrid']
+    search_type = ['kw', 'vector', 'hybrid'] if search_type == 'all' else [search_type]
     for prefix in search_type:
         results_dict[f'{prefix}_hit_rate'] = round(results_dict[f'{prefix}_hit_rate']/results_dict['total_questions'],2)
 
 def calc_mrr_scores(results_dict: Dict[str, Union[str, int]],
-                    search_type: Literal['kw', 'vector', 'hybrid', 'all']=['kw', 'vector']
+                    search_type: Literal['hybrid', 'all']='all'
                     ) -> None:
-    if search_type == 'all':
-        search_type = ['kw', 'vector', 'hybrid']
+    search_type = ['kw', 'vector', 'hybrid'] if search_type == 'all' else [search_type]
     for prefix in search_type:
         results_dict[f'{prefix}_mrr'] = round(results_dict[f'{prefix}_mrr']/results_dict['total_questions'],2)
 
