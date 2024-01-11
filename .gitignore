@@ -9,6 +9,7 @@ __pycache__/
 # Large Files
 models/
 eval_results/
+data/videos/
 
 # Distribution / packaging
 .Python
