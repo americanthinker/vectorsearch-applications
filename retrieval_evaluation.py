@@ -276,6 +276,9 @@ def execute_evaluation(dataset: EmbeddingQAFinetuneDataset,
 def calc_hit_rate_scores(results_dict: Dict[str, Union[str, int]], 
                          search_type: Literal['hybrid', 'all']='all'
                          ) -> None:
+    '''
+    Helper function to calculate hit rate scores
+    '''
     search_type = ['kw', 'vector', 'hybrid'] if search_type == 'all' else [search_type]
     for prefix in search_type:
         results_dict[f'{prefix}_hit_rate'] = round(results_dict[f'{prefix}_hit_rate']/results_dict['total_questions'],2)
@@ -283,6 +286,9 @@ def calc_hit_rate_scores(results_dict: Dict[str, Union[str, int]],
 def calc_mrr_scores(results_dict: Dict[str, Union[str, int]],
                     search_type: Literal['hybrid', 'all']='all'
                     ) -> None:
+    '''
+    Helper function to calculate mrr scores
+    '''
     search_type = ['kw', 'vector', 'hybrid'] if search_type == 'all' else [search_type]
     for prefix in search_type:
         results_dict[f'{prefix}_mrr'] = round(results_dict[f'{prefix}_mrr']/results_dict['total_questions'],2)
@@ -332,6 +338,11 @@ def add_params(client: WeaviateClient,
                param_options: dict, 
                hnsw_config_keys: List[str]
               ) -> dict:
+    '''
+    Helper function that adds parameters to the results_dict:
+    - Adds HNSW Index parameters to results_dict
+    - Adds optional user-defined parameters to results_dict
+    '''
     hnsw_params = {k:v for k,v in client.show_class_config(class_name)['vectorIndexConfig'].items() if k in hnsw_config_keys}
     if hnsw_params:
         results_dict = {**results_dict, **hnsw_params}
