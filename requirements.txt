@@ -18,7 +18,7 @@ langchain
 langcodes
 langsmith
 llama-hub==0.0.72
-llama-index==0.9.6.post1
+llama-index==0.9.29
 loguru==0.7.0
 matplotlib==3.7.2
 matplotlib-inline==0.1.6
