@@ -14,10 +14,10 @@ jupyterlab==4.0.4
 jupyterlab-pygments==0.2.2
 jupyterlab-widgets==3.0.9
 jupyterlab_server==2.24.0
-langchain==0.0.329
-langcodes==3.3.0
-langsmith==0.0.43
-llama-hub==0.0.47post1
+langchain
+langcodes
+langsmith
+llama-hub==0.0.72
 llama-index==0.9.6.post1
 loguru==0.7.0
 matplotlib==3.7.2
