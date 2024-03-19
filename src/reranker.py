@@ -3,6 +3,8 @@ from torch.nn import Sigmoid
 from typing import List, Union
 import numpy as np
 from loguru import logger
+from src.preprocessor.preprocessing import FileIO
+from src.pipelines.pipeline import chunk_data
 
 class ReRanker(CrossEncoder):
     '''
@@ -87,3 +89,8 @@ class ReRanker(CrossEncoder):
                 return sorted_hits[:top_k]
             return filtered_hits
         return sorted_hits[:top_k]
+    
+if __name__ == '__main__':
+    test = FileIO()
+    print(test.__class__.__name__)
+    print(dir(chunk_data))

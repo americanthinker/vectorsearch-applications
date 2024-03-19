@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 env = load_dotenv('.env', override=True)
 
 #external files
-from preprocessing import FileIO# bad ass tokenizer library for use with OpenAI LLMs 
+from src.preprocessor.preprocessing import FileIO # bad ass tokenizer library for use with OpenAI LLMs 
 from llama_index.text_splitter import SentenceSplitter #one of the best on the market
 from sentence_transformers import SentenceTransformer
 

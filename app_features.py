@@ -1,10 +1,10 @@
 import time
 import json
-from preprocessing import FileIO
+from src.preprocessor.preprocessing import FileIO
 from typing import List
 import tiktoken 
 from loguru import logger
-from prompt_templates import context_block, question_answering_prompt_series
+from src.llm.prompt_templates import context_block, question_answering_prompt_series
 import streamlit as st  
 
 @st.cache_data

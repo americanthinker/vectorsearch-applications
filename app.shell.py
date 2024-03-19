@@ -1,10 +1,10 @@
 from tiktoken import get_encoding
-from weaviate_interface import WeaviateClient
-from prompt_templates import question_answering_prompt_series, question_answering_system
-from openai_interface import GPT_Turbo
+from src.weaviate_stuff.weaviate_interface import WeaviateClient
+from src.llm.openai_interface import GPT_Turbo
+from src.llm.prompt_templates import question_answering_prompt_series, question_answering_system
 from app_features import (convert_seconds, generate_prompt_series, search_result,
                           validate_token_threshold, load_content_cache, load_data)
-from reranker import ReRanker
+from src.reranker import ReRanker
 from loguru import logger 
 import streamlit as st
 import sys
@@ -12,9 +12,11 @@ import json
 import os
 
 # load environment variables
-from dotenv import load_dotenv
-load_dotenv('.env', override=True)
- 
+from dotenv import load_dotenv, find_dotenv
+env_path = find_dotenv(raise_error_if_not_found=True)
+load_dotenv(env_path, override=True)
+
+
 ## PAGE CONFIGURATION
 st.set_page_config(page_title="Impact Theory", 
                    page_icon=None, 
