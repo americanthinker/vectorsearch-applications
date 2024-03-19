@@ -10,6 +10,7 @@ __pycache__/
 models/
 eval_results/
 data/videos/
+data/*.parquet
 
 # Distribution / packaging
 .Python
