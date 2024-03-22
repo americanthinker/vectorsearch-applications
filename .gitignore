@@ -12,6 +12,10 @@ eval_results/
 data/videos/
 data/*.parquet
 answer_key
+notebooks/videos
+notebooks/transcripts
+data/*.json
+
 # Distribution / packaging
 .Python
 build/

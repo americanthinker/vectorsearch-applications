@@ -1,0 +1,7 @@
+accelerate
+camel_converter
+optimum
+polars >=0.19
+pandas>=2.1.3
+pytube
+transformers
