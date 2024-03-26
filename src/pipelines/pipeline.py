@@ -6,8 +6,6 @@ from itertools import groupby
 from rich import print
 from torch import cuda
 from tqdm.notebook import tqdm
-from dotenv import load_dotenv
-env = load_dotenv('.env', override=True)
 
 #external files
 from src.preprocessor.preprocessing import FileIO # bad ass tokenizer library for use with OpenAI LLMs 
@@ -17,24 +15,26 @@ from sentence_transformers import SentenceTransformer
 def chunk_data(data: List[dict], text_splitter: SentenceSplitter, content_field='content'):
     return [text_splitter.split_text(d[content_field]) for d in tqdm(data, 'CHUNKING')]
 
-def create_vectors(content_splits: List[List[str]], model: SentenceTransformer):
+def create_vectors(content_splits: List[List[str]], model: SentenceTransformer, device: str):
     text_vector_tuples = []
     for chunk in tqdm(content_splits, 'VECTORS'):
-        vectors = model.encode(chunk, show_progress_bar=False, device='cuda:0')
+        vectors = model.encode(chunk, show_progress_bar=False, device=device)
         text_vector_tuples.append(list(zip(chunk, vectors)))
     return text_vector_tuples
 
 def join_docs(corpus: List[dict], 
-              tuples: List[Tuple[str, float]], 
+              tuples: List[Tuple[str, float]],
+              unique_id_field: str='video_id',
+              content_field: str='content',
               embedding_field: str='content_embedding'
               ) -> List[dict]:
     docs = []
     for i, d in enumerate(corpus):
         for j, episode in enumerate(tuples[i]):
-            doc = {k:v for k,v in d.items() if k != 'content'}
-            video_id = doc['video_id']
-            doc['doc_id'] = f'{video_id}_{j}'
-            doc['content'] = episode[0]
+            doc = {k:v for k,v in d.items() if k != content_field}
+            unique_id = doc[unique_id_field]
+            doc['doc_id'] = f'{unique_id}_{j}'
+            doc[content_field] = episode[0]
             doc[embedding_field] = episode[1].tolist()
             docs.append(doc)
     return docs
@@ -43,6 +43,7 @@ def create_dataset(corpus: List[dict],
                    embedding_model: SentenceTransformer,
                    text_splitter: SentenceSplitter,
                    file_outpath_prefix: str='./impact-theory-minilmL6',
+                   unique_id_field: str='videoId',
                    content_field: str='content',
                    embedding_field: str='content_embedding',
                    device: str='cuda:0' if cuda.is_available() else 'cpu'
@@ -59,8 +60,8 @@ def create_dataset(corpus: List[dict],
     print(f'Creating dataset using chunk_size: {chunk_size}')
     start = time.perf_counter()
     content_splits = chunk_data(corpus, text_splitter, content_field)
-    text_vector_tuples = create_vectors(content_splits, embedding_model)
-    joined_docs = join_docs(corpus, text_vector_tuples, embedding_field)
+    text_vector_tuples = create_vectors(content_splits, embedding_model, device)
+    joined_docs = join_docs(corpus, text_vector_tuples, unique_id_field, content_field, embedding_field)
     file_path = f'{file_outpath_prefix}-{chunk_size}.parquet'
     io.save_as_parquet(file_path=file_path, data=joined_docs, overwrite=False)
     end = time.perf_counter() - start
