@@ -71,7 +71,7 @@ class FileIO:
         step and outputs a list of dicts (docs).
         '''
         df = pd.read_parquet(file_path)
-        vector_labels = ['content_vector', 'image_vector', 'content_embedding']
+        vector_labels = ['content_vector', 'image_vector', 'content_embedding', 'keywords']
         for label in vector_labels:
             if label in df.columns:
                 df[label] = df[label].apply(lambda x: x.tolist())
