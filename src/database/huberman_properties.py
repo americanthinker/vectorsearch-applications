@@ -1,16 +1,16 @@
 from weaviate.classes.config import Property, DataType, Tokenization
 
-properties = [  
+properties_template = [  
                 Property(name='videoId',
                          data_type=DataType.TEXT,
                          index_filterable=True,
                          index_searchable=False,
-                         tokenenization=Tokenization.WORD),
+                         skip_vectorization=True,
+                         vectorize_property_name=False),
                 Property(name='title',
                          data_type=DataType.TEXT,
                          index_filterable=True,
-                         index_searchable=True,
-                         tokenenization=Tokenization.WORD),
+                         index_searchable=True),
                 Property(name='lengthSeconds',
                          data_type=DataType.INT,
                          index_filterable=True,
@@ -22,13 +22,11 @@ properties = [
                 Property(name='keywords',
                          data_type=DataType.TEXT_ARRAY,
                          index_filterable=True,
-                         index_searchable=True,
-                         tokenenization=Tokenization.WORD),
+                         index_searchable=True),
                 Property(name='shortDescription',
                          data_type=DataType.TEXT,
                          index_filterable=False,
-                         index_searchable=True,
-                         tokenenization=Tokenization.WORD),
+                         index_searchable=True),
                 Property(name='viewCount',
                          data_type=DataType.INT,
                          index_filterable=True,
@@ -44,6 +42,8 @@ properties = [
                 Property(name='content',
                          data_type=DataType.TEXT,
                          index_filterable=False,
-                         index_searchable=True,
-                         tokenenization=Tokenization.WORD)
+                         index_searchable=True)
               ]
+
+if __name__ == '__main__':
+    print(properties_template)
