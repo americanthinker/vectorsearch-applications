@@ -1,11 +1,11 @@
 from weaviate.auth import AuthApiKey
 from weaviate.collections.classes.internal import (MetadataReturn, QueryReturn,
-                                                    MetadataQuery)
+                                                   MetadataQuery)
 import weaviate
 from dataclasses import dataclass
 from openai import OpenAI
 from sentence_transformers import SentenceTransformer
-from typing import Union, Callable
+from typing import Callable, Union
 from torch import cuda
 from tqdm import tqdm
 import time
@@ -59,25 +59,36 @@ class WeaviateWCS:
         if not self.client.is_connected():
             self.client.connect()
 
-    def show_classes(self) -> Union[list[dict], str]:
+    def show_all_collections(self, 
+                             detailed: bool=False,
+                             max_details: bool=False
+                             ) -> list[str] | dict:
         '''
-        Shows all available classes (indexes) on the Weaviate instance.
+        Shows all available collections(indexes) on the Weaviate cluster.
+        By default will only return list of collection names.
+        Otherwise, increasing details about each collection can be returned.
         '''
-        classes = self.cluster.get_nodes_status()[0]['shards']
-        if classes:
-            return [d['class'] for d in classes]
-        else: 
-            return "No classes found on cluster."
+        self._connect()
+        collections = self.client.collections.list_all(simple=not max_details)
+        self.client.close()
+        if not detailed and not max_details:
+            return list(collections.keys())
+        else:
+            if not any(collections):
+                print('No collections found on host')
+            return collections
 
-    def show_class_info(self) -> Union[list[dict], str]:
+    def show_collection(self, collection_name: str) -> dict:
         '''
-        Shows all information related to the classes (indexes) on the Weaviate instance.
+        Shows all information of a specific collection. 
         '''
-        classes = self.cluster.get_nodes_status()[0]['shards']
-        if classes:
-            return [d for d in classes]
+        self._connect()
+        if self.client.collections.exists(collection_name):
+            collection = self.show_all_collections(max_details=True)[collection_name]
+            self.client.close()
+            return collection
         else: 
-            return "No classes found on cluster."
+            print(f'Collection "{collection_name}" not found on host')
 
     def show_class_properties(self, class_name: str) -> Union[dict, str]:
         '''
