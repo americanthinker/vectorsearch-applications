@@ -1,11 +1,13 @@
 from weaviate.auth import AuthApiKey
 from weaviate.collections.classes.internal import (MetadataReturn, QueryReturn,
-                                                    MetadataQuery)
+                                                   MetadataQuery)
 import weaviate
+from weaviate.classes.config import Property
+from weaviate.config import ConnectionConfig
 from dataclasses import dataclass
 from openai import OpenAI
 from sentence_transformers import SentenceTransformer
-from typing import Union, Callable
+from typing import Callable, Union
 from torch import cuda
 from tqdm import tqdm
 import time
@@ -39,16 +41,16 @@ class WeaviateWCS:
                  openai_api_key: str=None
                 ):
         auth_config = AuthApiKey(api_key=api_key) 
-        self.client = weaviate.connect_to_wcs(cluster_url=endpoint, auth_credentials=auth_config)   
-        self.model_name_or_path = model_name_or_path
-        self.openai_model = False
-        if self.model_name_or_path == 'text-embedding-ada-002':
+        self._client = weaviate.connect_to_wcs(cluster_url=endpoint, auth_credentials=auth_config)   
+        self._model_name_or_path = model_name_or_path
+        self._openai_model = False
+        if self._model_name_or_path == 'text-embedding-ada-002':
             if not openai_api_key:
-                raise ValueError(f'OpenAI API key must be provided to use this model: {self.model_name_or_path}')
+                raise ValueError(f'OpenAI API key must be provided to use this model: {self._model_name_or_path}')
             self.model = OpenAI(api_key=openai_api_key)
-            self.openai_model = True
+            self._openai_model = True
         else: 
-            self.model = SentenceTransformer(self.model_name_or_path) if self.model_name_or_path else None
+            self.model = SentenceTransformer(self._model_name_or_path) if self._model_name_or_path else None
 
         self.return_properties = ['title', 'videoId', 'content']  # 'playlist_id', 'channel_id', 'author'
 
@@ -56,86 +58,66 @@ class WeaviateWCS:
         '''
         Connects to Weaviate instance.
         '''
-        if not self.client.is_connected():
-            self.client.connect()
+        if not self._client.is_connected():
+            self._client.connect()
 
-    def show_classes(self) -> Union[list[dict], str]:
+    def show_all_collections(self, 
+                             detailed: bool=False,
+                             max_details: bool=False
+                             ) -> list[str] | dict:
         '''
-        Shows all available classes (indexes) on the Weaviate instance.
+        Shows all available collections(indexes) on the Weaviate cluster.
+        By default will only return list of collection names.
+        Otherwise, increasing details about each collection can be returned.
         '''
-        classes = self.cluster.get_nodes_status()[0]['shards']
-        if classes:
-            return [d['class'] for d in classes]
+        self._connect()
+        collections = self._client.collections.list_all(simple=not max_details)
+        self._client.close()
+        if not detailed and not max_details:
+            return list(collections.keys())
+        else:
+            if not any(collections):
+                print('No collections found on host')
+            return collections
+
+    def show_collection_config(self, collection_name: str) -> ConnectionConfig:
+        '''
+        Shows all information of a specific collection. 
+        '''
+        self._connect()
+        if self._client.collections.exists(collection_name):
+            collection = self.show_all_collections(max_details=True)[collection_name]
+            self._client.close()
+            return collection
         else: 
-            return "No classes found on cluster."
+            print(f'Collection "{collection_name}" not found on host')
 
-    def show_class_info(self) -> Union[list[dict], str]:
-        '''
-        Shows all information related to the classes (indexes) on the Weaviate instance.
-        '''
-        classes = self.cluster.get_nodes_status()[0]['shards']
-        if classes:
-            return [d for d in classes]
-        else: 
-            return "No classes found on cluster."
-
-    def show_class_properties(self, class_name: str) -> Union[dict, str]:
+    def show_collection_properties(self, collection_name: str) -> Union[dict, str]:
         '''
         Shows all properties of a collection (index) on the Weaviate instance.
         '''
-        classes = self.schema.get()
-        if classes:
-            all_classes = classes['classes']
-            for d in all_classes:
-                if d['class'] == class_name:
-                    return d['properties']
-            return f'Class "{class_name}" not found on host'
-        return f'No Classes found on host'
+        self._connect()
+        if self._client.collections.exists(collection_name):
+            collection = self.show_all_collections(max_details=True)[collection_name]
+            self._client.close()
+            return collection.properties
+        else: 
+            print(f'Collection "{collection_name}" not found on host')
     
-    def show_class_config(self, class_name: str) -> Union[dict, str]:
-        '''
-        Shows all configuration of a collection (index) on the Weaviate instance.
-        '''
-        classes = self.schema.get()
-        if classes:
-            all_classes = classes['classes']
-            for d in all_classes:
-                if d['class'] == class_name:
-                    return d
-            return f'Class "{class_name}" not found on host'
-        return f'No Classes found on host'
-    
-    def delete_class(self, class_name: str) -> str:
+    def delete_collection(self, collection_name: str) -> str:
         '''
         Deletes a collection (index) on the Weaviate instance, if it exists.
         '''
-        available = self._check_class_avialability(class_name)
-        if isinstance(available, bool):
-            if available:
-                self.schema.delete_class(class_name)
-                not_deleted = self._check_class_avialability(class_name)
-                if isinstance(not_deleted, bool):
-                    if not_deleted:
-                        return f'Class "{class_name}" was not deleted. Try again.'
-                    else: 
-                        return f'Class "{class_name}" deleted'
-                return f'Class "{class_name}" deleted and there are no longer any classes on host'
-            return f'Class "{class_name}" not found on host'
-        return available
-    
-    def _check_class_avialability(self, class_name: str) -> Union[bool, str]:
-        '''
-        Checks if a collection (index) exists on the Weaviate instance.
-        '''
-        classes = self.schema.get()
-        if classes:
-            all_classes = classes['classes']
-            for d in all_classes:
-                if d['class'] == class_name:
-                    return True
-            return False
+        self._connect()
+        if self._client.collections.exists(collection_name):
+            try:
+                self._client.collections.delete(collection_name)
+                self._client.close()
+                print(f'Collection "{collection_name}" deleted')
+            except Exception as e:
+                print(f'Error deleting collection, due to: {e}')
         else: 
-            return f'No Classes found on host'
+            print(f'Collection "{collection_name}" not found on host')
         
     def format_response(self, 
                         response: QueryReturn,
@@ -144,8 +126,6 @@ class WeaviateWCS:
         Formats json response from Weaviate into a list of dictionaries.
         Expands _additional fields if present into top-level dictionary.
         '''
-        # if response.get('errors'):
-        #     return response['errors'][0]['message']
         results = [{**d.properties, **self._get_meta(d.metadata)} for d in response.objects]
         return results
 
@@ -156,13 +136,13 @@ class WeaviateWCS:
         temp_dict = metadata.__dict__
         return {k:v for k,v in temp_dict.items() if v}
 
-    def update_ef_value(self, class_name: str, ef_value: int) -> str:
-        '''
-        Updates ef_value for a collection (index) on the Weaviate instance.
-        '''
-        self.schema.update_config(class_name=class_name, config={'vectorIndexConfig': {'ef': ef_value}})
-        print(f'ef_value updated to {ef_value} for collection {class_name}')
-        return self.show_class_config(class_name)['vectorIndexConfig']
+    # def update_ef_value(self, class_name: str, ef_value: int) -> str:
+    #     '''
+    #     Updates ef_value for a collection (index) on the Weaviate instance.
+    #     '''
+    #     self.schema.update_config(class_name=class_name, config={'vectorIndexConfig': {'ef': ef_value}})
+    #     print(f'ef_value updated to {ef_value} for collection {class_name}')
+    #     return self.show_class_config(class_name)['vectorIndexConfig']
         
     def keyword_search(self,
                        request: str,
@@ -195,14 +175,14 @@ class WeaviateWCS:
         '''
         self._connect()
         return_properties = return_properties if return_properties else self.return_properties
-        connection = self.client.collections.get(collection_name)
+        connection = self._client.collections.get(collection_name)
         response = connection.query.bm25(query=request,
                                          query_properties=query_properties,
                                          limit=limit,
                                          return_metadata=MetadataQuery(score=True),
                                          return_properties=return_properties)
         # response = response.with_where(where_filter).do() if where_filter else response.do()
-        self.client.close()
+        self._client.close()
         if return_raw:
             return response
         else: 
@@ -239,7 +219,7 @@ class WeaviateWCS:
         self._connect()
         return_properties = return_properties if return_properties else self.return_properties
         query_vector = self._create_query_vector(request, device=device)
-        connection = self.client.collections.get(collection_name)
+        connection = self._client.collections.get(collection_name)
         response = connection.query.near_vector(near_vector=query_vector,
                                                 limit=limit,
                                                 return_metadata=MetadataQuery(distance=True, 
@@ -247,7 +227,7 @@ class WeaviateWCS:
                                                                                 ),
                                                 return_properties=return_properties)
         #  response = response.with_where(where_filter).do() if where_filter else response.do()
-        self.client.close()
+        self._client.close()
         if return_raw:
             return response
         else: 
@@ -257,7 +237,7 @@ class WeaviateWCS:
         '''
         Creates embedding vector from text query.
         '''
-        return self.get_openai_embedding(query) if self.openai_model else self.model.encode(query, device=device).tolist()
+        return self.get_openai_embedding(query) if self._openai_model else self.model.encode(query, device=device).tolist()
     
     def get_openai_embedding(self, query: str) -> list[float]:
         '''
@@ -310,7 +290,7 @@ class WeaviateWCS:
         self._connect()
         return_properties = return_properties if return_properties else self.return_properties
         query_vector = self._create_query_vector(request, device=device)
-        connection = self.client.collections.get(collection_name)
+        connection = self._client.collections.get(collection_name)
         response = connection.query.hybrid(query=request,
                                            query_properties=query_properties,
                                            vector=query_vector,
@@ -319,91 +299,91 @@ class WeaviateWCS:
                                            return_metadata=MetadataQuery(score=True, distance=True),
                                            return_properties=return_properties)
         # response = response.with_where(where_filter).do() if where_filter else response.do()
-        self.client.close()
+        self._client.close()
         if return_raw:
             return response
         else: 
             return self.format_response(response)
         
         
-# class WeaviateIndexer:
+class WeaviateIndexer:
 
-#     def __init__(self,
-#                  client: WeaviateClient,
-#                  batch_size: int=150,
-#                  num_workers: int=4,
-#                  dynamic: bool=True,
-#                  creation_time: int=5,
-#                  timeout_retries: int=3,
-#                  connection_error_retries: int=3,
-#                  callback: Callable=None,
-#                  ):
-#         '''
-#         Class designed to batch index documents into Weaviate. Instantiating
-#         this class will automatically configure the Weaviate batch client.
-#         '''
-#         self._client = client
-#         self._callback = callback if callback else self._default_callback
-        
-#         self._client.batch.configure(batch_size=batch_size,
-#                                      num_workers=num_workers,
-#                                      dynamic=dynamic,
-#                                      creation_time=creation_time,
-#                                      timeout_retries=timeout_retries,
-#                                      connection_error_retries=connection_error_retries,
-#                                      callback=self._callback
-#                                     )
-        
-#     def _default_callback(self, results: dict):
-#         """
-#         Check batch results for errors.
-
-#         Parameters
-#         ----------
-#         results : dict
-#             The Weaviate batch creation return value.
-#         """
-
-#         if results is not None:
-#             for result in results:
-#                 if "result" in result and "errors" in result["result"]:
-#                     if "error" in result["result"]["errors"]:
-#                         print(result["result"])
-
-#     def batch_index_data(self,
-#                          data: list[dict], 
-#                          class_name: str,
-#                          vector_property: str='content_embedding'
-#                          ) -> None:
-#         '''
-#         Batch function for fast indexing of data onto Weaviate cluster. 
-#         This method assumes that self._client.batch is already configured.
-#         '''
-#         start = time.perf_counter()
-#         with self._client.batch as batch:
-#             for d in tqdm(data):
-                
-#                 #define single document 
-#                 properties = {k:v for k,v in d.items() if k != vector_property}
-#                 try:
-#                     #add data object to batch
-#                     batch.add_data_object(
-#                                         data_object=properties,
-#                                         class_name=class_name,
-#                                         vector=d[vector_property]
-#                                         )
-#                 except Exception as e:
-#                     print(e)
-#                     continue
-
-#         end = time.perf_counter() - start
+    def __init__(self,
+                 client: WeaviateWCS
+                 ):
+        '''
+        Class designed to batch index documents into Weaviate. Instantiating
+        this class will automatically configure the Weaviate batch client.
+        '''
     
-#         print(f'Batch job completed in {round(end/60, 2)} minutes.')
-#         class_info = self._client.show_class_info()
-#         for i, c in enumerate(class_info):
-#             if c['class'] == class_name:
-#                 print(class_info[i])
-#         self._client.batch.shutdown()
+        self._client = client._client
+
+    def _connect(self):
+        '''
+        Connects to Weaviate instance.
+        '''
+        if not self._client.is_connected():
+            self._client.connect()
+
+    def create_collection(self, 
+                          collection_name: str, 
+                          properties: list[Property],
+                          description: str=None,
+                          **kwargs
+                          ) -> str:
+        '''
+        Creates a collection (index) on the Weaviate instance.
+        '''
+        if collection_name.find('-') != -1:
+            raise ValueError('Collection name cannot contain hyphens')
+        try:
+            self._connect()
+            collection = self._client.collections.create(
+                                                        name=collection_name,
+                                                        description=description,
+                                                        properties=properties,
+                                                        **kwargs
+                                                        )
+            if self._client.collections.exists(collection_name):
+                print(f'Collection "{collection_name}" created')
+            else:
+                print(f'Collection not found at the moment, try again later')
+            self._client.close()
+        except Exception as e:
+            print(f'Error creating collection, due to: {e}')
+
+    def batch_index_data(self,
+                         data: list[dict], 
+                         collection_name: str,
+                         vector_property: str='content_embedding', 
+                         return_batch_errors: bool=True
+                         ) -> None:
+        '''
+        Batch function for fast indexing of data onto Weaviate cluster. 
+        This method assumes that self._client.batch is already configured.
+        '''
+        self._connect()
+        if not self._client.collections.exists(collection_name):
+            print(f'Collection "{collection_name}" not found on host')
+            return
+        else:
+            start = time.perf_counter()
+            collection = self._client.collections.get(collection_name)
+            with collection.batch.dynamic() as batch:
+                for doc in tqdm(data):
+                    try:
+                        batch.add_object(properties={k:v for k,v in doc.items() if k != vector_property},
+                                         vector=doc[vector_property])
+                    except Exception as e:
+                        print(e)
+                        continue
+            end = time.perf_counter() - start
+            print(f'Batch job completed in {round(end/60, 2)} minutes.')
+        if return_batch_errors:
+            return {'batch_errors':batch.number_errors, 
+                    'failed_objects':self._client.batch.failed_objects,
+                    'failed_references': self._client.batch.failed_references}
+            
 
 # @dataclass
 # class WhereFilter:
