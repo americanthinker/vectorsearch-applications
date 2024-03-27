@@ -39,6 +39,24 @@ def join_docs(corpus: List[dict],
             docs.append(doc)
     return docs
     
+def convert_raw_data(raw_data: list[dict]) -> list[dict]:
+    '''
+    Converts raw YouTube json to correct format for 
+    indexing on Weaviate. i.e. drops unused fields, 
+    and coerces data types. 
+    '''
+    drops = ['channelId', 'isOwnerViewing', 'isCrawlable', 'allowRatings', \
+             'author', 'isPrivate', 'isUnpluggedCorpus', 'isLiveContent']
+    data = list(raw_data.values())
+    for d in data:
+        d['thumbnail_url'] = d['thumbnail']['thumbnails'][1].get('url')
+        d['lengthSeconds'] = int(d['lengthSeconds'])
+        d['viewCount'] = int(d['viewCount'])
+        del d['thumbnail']
+        for field in drops:
+            del d[field]
+    return data
+    
 def create_dataset(corpus: List[dict],
                    embedding_model: SentenceTransformer,
                    text_splitter: SentenceSplitter,

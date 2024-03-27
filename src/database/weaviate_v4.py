@@ -356,7 +356,10 @@ class WeaviateIndexer:
                          data: list[dict], 
                          collection_name: str,
                          vector_property: str='content_embedding', 
-                         return_batch_errors: bool=True
+                         return_batch_errors: bool=True,
+                         properties: list[Property]=None,
+                         description: str=None,
+                         **kwargs
                          ) -> None:
         '''
         Batch function for fast indexing of data onto Weaviate cluster. 
@@ -364,21 +367,28 @@ class WeaviateIndexer:
         '''
         self._connect()
         if not self._client.collections.exists(collection_name):
-            print(f'Collection "{collection_name}" not found on host')
-            return
-        else:
-            start = time.perf_counter()
-            collection = self._client.collections.get(collection_name)
-            with collection.batch.dynamic() as batch:
-                for doc in tqdm(data):
-                    try:
-                        batch.add_object(properties={k:v for k,v in doc.items() if k != vector_property},
-                                         vector=doc[vector_property])
-                    except Exception as e:
-                        print(e)
-                        continue
-            end = time.perf_counter() - start
-            print(f'Batch job completed in {round(end/60, 2)} minutes.')
+            print(f'Collection "{collection_name}" not found on host, creating Collection first...')
+            if properties is None:
+                raise ValueError(f'Tried to create Collection <{collection_name}> but no properties were provided.')
+            self.create_collection(collection_name=collection_name, 
+                                   properties=properties,
+                                   description=description,
+                                   **kwargs)
+            self._client.close()
+        start = time.perf_counter()
+        self._connect()
+        collection = self._client.collections.get(collection_name)
+        with collection.batch.dynamic() as batch:
+            for doc in tqdm(data):
+                try:
+                    batch.add_object(properties={k:v for k,v in doc.items() if k != vector_property},
+                                        vector=doc[vector_property])
+                except Exception as e:
+                    print(e)
+                    continue
+        end = time.perf_counter() - start
+        self._client.close()
+        print(f'Batch job completed in {round(end/60, 2)} minutes.')
         if return_batch_errors:
             return {'batch_errors':batch.number_errors, 
                     'failed_objects':self._client.batch.failed_objects,
