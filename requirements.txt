@@ -37,5 +37,5 @@ tiktoken==0.5.1
 tokenizers==0.15.0
 torch==2.0.1
 tqdm==4.66.1
-transformers==4.36.0
-weaviate-client==3.25.3 
+transformers==4.39.1
+weaviate-client==4.5.4
