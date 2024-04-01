@@ -44,6 +44,3 @@ properties_template = [
                          index_filterable=False,
                          index_searchable=True)
               ]
-
-if __name__ == '__main__':
-    print(properties_template)

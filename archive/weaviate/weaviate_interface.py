@@ -40,13 +40,13 @@ class WeaviateClient(Client):
         super().__init__(auth_client_secret=auth_config,
                          url=endpoint,
                          **kwargs)    
-        self.model_name_or_path = model_name_or_path
-        self.openai_model = False
-        if self.model_name_or_path == 'text-embedding-ada-002':
+        self._model_name_or_path = model_name_or_path
+        self._openai_model = False
+        if self._model_name_or_path == 'text-embedding-ada-002':
             if not openai_api_key:
                 raise ValueError(f'OpenAI API key must be provided to use this model: {self.model_name_or_path}')
             self.model = OpenAI(api_key=openai_api_key)
-            self.openai_model = True
+            self._openai_model = True
         else: 
             self.model = SentenceTransformer(self.model_name_or_path) if self.model_name_or_path else None
 

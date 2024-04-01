@@ -120,4 +120,24 @@ class Utilities:
             Playlist id of the episode from YouTube
         '''
         return f'https://www.youtube.com/watch?v={video_id}&list={playlist_id}'
+
+    def convert_raw_data(self, raw_data: dict | list[dict]) -> list[dict]:
+        '''
+        Converts raw YouTube json to correct format for 
+        indexing on Weaviate. i.e. drops unused fields, 
+        and coerces data types. 
+        '''
+        drops = ['channelId', 'isOwnerViewing', 'isCrawlable', 'allowRatings', \
+                 'author', 'isPrivate', 'isUnpluggedCorpus', 'isLiveContent']
+        if not isinstance(raw_data, dict):   
+            raise TypeError('Input data must be a dictionary.')
+        data = [v for k, v in raw_data.items() if k not in drops]
+        for d in data:
+            d['thumbnail_url'] = d['thumbnail']['thumbnails'][1].get('url')
+            d['lengthSeconds'] = int(d['lengthSeconds'])
+            d['viewCount'] = int(d['viewCount'])
+            del d['thumbnail']
+            for field in drops:
+                del d[field]
+        return data
     
