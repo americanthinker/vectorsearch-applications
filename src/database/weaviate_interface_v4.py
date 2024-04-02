@@ -187,7 +187,6 @@ class WeaviateWCS:
                                          return_metadata=MetadataQuery(score=True),
                                          return_properties=return_properties)
         # response = response.with_where(where_filter).do() if where_filter else response.do()
-        self._client.close()
         if return_raw:
             return response
         else: 
@@ -232,7 +231,6 @@ class WeaviateWCS:
                                                                                 ),
                                                 return_properties=return_properties)
         #  response = response.with_where(where_filter).do() if where_filter else response.do()
-        self._client.close()
         if return_raw:
             return response
         else: 
@@ -304,7 +302,6 @@ class WeaviateWCS:
                                            return_metadata=MetadataQuery(score=True, distance=True),
                                            return_properties=return_properties)
         # response = response.with_where(where_filter).do() if where_filter else response.do()
-        self._client.close()
         if return_raw:
             return response
         else: 
