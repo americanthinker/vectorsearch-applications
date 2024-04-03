@@ -6,10 +6,11 @@ from weaviate.classes.config import Property
 from weaviate.config import ConnectionConfig
 from openai import OpenAI
 from sentence_transformers import SentenceTransformer
-from typing import Union
+from typing import Any
 from torch import cuda
 from tqdm import tqdm
 import time
+from dataclasses import dataclass
 
 class WeaviateWCS:
     '''
@@ -39,13 +40,16 @@ class WeaviateWCS:
                  model_name_or_path: str='sentence-transformers/all-MiniLM-L6-v2',
                  embedded: bool=False,
                  openai_api_key: str=None,
+                 skip_init_checks: bool=False,
                  **kwargs
                 ):
         if embedded:
             self._client = weaviate.connect_to_embedded(**kwargs)
         else: 
             auth_config = AuthApiKey(api_key=api_key) 
-            self._client = weaviate.connect_to_wcs(cluster_url=endpoint, auth_credentials=auth_config, skip_init_checks=True)   
+            self._client = weaviate.connect_to_wcs(cluster_url=endpoint, 
+                                                   auth_credentials=auth_config, 
+                                                   skip_init_checks=skip_init_checks)   
         self._model_name_or_path = model_name_or_path
         self._openai_model = False
         if self._model_name_or_path == 'text-embedding-ada-002':
@@ -56,7 +60,7 @@ class WeaviateWCS:
         else: 
             self.model = SentenceTransformer(self._model_name_or_path) if self._model_name_or_path else None
 
-        self.return_properties = ['title', 'videoId', 'content']  # 'playlist_id', 'channel_id', 'author'
+        self.return_properties = ['title', 'videoId', 'content', 'guest']
 
     def _connect(self):
         '''
@@ -179,8 +183,8 @@ class WeaviateWCS:
         '''
         self._connect()
         return_properties = return_properties if return_properties else self.return_properties
-        connection = self._client.collections.get(collection_name)
-        response = connection.query.bm25(query=request,
+        collection = self._client.collections.get(collection_name)
+        response = collection.query.bm25(query=request,
                                          query_properties=query_properties,
                                          limit=limit,
                                          return_metadata=MetadataQuery(score=True),
@@ -222,8 +226,8 @@ class WeaviateWCS:
         self._connect()
         return_properties = return_properties if return_properties else self.return_properties
         query_vector = self._create_query_vector(request, device=device)
-        connection = self._client.collections.get(collection_name)
-        response = connection.query.near_vector(near_vector=query_vector,
+        collection = self._client.collections.get(collection_name)
+        response = collection.query.near_vector(near_vector=query_vector,
                                                 limit=limit,
                                                 return_metadata=MetadataQuery(distance=True, 
                                                                                 explain_score=True,
@@ -292,8 +296,8 @@ class WeaviateWCS:
         self._connect()
         return_properties = return_properties if return_properties else self.return_properties
         query_vector = self._create_query_vector(request, device=device)
-        connection = self._client.collections.get(collection_name)
-        response = connection.query.hybrid(query=request,
+        collection = self._client.collections.get(collection_name)
+        response = collection.query.hybrid(query=request,
                                            query_properties=query_properties,
                                            vector=query_vector,
                                            alpha=alpha,
@@ -396,42 +400,42 @@ class WeaviateIndexer:
                     'failed_references': self._client.batch.failed_references}
             
 
-# @dataclass
-# class WhereFilter:
+@dataclass
+class WhereFilter:
 
-#     '''
-#     Simplified interface for constructing a WhereFilter object.
+    '''
+    Simplified interface for constructing a WhereFilter object.
 
-#     Args
-#     ----
-#     path: list[str]
-#         list of properties to filter on.
-#     operator: str
-#         Operator to use for filtering. Options: ['And', 'Or', 'Equal', 'NotEqual', 
-#         'GreaterThan', 'GreaterThanEqual', 'LessThan', 'LessThanEqual', 'Like', 
-#         'WithinGeoRange', 'IsNull', 'ContainsAny', 'ContainsAll']
-#     value[dataType]: Union[int, bool, str, float, datetime]
-#         Value to filter on. The dataType suffix must match the data type of the 
-#         property being filtered on. At least and only one value type must be provided. 
-#     '''
-#     path: list[str]
-#     operator: str
-#     valueInt: int=None
-#     valueBoolean: bool=None
-#     valueText: str=None
-#     valueNumber: float=None
-#     valueDate = None
+    Args
+    ----
+    path: list[str]
+        list of properties to filter on.
+    operator: str
+        Operator to use for filtering. Options: ['And', 'Or', 'Equal', 'NotEqual', 
+        'GreaterThan', 'GreaterThanEqual', 'LessThan', 'LessThanEqual', 'Like', 
+        'WithinGeoRange', 'IsNull', 'ContainsAny', 'ContainsAll']
+    value[dataType]: Union[int, bool, str, float, datetime]
+        Value to filter on. The dataType suffix must match the data type of the 
+        property being filtered on. At least and only one value type must be provided. 
+    '''
+    path: list[str]
+    operator: str
+    valueInt: int=None
+    valueBoolean: bool=None
+    valueText: str=None
+    valueNumber: float=None
+    valueDate = None
 
-#     def post_init(self):
-#         operators = ['And', 'Or', 'Equal', 'NotEqual','GreaterThan', 'GreaterThanEqual', 'LessThan',\
-#                       'LessThanEqual', 'Like', 'WithinGeoRange', 'IsNull', 'ContainsAny', 'ContainsAll']
-#         if self.operator not in operators:
-#             raise ValueError(f'operator must be one of: {operators}, got {self.operator}')
-#         values = [self.valueInt, self.valueBoolean, self.valueText, self.valueNumber, self.valueDate]
-#         if not any(values):
-#             raise ValueError('At least one value must be provided.')
-#         if len(values) > 1:
-#             raise ValueError('At most one value can be provided.')
+    def post_init(self):
+        operators = ['And', 'Or', 'Equal', 'NotEqual','GreaterThan', 'GreaterThanEqual', 'LessThan',\
+                      'LessThanEqual', 'Like', 'WithinGeoRange', 'IsNull', 'ContainsAny', 'ContainsAll']
+        if self.operator not in operators:
+            raise ValueError(f'operator must be one of: {operators}, got {self.operator}')
+        values = [self.valueInt, self.valueBoolean, self.valueText, self.valueNumber, self.valueDate]
+        if not any(values):
+            raise ValueError('At least one value must be provided.')
+        if len(values) > 1:
+            raise ValueError('At most one value can be provided.')
     
-#     def todict(self):
-#         return {k:v for k,v in self.__dict__.items() if v is not None}
+    def todict(self) -> dict[str, Any]:
+        return {k:v for k,v in self.__dict__.items() if v is not None}

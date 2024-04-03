@@ -1,4 +1,5 @@
 import time
+import os
 from typing import List, Tuple
 from itertools import groupby
 
@@ -64,6 +65,7 @@ def create_dataset(corpus: List[dict],
                    unique_id_field: str='videoId',
                    content_field: str='content',
                    embedding_field: str='content_embedding',
+                   overwrite_existing: bool=False,
                    device: str='cuda:0' if cuda.is_available() else 'cpu'
                    ) -> None:
     '''
@@ -73,15 +75,22 @@ def create_dataset(corpus: List[dict],
     '''
     
     io = FileIO()
-
     chunk_size = text_splitter.chunk_size
+    file_path = f'{file_outpath_prefix}-{chunk_size}.parquet'
+    # fail early prior to kicking off expensive job
+    if os.path.exists(file_path) and overwrite_existing == False:
+            raise FileExistsError(f'File by name {file_path} already exists, try using another file name or set overwrite_existing to True.')
     print(f'Creating dataset using chunk_size: {chunk_size}')
+
     start = time.perf_counter()
+
     content_splits = chunk_data(corpus, text_splitter, content_field)
     text_vector_tuples = create_vectors(content_splits, embedding_model, device)
     joined_docs = join_docs(corpus, text_vector_tuples, unique_id_field, content_field, embedding_field)
-    file_path = f'{file_outpath_prefix}-{chunk_size}.parquet'
-    io.save_as_parquet(file_path=file_path, data=joined_docs, overwrite=False)
+    try:
+        io.save_as_parquet(file_path=file_path, data=joined_docs, overwrite=overwrite_existing)
+    except Exception as e:
+        print(f'Dataset not saved to disk as parquet file due to: {e}')
     end = time.perf_counter() - start
     print(f'Total Time to process dataset of chunk_size ({chunk_size}): {round(end/60, 2)} minutes')
     return joined_docs

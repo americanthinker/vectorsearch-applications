@@ -25,7 +25,12 @@ def convert_seconds(seconds: int):
     """
     return time.strftime("%H:%M:%S", time.gmtime(seconds))
 
-def generate_prompt_series(query: str, results: List[dict]) -> str:
+def generate_prompt_series(query: str, 
+                           results: List[dict], 
+                           summary_key: str='summary',
+                           guest_key: str='guest',
+                           content_key: str='content'
+                           ) -> str:
     """
     Generates a prompt for the OpenAI API by joining the context blocks of the top results.
     Provides context to the LLM by supplying the summary, guest, and retrieved content of each result.
@@ -37,27 +42,10 @@ def generate_prompt_series(query: str, results: List[dict]) -> str:
         results : List[dict]
             List of results from the Weaviate client
     """
-    delimiter = '--------'
-    context_series = f'\n{delimiter}'.join([context_block.format(summary=res['summary'], guest=res['guest'], \
-                                         transcript=res['content']) for res in results]).strip()
-    prompt = question_answering_prompt_series.format(question=query, series=context_series)
-    return prompt
-
-def demo_gen_prompt_series(query: str, results: list[dict], guest: str, summary: str) -> str:
-    """
-    Generates a prompt for the OpenAI API by joining the context blocks of the top results.
-    Provides context to the LLM by supplying the summary, guest, and retrieved content of each result.
-
-    Args:
-    -----
-        query : str
-            User query
-        results : List[dict]
-            List of results from the Weaviate client
-    """
-    # delimiter = '-------------------'
-    context_series = f'\n'.join([context_block.format(summary=summary, guest=guest, \
-                                transcript=res['content']) for res in results]).strip()
+    context_series = f'\n'.join([context_block.format(summary=res[summary_key],
+                                                                 guest=res[guest_key],
+                                                                 transcript=res[content_key]) 
+                                for res in results]).strip()
     prompt = question_answering_prompt_series.format(question=query, series=context_series)
     return prompt
 

@@ -6,6 +6,7 @@ def get_weaviate_client(endpoint: str=os.environ.get('WEAVIATE_ENDPOINT'),
                         model_name_or_path: str='sentence-transformers/all-MiniLM-L6-v2',
                         embedded: bool=False,
                         openai_api_key: str=None,
+                        skip_init_checks: bool=False,
                         **kwargs
                         ) -> WeaviateWCS:
-    return WeaviateWCS(endpoint, api_key, model_name_or_path, embedded, openai_api_key, **kwargs)
+    return WeaviateWCS(endpoint, api_key, model_name_or_path, embedded, openai_api_key, skip_init_checks, **kwargs)
