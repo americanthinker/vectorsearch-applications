@@ -49,24 +49,6 @@ def generate_prompt_series(query: str,
     prompt = question_answering_prompt_series.format(question=query, series=context_series)
     return prompt
 
-def demo_gen_prompt_series(query: str, results: list[dict], guest: str, summary: str) -> str:
-    """
-    Generates a prompt for the OpenAI API by joining the context blocks of the top results.
-    Provides context to the LLM by supplying the summary, guest, and retrieved content of each result.
-
-    Args:
-    -----
-        query : str
-            User query
-        results : List[dict]
-            List of results from the Weaviate client
-    """
-    # delimiter = '-------------------'
-    context_series = f'\n'.join([context_block.format(summary=summary, guest=guest, \
-                                transcript=res['content']) for res in results]).strip()
-    prompt = question_answering_prompt_series.format(question=query, series=context_series)
-    return prompt
-
 def validate_token_threshold(ranked_results: List[dict], 
                              base_prompt: str,
                              query: str,

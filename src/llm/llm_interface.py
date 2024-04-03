@@ -19,7 +19,6 @@ class LLM:
                         temperature: int=0, 
                         max_tokens: int=500,
                         stream: bool=False,
-                        raw_response: bool=False,
                         **kwargs
                         ) -> str:
         '''
@@ -56,9 +55,7 @@ class LLM:
                                            retry_strategy="exponential_backoff_retry",
                                            api_key=self._api_key,
                                            **kwargs)
-        if raw_response:
-            return response
-        return response.choices[0].message.content
+        return response
     
     async def achat_completion(self, 
                                system_message: str,
