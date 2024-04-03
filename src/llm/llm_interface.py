@@ -1,25 +1,45 @@
-from litellm import completion_with_retries, completion, acompletion
-import pandas as pd
+from litellm import completion_with_retries, acompletion, acompletion_with_retries
 import os
 
 class LLM:
-
+    '''
+    Creates primary Class instance for interacting with various LLM model APIs.
+    Primary APIs supported are OpenAI and Anthropic.
+    '''
     def __init__(self, 
                  model_name: str="gpt-3.5-turbo-0125", 
                  api_key: str=os.environ['OPENAI_API_KEY']
                  ):
         self.model_name = model_name
+        self._api_key = api_key
 
-    def get_chat_completion(self, 
-                            system_message: str,
-                            assistant_message: str=None,
-                            temperature: int=0, 
-                            max_tokens: int=500,
-                            stream: bool=False,
-                            raw_response: bool=False,
-                            **kwargs
-                            ) -> str:
-        
+    def chat_completion(self, 
+                        system_message: str,
+                        assistant_message: str=None,
+                        temperature: int=0, 
+                        max_tokens: int=500,
+                        stream: bool=False,
+                        raw_response: bool=False,
+                        **kwargs
+                        ) -> str:
+        '''
+        Generative text completion method.
+
+        Args:
+        -----
+        system_message: str
+            The system message to be sent to the model.
+        assistant_message: str
+            The assistant message to be sent to the model.
+        temperature: int
+            The temperature parameter for the model.
+        max_tokens: int
+            The maximum tokens to be generated.
+        stream: bool
+            Whether to stream the response.
+        raw_response: bool
+            If True, returns the raw model response.
+        '''
         initial_role = 'user' if self.model_name.startswith('claude') else 'system'
         if self.model_name.startswith('claude'):
             temperature = temperature/2
@@ -34,11 +54,57 @@ class LLM:
                                            max_tokens=max_tokens,
                                            stream=stream,
                                            retry_strategy="exponential_backoff_retry",
+                                           api_key=self._api_key,
                                            **kwargs)
         if raw_response:
             return response
         return response.choices[0].message.content
     
+    async def achat_completion(self, 
+                               system_message: str,
+                               assistant_message: str=None,
+                               temperature: int=0, 
+                               max_tokens: int=500,
+                               stream: bool=False,
+                               raw_response: bool=False,
+                               **kwargs
+                               ) -> str:
+        '''
+        Asynchronous generative text completion method.
+
+        Args:
+        -----
+        system_message: str
+            The system message to be sent to the model.
+        assistant_message: str
+            The assistant message to be sent to the model.
+        temperature: int
+            The temperature parameter for the model.
+        max_tokens: int
+            The maximum tokens to be generated.
+        stream: bool
+            Whether to stream the response.
+        raw_response: bool
+            If True, returns the raw model response.
+        '''
+        
+        initial_role = 'user' if self.model_name.startswith('claude') else 'system'
+        if self.model_name.startswith('claude'):
+            temperature = temperature/2
+        messages =  [
+            {'role': initial_role, 'content': system_message},
+            {'role': 'assistant', 'content': assistant_message}
+                    ]
+        
+        response = await acompletion(model=self.model_name,
+                                    messages=messages,
+                                    temperature=temperature,
+                                    max_tokens=max_tokens,
+                                    stream=stream,
+                                    **kwargs)
+        if raw_response:
+            return response
+        return response.choices[0].message.content
     
     # def generate_question_context_pairs(self, 
     #                                     context_tuple: Tuple[str, str], 

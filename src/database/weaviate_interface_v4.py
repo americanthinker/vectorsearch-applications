@@ -4,10 +4,9 @@ from weaviate.collections.classes.internal import (MetadataReturn, QueryReturn,
 import weaviate
 from weaviate.classes.config import Property
 from weaviate.config import ConnectionConfig
-from dataclasses import dataclass
 from openai import OpenAI
 from sentence_transformers import SentenceTransformer
-from typing import Callable, Union
+from typing import Union
 from torch import cuda
 from tqdm import tqdm
 import time
@@ -97,7 +96,7 @@ class WeaviateWCS:
         else: 
             print(f'Collection "{collection_name}" not found on host')
 
-    def show_collection_properties(self, collection_name: str) -> Union[dict, str]:
+    def show_collection_properties(self, collection_name: str) -> dict | str:
         '''
         Shows all properties of a collection (index) on the Weaviate instance.
         '''
@@ -156,7 +155,7 @@ class WeaviateWCS:
                        limit: int=10,
                        where_filter: dict=None,
                        return_properties: list[str]=None,
-                       return_raw: bool=False) -> Union[dict, list[dict]]:
+                       return_raw: bool=False) -> dict | list[dict]:
         '''
         Executes Keyword (BM25) search. 
 
@@ -262,7 +261,7 @@ class WeaviateWCS:
                       return_properties: list[str]=None,
                       return_raw: bool=False,
                       device: str='cuda:0' if cuda.is_available() else 'cpu'
-                     ) -> Union[dict, list[dict]]:
+                     ) -> dict | list[dict]:
         '''
         Executes Hybrid (BM25 + Vector) search.
         

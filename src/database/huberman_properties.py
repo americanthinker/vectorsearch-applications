@@ -1,4 +1,4 @@
-from weaviate.classes.config import Property, DataType, Tokenization
+from weaviate.classes.config import Property, DataType
 
 properties_template = [  
                 Property(name='videoId',
@@ -42,5 +42,9 @@ properties_template = [
                 Property(name='content',
                          data_type=DataType.TEXT,
                          index_filterable=False,
-                         index_searchable=True)
+                         index_searchable=True),
+                Property(name='guest',
+                         data_type=DataType.TEXT,
+                         index_filterable=True,
+                         index_searchable=True),
               ]
