@@ -3,13 +3,14 @@ from openai import OpenAI
 from typing import List, Any, Tuple
 from dotenv import load_dotenv
 from tqdm import tqdm
-from concurrent.futures import ThreadPoolExecutor, as_completed
-_ = load_dotenv('./.env', override=True) # read local .env file
 
 
 class GPT_Turbo:
 
-    def __init__(self, model: str="gpt-3.5-turbo-0613", api_key: str=os.environ['OPENAI_API_KEY']):
+    def __init__(self, 
+                 model: str="gpt-3.5-turbo-0613", 
+                 api_key: str=os.environ['OPENAI_API_KEY']
+                 ):
         self.model = model
         self.client = OpenAI(api_key=api_key)
 
