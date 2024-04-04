@@ -14,7 +14,8 @@ data/*.parquet
 answer_key
 notebooks/videos
 notebooks/transcripts
-data/*.json
+notebooks/data_ingest/videos
+notebooks/data_ingest/transcripts
 
 # Distribution / packaging
 .Python
