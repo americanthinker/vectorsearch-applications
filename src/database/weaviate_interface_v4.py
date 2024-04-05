@@ -60,7 +60,7 @@ class WeaviateWCS:
         else: 
             self.model = SentenceTransformer(self._model_name_or_path) if self._model_name_or_path else None
 
-        self.return_properties = ['title', 'videoId', 'content', 'guest']
+        self.return_properties = ['title', 'video_id', 'content', 'guest']
 
     def _connect(self):
         '''

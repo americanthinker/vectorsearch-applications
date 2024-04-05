@@ -1,4 +1,5 @@
 from litellm import completion_with_retries, acompletion, acompletion_with_retries
+from typing import Literal
 import os
 
 class LLM:
@@ -7,7 +8,8 @@ class LLM:
     Primary APIs supported are OpenAI and Anthropic.
     '''
     def __init__(self, 
-                 model_name: str="gpt-3.5-turbo-0125", 
+                 model_name: Literal['gpt-3.5-turbo-0125', 'gpt-3.5-turbo', 'gpt-3.5-turbo-16k',
+                                     'claude-3-haiku-20240307', 'claude-3-sonnet-2024022','claude-3-opus-20240229'],
                  api_key: str=os.environ['OPENAI_API_KEY']
                  ):
         self.model_name = model_name
@@ -63,7 +65,7 @@ class LLM:
                                temperature: int=0, 
                                max_tokens: int=500,
                                stream: bool=False,
-                               raw_response: bool=False,
+                               raw_response: bool=True,
                                **kwargs
                                ) -> str:
         '''
@@ -84,7 +86,6 @@ class LLM:
         raw_response: bool
             If True, returns the raw model response.
         '''
-        
         initial_role = 'user' if self.model_name.startswith('claude') else 'system'
         if self.model_name.startswith('claude'):
             temperature = temperature/2
@@ -92,13 +93,12 @@ class LLM:
             {'role': initial_role, 'content': system_message},
             {'role': 'assistant', 'content': assistant_message}
                     ]
-        
         response = await acompletion(model=self.model_name,
-                                    messages=messages,
-                                    temperature=temperature,
-                                    max_tokens=max_tokens,
-                                    stream=stream,
-                                    **kwargs)
+                                     messages=messages,
+                                     temperature=temperature,
+                                     max_tokens=max_tokens,
+                                     stream=stream,
+                                     **kwargs)
         if raw_response:
             return response
         return response.choices[0].message.content
