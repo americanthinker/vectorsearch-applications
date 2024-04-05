@@ -25,14 +25,13 @@ class DataIngest:
             os.makedirs(video_dir)
         yt = YouTube(video_url)
         filename = f"{os.path.join(video_dir, yt.video_id)}.mp4"
-        if not os.path.exists(filename):
-            (yt.streams
-                .filter(only_audio=True, file_extension = "mp4")
-                .order_by("abr")
-                .desc()
-                .first()
-                .download(output_path=filename)
-            )
+        (yt.streams
+            .filter(only_audio=True, file_extension = "mp4")
+            .order_by("abr")
+            .desc()
+            .first()
+            .download(filename=filename)
+        )
         details = yt.vid_info['videoDetails']
         if isinstance(index, int):
             details['episode_num'] = index
@@ -66,25 +65,27 @@ class DataIngest:
     def get_audio_files_threaded(self,
                                  video_urls: Playlist | list[str], 
                                  video_dir: str='videos/',
-                                 create_dict: bool=True, 
+                                 return_dict: bool=True, 
                                  video_id_key: str='video_id'
-                                 ) -> list[dict]:
+                                 ) -> dict | list[dict] :
         '''
-        Multithreaded concurrent method for multiple video downloads
+        Multithreaded concurrent method for multiple video downloads.
+        Returns either a single dictionary with video_ids as keys or
+        a list of singular metadata dictionaries.
         '''
-        meta_data = {} if create_dict else []
-        with tqdm(total=len(video_urls)) as progress:
-            with ThreadPoolExecutor(max_workers=os.cpu_count() * 2) as executor:
-                futures = [executor.submit(self.download_audio, url, i, video_dir) for i, url in enumerate(video_urls, start=1)]
-                for future in as_completed(futures):
-                    try:
-                        video_info = future.result()
-                        if create_dict:
-                            meta_data[video_info[video_id_key]] = video_info
-                        else:
-                            meta_data.append(video_info)
-                        progress.update(1)
-                    except Exception as e:
-                        print(f'Error due to: {e}')
-                        continue
+        meta_data = {} if return_dict else []
+        progress = tqdm("Downloading videos", total=len(video_urls))
+        with ThreadPoolExecutor(max_workers=os.cpu_count() * 2) as executor:
+            futures = [executor.submit(self.download_audio, url, i, video_dir) for i, url in enumerate(video_urls, start=1)]
+            for future in as_completed(futures):
+                try:
+                    video_info = future.result()
+                    if return_dict:
+                        meta_data[video_info[video_id_key]] = video_info
+                    else:
+                        meta_data.append(video_info)
+                except Exception as e:
+                    print(f'Error due to: {e}')
+                    continue
+                progress.update(1)
         return meta_data
