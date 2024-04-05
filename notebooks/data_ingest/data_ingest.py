@@ -35,8 +35,6 @@ class DataIngest:
                        ) -> dict:
         """Download youtube video and return videoDetails"""
         
-        if not os.path.exists(video_dir):
-            os.makedirs(video_dir)
         yt = YouTube(video_url)
         filename = f"{os.path.join(video_dir, yt.video_id)}.mp4"
         (yt.streams
@@ -136,9 +134,12 @@ class DataIngest:
         with open(path, 'w') as f:
             f.write(json.dumps(data, indent=4)) 
     
-    def get_transcript_paths(self, path: str) -> list[Path]:
-        """Get transcript paths"""
-        return [path for path in Path(path).iterdir() if path.name.endswith('.txt')]
+    def get_transcript_paths(self, transcript_dir: str) -> list[Path]:
+        """
+        Get all transcript paths from directory.  Directory should contain
+        only transcript files with the extension ".txt"
+        """
+        return [path for path in Path(transcript_dir).iterdir() if path.name.endswith('.txt')]
     
     def _get_thumbnail_url(self, episode_dict: str, default_url: str=''):
         """
