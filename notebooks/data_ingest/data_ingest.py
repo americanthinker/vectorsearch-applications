@@ -74,18 +74,18 @@ class DataIngest:
         a list of singular metadata dictionaries.
         '''
         meta_data = {} if return_dict else []
-        with tqdm(total=len(video_urls)) as progress:
-            with ThreadPoolExecutor(max_workers=os.cpu_count() * 2) as executor:
-                futures = [executor.submit(self.download_audio, url, i, video_dir) for i, url in enumerate(video_urls, start=1)]
-                for future in as_completed(futures):
-                    try:
-                        video_info = future.result()
-                        if return_dict:
-                            meta_data[video_info[video_id_key]] = video_info
-                        else:
-                            meta_data.append(video_info)
-                        progress.update(1)
-                    except Exception as e:
-                        print(f'Error due to: {e}')
-                        continue
+        progress = tqdm("Downloading videos", total=len(video_urls))
+        with ThreadPoolExecutor(max_workers=os.cpu_count() * 2) as executor:
+            futures = [executor.submit(self.download_audio, url, i, video_dir) for i, url in enumerate(video_urls, start=1)]
+            for future in as_completed(futures):
+                try:
+                    video_info = future.result()
+                    if return_dict:
+                        meta_data[video_info[video_id_key]] = video_info
+                    else:
+                        meta_data.append(video_info)
+                except Exception as e:
+                    print(f'Error due to: {e}')
+                    continue
+                progress.update(1)
         return meta_data
