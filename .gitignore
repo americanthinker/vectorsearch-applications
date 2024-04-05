@@ -9,6 +9,7 @@ __pycache__/
 # Large Files
 models/
 eval_results/
+data/raw/
 data/videos/
 data/*.parquet
 answer_key
