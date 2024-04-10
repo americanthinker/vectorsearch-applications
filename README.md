@@ -10,7 +10,7 @@ Students are expected to have the following technical skills prior to enrolling.
 - Nice to have but not strictly required:
     - experience fine-tuning a ML model
     - familiarity with the Streamlit API
-    - familiarity with making inference calls to a Generative LLM (OpenAI or Llama-2)  
+    - familiarity with making inference calls to a Generative LLM (OpenAI)  
 # Prerequisites - Administrative
 1. Students will need access to their own compute environment, whether locally or remote.  There are no hard requirements for RAM or CPU processing power, but in general the more punch the better. 
 2. Students will need accounts with the following organizations:
