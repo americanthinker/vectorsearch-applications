@@ -24,11 +24,11 @@ Students are expected to have the following technical skills prior to enrolling.
 3. Clone a copy of the forked repo into the dev environment of your choice.  Navigate into the cloned `vectorsearch-applications` directory. 
 4. Create a python virtual environment using your library of choice.  Here's an example using [`conda`](https://docs.conda.io/projects/miniconda/en/latest/):  
 ```
-conda create --name impactenv -y python=3.10
+conda create --name mynewenv -y python=3.10
 ```
 4. Once the environment is created, activate the environment and install dependencies.
 ```
-conda activate impactenv
+conda activate mynewenv
 
 pip install -r requirements.txt
 ```
