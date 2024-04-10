@@ -35,7 +35,6 @@ pip install -r requirements.txt
 5. Last but not least create a `.env` text file in your cloned repo.  At a minimum, add the following environment variables:
 ```
 OPENAI_API_KEY= "your OpenAI account API Key"
-HF_TOKEN= "your HuggingFace account token"  <--- Optional: not required if using OpenAI
 WEAVIATE_API_KEY= "your Weaviate cluster API Key"   <--- you will get this on Day One of the course
 WEAVIATE_ENDPOINT= "your Weaviate cluster endpoint"  <--- you will get this on Day One of the course
 ```
