@@ -1,12 +1,10 @@
 from weaviate.classes.config import Property, DataType
 
-properties_template = [  
+properties = [  
                 Property(name='video_id',
                          data_type=DataType.TEXT,
                          index_filterable=True,
-                         index_searchable=False,
-                         skip_vectorization=True,
-                         vectorize_property_name=False),
+                         index_searchable=False),
                 Property(name='title',
                          data_type=DataType.TEXT,
                          index_filterable=True,
@@ -50,9 +48,9 @@ properties_template = [
                 Property(name='episode_url',
                          data_type=DataType.TEXT,
                          index_filterable=False,
-                         index_searchable=False),
-                Property(name='content_window',
-                         data_type=DataType.TEXT,
-                         index_filterable=False,
-                         index_searchable=True),
+                         index_searchable=False)
+                # Property(name='content_window',
+                #          data_type=DataType.TEXT,
+                #          index_filterable=False,
+                #          index_searchable=True),
               ]

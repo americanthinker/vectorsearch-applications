@@ -6,17 +6,21 @@ from itertools import groupby
 #external libraries
 from rich import print
 from torch import cuda
+from numpy import ndarray
 from tqdm.notebook import tqdm
 
 #external files
 from src.preprocessor.preprocessing import FileIO # bad ass tokenizer library for use with OpenAI LLMs 
-from llama_index.text_splitter import SentenceSplitter #one of the best on the market
+from llama_index.legacy.text_splitter import SentenceSplitter #one of the best on the market
 from sentence_transformers import SentenceTransformer
 
-def chunk_data(data: List[dict], text_splitter: SentenceSplitter, content_field='content'):
+def chunk_data(data: List[dict], text_splitter: SentenceSplitter, content_field='content') -> List[List[str]]:
     return [text_splitter.split_text(d[content_field]) for d in tqdm(data, 'CHUNKING')]
 
-def create_vectors(content_splits: List[List[str]], model: SentenceTransformer, device: str):
+def create_vectors(content_splits: List[List[str]], 
+                   model: SentenceTransformer, 
+                   device: str
+                   ) -> list[tuple[str, ndarray[float]]]:
     text_vector_tuples = []
     for chunk in tqdm(content_splits, 'VECTORS'):
         vectors = model.encode(chunk, show_progress_bar=False, device=device)
@@ -61,13 +65,13 @@ def convert_raw_data(raw_data: list[dict]) -> list[dict]:
 def create_dataset(corpus: List[dict],
                    embedding_model: SentenceTransformer,
                    text_splitter: SentenceSplitter,
-                   file_outpath_prefix: str='./impact-theory-minilmL6',
-                   unique_id_field: str='videoId',
+                   file_outpath_prefix: str='./huberman-labs-minilm',
+                   unique_id_field: str='video_id',
                    content_field: str='content',
                    embedding_field: str='content_embedding',
                    overwrite_existing: bool=False,
                    device: str='cuda:0' if cuda.is_available() else 'cpu'
-                   ) -> None:
+                   ) -> list[dict]:
     '''
     Given a raw corpus of data, this function creates a new dataset where each dataset 
     doc contains episode metadata and it's associated text chunk and vector representation. 
@@ -86,7 +90,11 @@ def create_dataset(corpus: List[dict],
 
     content_splits = chunk_data(corpus, text_splitter, content_field)
     text_vector_tuples = create_vectors(content_splits, embedding_model, device)
-    joined_docs = join_docs(corpus, text_vector_tuples, unique_id_field, content_field, embedding_field)
+    try:
+        joined_docs = join_docs(corpus, text_vector_tuples, unique_id_field, content_field, embedding_field)
+    except Exception as e:
+        print(f'Failed to join docs due to: {e}. Try manually joining docs using the returned text_vector_tuples and your original corpus')
+        return text_vector_tuples
     try:
         io.save_as_parquet(file_path=file_path, data=joined_docs, overwrite=overwrite_existing)
     except Exception as e:

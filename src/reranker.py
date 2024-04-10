@@ -89,8 +89,3 @@ class ReRanker(CrossEncoder):
                 return sorted_hits[:top_k]
             return filtered_hits
         return sorted_hits[:top_k]
-    
-if __name__ == '__main__':
-    test = FileIO()
-    print(test.__class__.__name__)
-    print(dir(chunk_data))

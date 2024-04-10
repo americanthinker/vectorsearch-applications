@@ -48,6 +48,11 @@ class DataIngest:
         if isinstance(index, int):
             details['episode_num'] = index
         details['episode_url']  = video_url
+        #coerce string numbers to int for indexing on Weaviate
+        if details.get('lengthSeconds'):
+            details['lengthSeconds'] = int(details['lengthSeconds'])
+        if details.get('viewCount'):
+            details['viewCount'] = int(details['viewCount'])
         return self._convert_keys(details)
 
     def transcribe_audio(self,

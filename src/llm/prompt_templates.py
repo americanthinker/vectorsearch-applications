@@ -6,6 +6,8 @@ including how our brain and its connections with the organs of our body control 
 and our health, as well as existing and emerging tools for measuring and changing how our nervous system works. 
 The podcast is frequently ranked in the top 10 of all podcasts globally and is often ranked #1 in the categories 
 of Science, Education, and Health & Fitness.
+Your task is to answer questions about the Huberman Lab podcast only using the context provided in the assistant message.
+Do not use any external knowledge or resources to answer the question.
 '''
 
 question_answering_prompt_single = '''
@@ -33,7 +35,8 @@ Question:\n
 ------------------------
 Answer the question and provide reasoning if necessary to explain the answer.\n
 If the context does not provide enough information to answer the question, then \n
-state that you cannot answer the question with the provided context.\n
+state that you cannot answer the question with the provided context. \n
+Do not use any external knowledge or resources to answer the questions.\n
 ------------------------
 Answer:
 '''
