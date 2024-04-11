@@ -10,8 +10,8 @@ import pathlib
 ## Set of helper functions that support data preprocessing 
 class FileIO:
     '''
-    Convenience class for saving and loading data in parquet and 
-    json formats to/from disk.
+    Convenience class for saving and loading data in parquet and json formats 
+    to/from disk.
     '''
 
     def save_as_parquet(self, 
