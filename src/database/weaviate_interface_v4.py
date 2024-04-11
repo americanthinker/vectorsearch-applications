@@ -381,25 +381,31 @@ class WeaviateIndexer:
             self._client.close()
         start = time.perf_counter()
         self._connect()
-        try:
-            collection = self._client.collections.get(collection_name)
-            with collection.batch.dynamic() as batch:
-                for doc in tqdm(data):
-                    try:
-                        batch.add_object(properties={k:v for k,v in doc.items() if k != vector_property},
-                                            vector=doc[vector_property])
-                    except Exception as e:
-                        print(e)
-                        continue
-        finally:
-            self._client.close()
+        collection = self._client.collections.get(collection_name)
+        with collection.batch.dynamic() as batch:
+            for doc in tqdm(data):
+                try:
+                    batch.add_object(properties={k:v for k,v in doc.items() if k != vector_property},
+                                        vector=doc[vector_property])
+                except Exception as e:
+                    print(e)
+                    continue
+
+        # if(len(collection.batch.failed_objects)>0):
+        #     print("Import complete with errors")
+        #     for err in collection.batch.failed_objects:
+        #         print(err)
+        # else:
+        #     print("Import complete with no errors")
         end = time.perf_counter() - start
         print(f'Batch job completed in {round(end/60, 2)} minutes.')
+        
+        batch_object = {'batch_object': batch,
+                        'batch_errors':batch.number_errors, 
+                        'failed_objects':collection.batch.failed_objects,
+                        'failed_references': collection.batch.failed_references}
         if return_batch_errors:
-            return {'batch_object': batch,
-                    'batch_errors':batch.number_errors, 
-                    'failed_objects':self._client.batch.failed_objects,
-                    'failed_references': self._client.batch.failed_references}
+            return batch_object
             
 
 @dataclass
