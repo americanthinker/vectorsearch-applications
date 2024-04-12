@@ -71,6 +71,41 @@ class WeaviateWCS:
         if not self._client.is_connected():
             self._client.connect()
 
+    def create_collection(self,
+                          collection_name: str,
+                          properties: list[Property],
+                          description: str=None,
+                          **kwargs
+                          ) -> None:
+        '''
+        Creates a collection (index) on the Weaviate instance.
+        
+        Args
+        ----
+        collection_name: str
+            Name of the collection to create.
+        properties: list[Property]
+            List of properties to add to data objects in the collection.
+        description: str=None
+            User-defined description of the collection.
+        '''
+        
+        self._connect()
+        if self._client.collections.exists(collection_name):
+            print(f'Collection "{collection_name}" already exists')
+            return 
+        else:
+            try:
+                self._client.collections.create(name=collection_name, 
+                                                properties=properties,
+                                                description=description,
+                                                **kwargs)
+                print(f'Collection "{collection_name}" created')
+            except Exception as e:
+                print(f'Error creating collection, due to: {e}')
+        self._client.close()
+        return
+
     def show_all_collections(self, 
                              detailed: bool=False,
                              max_details: bool=False
