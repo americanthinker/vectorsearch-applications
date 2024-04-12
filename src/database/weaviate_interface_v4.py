@@ -43,6 +43,8 @@ class WeaviateWCS:
                  skip_init_checks: bool=False,
                  **kwargs
                 ):
+
+        self.endpoint = endpoint
         if embedded:
             self._client = weaviate.connect_to_embedded(**kwargs)
         else: 
@@ -359,15 +361,40 @@ class WeaviateIndexer:
     def batch_index_data(self,
                          data: list[dict], 
                          collection_name: str,
+                         error_threshold: float=0.01,
                          vector_property: str='content_embedding', 
-                         return_batch_errors: bool=True,
+                         unique_id_field: str='doc_id',
                          properties: list[Property]=None,
-                         description: str=None,
+                         collection_description: str=None,
                          **kwargs
-                         ) -> None:
+                         ) -> dict:
         '''
         Batch function for fast indexing of data onto Weaviate cluster. 
-        This method assumes that self._client.batch is already configured.
+        
+        Args
+        ----
+        data: list[dict]
+            List of dictionaries where each dictionary represents a document.
+        collection_name: str
+            Name of the collection to index data into.
+        error_threshold: float=0.01
+            Threshold for error rate during batch upload. This value is a percentage of the total data
+            that the end user is willing to tolerate as errors. If the error rate exceeds this threshold,
+            the batch job will be aborted.
+        vector_property: str='content_embedding'
+            Name of the property that contains the vector representation of the document.
+        unique_id_field: str='doc_id'
+            Name of the unique identifier field in the document.
+        properties: list[Property]=None
+            List of properties to create the collection with. Required if collection does not exist.
+        collection_description: str=None
+            Description of the collection. Optional parameter.
+        
+        Returns
+        -------
+        dict
+            Dictionary containing error information if any with the following keys: 
+            ['num_errors', 'error_messages', 'doc_ids']
         '''
         self._connect()
         if not self._client.collections.exists(collection_name):
@@ -376,36 +403,45 @@ class WeaviateIndexer:
                 raise ValueError(f'Tried to create Collection <{collection_name}> but no properties were provided.')
             self.create_collection(collection_name=collection_name, 
                                    properties=properties,
-                                   description=description,
+                                   description=collection_description,
                                    **kwargs)
             self._client.close()
-        start = time.perf_counter()
+
         self._connect()
+        error_threshold_size = int(len(data) * error_threshold)
         collection = self._client.collections.get(collection_name)
+
+        start = time.perf_counter()
+        completed_job = True
+        
         with collection.batch.dynamic() as batch:
             for doc in tqdm(data):
-                try:
-                    batch.add_object(properties={k:v for k,v in doc.items() if k != vector_property},
-                                        vector=doc[vector_property])
-                except Exception as e:
-                    print(e)
-                    continue
-
-        # if(len(collection.batch.failed_objects)>0):
-        #     print("Import complete with errors")
-        #     for err in collection.batch.failed_objects:
-        #         print(err)
-        # else:
-        #     print("Import complete with no errors")
+                batch.add_object(properties={k:v for k,v in doc.items() if k != vector_property},
+                                 vector=doc[vector_property])
+                if batch.number_errors > error_threshold_size:
+                    print('Upload errors exceed error_threshold...')
+                    completed_job = False
+                    break 
         end = time.perf_counter() - start
-        print(f'Batch job completed in {round(end/60, 2)} minutes.')
+        print(f'Processing finished in {round(end/60, 2)} minutes.')
         
-        batch_object = {'batch_object': batch,
-                        'batch_errors':batch.number_errors, 
-                        'failed_objects':collection.batch.failed_objects,
-                        'failed_references': collection.batch.failed_references}
-        if return_batch_errors:
-            return batch_object
+        failed_objects = collection.batch.failed_objects
+        if any(failed_objects):
+            error_messages = [obj.message for obj in failed_objects]
+            doc_ids = [obj.object_.properties.get(unique_id_field, 'Not Found') for obj in failed_objects] 
+        else:
+            error_messages, doc_ids = [], []
+        error_object = {'num_errors':batch.number_errors, 
+                        'error_messages': error_messages,
+                        'doc_ids': doc_ids}
+        if not completed_job:
+            print(f'Batch job failed. Review errors using these keys: {list(error_object.keys())}')
+            return error_object
+        if batch.number_errors > 0:
+                print(f'Batch job completed with {batch.number_errors} errors.  Review errors using these keys: {list(error_object.keys())}')
+        else:
+            print('Batch job completed with zero errors.')
+        return error_object
             
 
 @dataclass
