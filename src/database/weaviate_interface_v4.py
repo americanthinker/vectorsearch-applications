@@ -3,6 +3,7 @@ from weaviate.collections.classes.internal import (MetadataReturn, QueryReturn,
                                                    MetadataQuery)
 import weaviate
 from weaviate.classes.config import Property
+from weaviate.classes.query import Filter
 from weaviate.config import ConnectionConfig
 from openai import OpenAI
 from sentence_transformers import SentenceTransformer
@@ -171,7 +172,7 @@ class WeaviateWCS:
         Formats json response from Weaviate into a list of dictionaries.
         Expands _additional fields if present into top-level dictionary.
         '''
-        results = [{**d.properties, **self._get_meta(d.metadata)} for d in response.objects]
+        results = [{**o.properties, **self._get_meta(o.metadata)} for o in response.objects]
         return results
 
     def _get_meta(self, metadata: MetadataReturn):
@@ -180,21 +181,13 @@ class WeaviateWCS:
         '''
         temp_dict = metadata.__dict__
         return {k:v for k,v in temp_dict.items() if v}
-
-    # def update_ef_value(self, class_name: str, ef_value: int) -> str:
-    #     '''
-    #     Updates ef_value for a collection (index) on the Weaviate instance.
-    #     '''
-    #     self.schema.update_config(class_name=class_name, config={'vectorIndexConfig': {'ef': ef_value}})
-    #     print(f'ef_value updated to {ef_value} for collection {class_name}')
-    #     return self.show_class_config(class_name)['vectorIndexConfig']
         
     def keyword_search(self,
                        request: str,
                        collection_name: str,
                        query_properties: list[str]=['content'],
                        limit: int=10,
-                       where_filter: dict=None,
+                       filter: Filter=None,
                        return_properties: list[str]=None,
                        return_raw: bool=False) -> dict | list[dict]:
         '''
@@ -237,6 +230,7 @@ class WeaviateWCS:
                       collection_name: str,
                       limit: int=10,
                       return_properties: list[str]=None,
+                      filter: Filter=None,
                       return_raw: bool=False,
                       device: str='cuda:0' if cuda.is_available() else 'cpu'
                       ) -> dict | list[dict]:
@@ -266,6 +260,7 @@ class WeaviateWCS:
         collection = self._client.collections.get(collection_name)
         response = collection.query.near_vector(near_vector=query_vector,
                                                 limit=limit,
+                                                filters=filter,
                                                 return_metadata=MetadataQuery(distance=True, 
                                                                                 explain_score=True,
                                                                                 ),
@@ -298,7 +293,7 @@ class WeaviateWCS:
                       query_properties: list[str]=['content'],
                       alpha: float=0.5,
                       limit: int=10,
-                      where_filter: dict=None,
+                      filter: Filter=None,
                       return_properties: list[str]=None,
                       return_raw: bool=False,
                       device: str='cuda:0' if cuda.is_available() else 'cpu'
@@ -322,7 +317,7 @@ class WeaviateWCS:
                 alpha = 1 executes a pure vector search method
         limit: int=10
             Number of results to return.
-        where_filter: dict=None
+        filter: Filter=None
             Property filter to apply to search results.
         return_properties: list[str]=None
             list of properties to return in response.
@@ -336,6 +331,7 @@ class WeaviateWCS:
         collection = self._client.collections.get(collection_name)
         response = collection.query.hybrid(query=request,
                                            query_properties=query_properties,
+                                           filters=filter,
                                            vector=query_vector,
                                            alpha=alpha,
                                            limit=limit,
@@ -480,41 +476,23 @@ class WeaviateIndexer:
             
 
 @dataclass
-class WhereFilter:
+class SearchFilter(Filter):
 
     '''
-    Simplified interface for constructing a WhereFilter object.
+    Simplified interface for constructing a Filter object.
 
     Args
     ----
-    path: list[str]
-        list of properties to filter on.
-    operator: str
-        Operator to use for filtering. Options: ['And', 'Or', 'Equal', 'NotEqual', 
-        'GreaterThan', 'GreaterThanEqual', 'LessThan', 'LessThanEqual', 'Like', 
-        'WithinGeoRange', 'IsNull', 'ContainsAny', 'ContainsAll']
-    value[dataType]: Union[int, bool, str, float, datetime]
-        Value to filter on. The dataType suffix must match the data type of the 
-        property being filtered on. At least and only one value type must be provided. 
+    property : str
+        Property to filter on.
+    query_value : str
+        Query value to filter on.
     '''
-    path: list[str]
-    operator: str
-    valueInt: int=None
-    valueBoolean: bool=None
-    valueText: str=None
-    valueNumber: float=None
-    valueDate = None
+    property: str
+    query_value: str
 
-    def post_init(self):
-        operators = ['And', 'Or', 'Equal', 'NotEqual','GreaterThan', 'GreaterThanEqual', 'LessThan',\
-                      'LessThanEqual', 'Like', 'WithinGeoRange', 'IsNull', 'ContainsAny', 'ContainsAll']
-        if self.operator not in operators:
-            raise ValueError(f'operator must be one of: {operators}, got {self.operator}')
-        values = [self.valueInt, self.valueBoolean, self.valueText, self.valueNumber, self.valueDate]
-        if not any(values):
-            raise ValueError('At least one value must be provided.')
-        if len(values) > 1:
-            raise ValueError('At most one value can be provided.')
+    def exact_match(self):
+        return self.by_property(self.property).equal(self.query_value)
     
-    def todict(self) -> dict[str, Any]:
-        return {k:v for k,v in self.__dict__.items() if v is not None}
+    def fuzzy_match(self):
+        return self.by_property(self.property).like(f'*{self.query_value}*')
