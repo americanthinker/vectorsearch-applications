@@ -10,10 +10,14 @@ class LLM:
     def __init__(self, 
                  model_name: Literal['gpt-3.5-turbo-0125', 'gpt-3.5-turbo', 'gpt-3.5-turbo-16k',
                                      'claude-3-haiku-20240307', 'claude-3-sonnet-2024022','claude-3-opus-20240229'],
-                 api_key: str=os.environ['OPENAI_API_KEY']
+                 api_key: str=os.environ['OPENAI_API_KEY'],
+                 api_version: str=None,
+                 api_base: str=None
                  ):
         self.model_name = model_name
         self._api_key = api_key
+        self.api_version = api_version
+        self.api_base = api_base
         self.valid_openai_models = [
                                     "gpt-4-turbo-preview",
                                     "gpt-4-0125-preview",
@@ -70,6 +74,8 @@ class LLM:
                                            stream=stream,
                                            retry_strategy="exponential_backoff_retry",
                                            api_key=self._api_key,
+                                           api_base=self.api_base,
+                                           api_version=self.api_version,
                                            **kwargs)
         if raw_response:
             return response
@@ -114,6 +120,9 @@ class LLM:
                                      temperature=temperature,
                                      max_tokens=max_tokens,
                                      stream=stream,
+                                     api_key=self._api_key,
+                                     api_base=self.api_base,
+                                     api_version=self.api_version,
                                      **kwargs)
         if raw_response:
             return response

@@ -4,7 +4,8 @@ from tiktoken import Encoding
 def get_token_count(content: str | list[str], 
                     encoder: Encoding=None, 
                     encoding: str='cl100k_base', 
-                    return_tokens: bool=False
+                    return_tokens: bool=False,
+                    verbose: bool=True
                     ) -> int | list[int]:
     '''
     Takes a tiktoken encoder and returns token count for a given message(s).
@@ -19,6 +20,7 @@ def get_token_count(content: str | list[str],
         tokens = encoder.encode_batch(content)
         count = sum(list(map(len, tokens)))
     if return_tokens:
-        print(f'Total tokens: {count}')
+        if verbose:
+            print(f'Total tokens: {count}')
         return tokens
     return count
