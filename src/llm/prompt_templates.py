@@ -49,7 +49,7 @@ Transcript: {transcript}
 '''
 
 qa_generation_prompt = '''
-Impact Theory episode summary and episode guest are below:
+Huberman Lab episode summary and episode guest are below:
 
 ---------------------
 Summary: {summary}
@@ -66,6 +66,6 @@ Transcript: {transcript}
 ---------------------
 
 Your task is to create {num_questions_per_chunk} questions that can \
-only be answered given the previous context and transcript details. \
+only be answered given the previous context and transcript details and no other information. \
 The question should randomly start with How, Why, or What.   
 '''

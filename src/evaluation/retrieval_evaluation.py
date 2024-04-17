@@ -1,9 +1,9 @@
 #external files
-from openai_interface import GPT_Turbo
-from weaviate_interface import WeaviateClient
-from llama_index.finetuning import EmbeddingQAFinetuneDataset
-from prompt_templates import qa_generation_prompt
-from reranker import ReRanker
+from src.llm.llm_interface import LLM
+from src.database.database_utils import get_weaviate_client
+# from llama_index.finetuning import EmbeddingQAFinetuneDataset
+# from prompt_templates import qa_generation_prompt
+from src.reranker import ReRanker
 
 #standard library imports
 import json
