@@ -189,7 +189,8 @@ class WeaviateWCS:
                        limit: int=10,
                        filter: Filter=None,
                        return_properties: list[str]=None,
-                       return_raw: bool=False) -> dict | list[dict]:
+                       return_raw: bool=False
+                       ) -> dict | list[dict]:
         '''
         Executes Keyword (BM25) search. 
 
@@ -217,6 +218,7 @@ class WeaviateWCS:
         response = collection.query.bm25(query=request,
                                          query_properties=query_properties,
                                          limit=limit,
+                                         filters=filter,
                                          return_metadata=MetadataQuery(score=True),
                                          return_properties=return_properties)
         # response = response.with_where(where_filter).do() if where_filter else response.do()
