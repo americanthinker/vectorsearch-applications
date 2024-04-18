@@ -53,15 +53,15 @@ class WeaviateWCS:
             self._client = weaviate.connect_to_wcs(cluster_url=endpoint, 
                                                    auth_credentials=auth_config, 
                                                    skip_init_checks=skip_init_checks)   
-        self._model_name_or_path = model_name_or_path
+        self.model_name_or_path = model_name_or_path
         self._openai_model = False
-        if self._model_name_or_path == 'text-embedding-ada-002':
+        if self.model_name_or_path == 'text-embedding-ada-002':
             if not openai_api_key:
-                raise ValueError(f'OpenAI API key must be provided to use this model: {self._model_name_or_path}')
+                raise ValueError(f'OpenAI API key must be provided to use this model: {self.model_name_or_path}')
             self.model = OpenAI(api_key=openai_api_key)
             self._openai_model = True
         else: 
-            self.model = SentenceTransformer(self._model_name_or_path) if self._model_name_or_path else None
+            self.model = SentenceTransformer(self.model_name_or_path) if self.model_name_or_path else None
 
         self.return_properties = ['title', 'video_id', 'content', 'guest', 'doc_id']
 
