@@ -85,6 +85,18 @@ class QueryContextGenerator:
         print(f'Length Validation Data: {len(valid_data)}')
         return train_data, valid_data
 
+    def _remove_bad_questions(self, questions: list[str]):
+        '''
+        Removes questions that contain either the words 'transcript' or 'episode'.
+        These questions will potentially add unnecessary noise to the dataset.
+        '''
+        removal_words = ['transcript', 'episode']
+        for i, q in enumerate(questions):
+            for word in removal_words:
+                finding = re.findall(word, q)
+                if finding:
+                    questions[i] = ''
+        return questions
     
     def generate_qa_embedding_pairs(self,
                                     data: list[dict],
@@ -135,8 +147,11 @@ class QueryContextGenerator:
             questions = [
                 re.sub(r"^\d+[\).\s]", "", question).strip() for question in result
             ]
+            questions = self._remove_bad_questions(questions)
             questions = [question for question in questions if len(question) > 0]
-            
+            if not any(questions):
+                print('No good questions returned')
+                continue
             if threshold:
                 pairs = [[question,transcript] for question in questions]
                 scores = self.reranker.predict(sentences=pairs, activation_fct=self.reranker.activation_fct)
@@ -153,7 +168,7 @@ class QueryContextGenerator:
                             relevant_docs[question_id] = doc_id
             else:
                 print('No questions retrieved for this chunk')
-            if len(question_bank) % 5 == 0 and len(question_bank) != 0:
+            if len(question_bank) % int((num_total_questions * 0.2)) == 0 and len(question_bank) != 0:
                 print(f'{len(question_bank)} questions generated')
                 
         # construct dataset
