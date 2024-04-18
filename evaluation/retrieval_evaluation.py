@@ -1,8 +1,6 @@
 #external files
 from src.database.weaviate_interface_v4 import WeaviateWCS
-from src.llm.prompt_templates import qa_generation_prompt
 from src.llm.llm_interface import LLM
-from src.preprocessor.preprocessing import FileIO
 from src.reranker import ReRanker
 
 #standard library imports
@@ -67,7 +65,8 @@ class QueryContextGenerator:
                         n_train_questions: int, 
                         n_val_questions: int, 
                         n_questions_per_chunk: int=2,
-                        total_chars: int=None):
+                        total_chars: int=None
+                        ) -> tuple[list[dict], list[dict]]:
         '''
         Splits corpus into training and validation sets.  Training and 
         validation samples are randomly selected from the corpus. total_chars
@@ -87,7 +86,7 @@ class QueryContextGenerator:
         print(f'Length Validation Data: {len(valid_data)}')
         return train_data, valid_data
 
-    def _remove_bad_questions(self, questions: list[str]):
+    def _remove_bad_questions(self, questions: list[str]) -> list[str]:
         '''
         Removes questions that contain either the words 'transcript' or 'episode'.
         These questions will potentially add unnecessary noise to the dataset.
