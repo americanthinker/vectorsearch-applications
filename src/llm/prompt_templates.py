@@ -48,24 +48,25 @@ Transcript: {transcript}
 ------------------------
 '''
 
-qa_generation_prompt = '''
-Huberman Lab episode summary and episode guest are below:
+# ---------------------
+# Summary: {summary}
 
----------------------
-Summary: {summary}
+qa_generation_prompt = '''
+Huberman Lab episode guest and transcript are below:
+
 ---------------------
 Guest: {guest}
 ---------------------
-Given the Summary and Guest of the episode as context \
-use the following randomly selected transcript section \
-of the episode and not prior knowledge, generate questions that can \
-be answered by the transcript section: 
+Given the Guest of the episode as context use the following snippet of episode transcript \
+and not prior knowledge, generate questions that can be answered by the transcript section: 
 
 ---------------------
 Transcript: {transcript}
 ---------------------
 
-Your task is to create {num_questions_per_chunk} questions that can \
-only be answered given the previous context and transcript details and no other information. \
-The question should randomly start with How, Why, or What.   
+Your task is to create {num_questions_per_chunk} questions that can only be answered \
+given the transcript content and no other information. Follow these rules explicitly:\n
+    1. Do not make any reference to the transcript or episode when generating the question(s), simply generate the question(s).\n
+    2. The question generated and the transcript chunk should be highly semantically related.  If I were to measure their respective vector embeddings using cosine similarity, the outcome would be close to 1.0.\n
+    3. The question(s) should randomly start with How, Why, or What.   
 '''
