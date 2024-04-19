@@ -301,7 +301,7 @@ class WeaviateWCS:
                       device: str='cuda:0' if cuda.is_available() else 'cpu'
                      ) -> dict | list[dict]:
         '''
-        Executes Hybrid (BM25 + Vector) search.
+        Executes Hybrid (Keyword + Vector) search.
         
         Args
         ----
@@ -339,7 +339,6 @@ class WeaviateWCS:
                                            limit=limit,
                                            return_metadata=MetadataQuery(score=True, distance=True),
                                            return_properties=return_properties)
-        # response = response.with_where(where_filter).do() if where_filter else response.do()
         if return_raw:
             return response
         else: 

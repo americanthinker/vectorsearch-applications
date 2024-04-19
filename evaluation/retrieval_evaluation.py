@@ -176,17 +176,16 @@ class QueryContextGenerator:
         return dict(queries=queries, corpus=corpus, relevant_docs=relevant_docs)
 
 def execute_evaluation(dataset: dict, 
-                       class_name: str, 
+                       collection_name: str, 
                        retriever: WeaviateWCS,
                        reranker: ReRanker=None,
                        alpha: float=0.5,
                        retrieve_limit: int=100,
                        top_k: int=5,
                        chunk_size: int=256,
-                       hnsw_config_keys: list[str]=['maxConnections', 'efConstruction', 'ef'],
-                       search_type: Literal['hybrid', 'all']='all',
-                       search_properties: list[str]=['content'],
-                       display_properties: list[str]=['doc_id', 'content'],
+                       search_type: Literal['hybrid', 'kw', 'vector', 'all']=['all'],
+                       query_properties: list[str]=['content'],
+                       return_properties: list[str]=['doc_id', 'content'],
                        dir_outpath: str='./eval_results',
                        include_miss_info: bool=False,
                        user_def_params: dict=None
@@ -200,7 +199,7 @@ def execute_evaluation(dataset: dict,
     -----
     dataset: dict
         Dataset to be used for evaluation
-    class_name: str
+    collection_name: str
         Name of Class on Weaviate host to be used for retrieval
     retriever: WeaviateWCS
         WeaviateWCS object to be used for retrieval 
@@ -222,9 +221,9 @@ def execute_evaluation(dataset: dict,
         list of keys to be used for retrieving HNSW Index parameters from Weaviate host
     search_type: Literal['kw', 'vector', 'hybrid', 'all']='all'
         Type of search to be evaluated.  Options are 'kw', 'vector', 'hybrid', or 'all'
-    search_properties: list[str]=['content']
+    query_properties: list[str]=['content']
         list of properties to be used for search
-    display_properties: list[str]=['doc_id', 'content']
+    return_properties: list[str]=['doc_id', 'content']
         list of properties to be returned from Weaviate host for display in response
     dir_outpath: str='./eval_results'
         Directory path for saving results.  Directory will be created if it does not
@@ -236,7 +235,6 @@ def execute_evaluation(dataset: dict,
         Option for user to pass in a dictionary of user-defined parameters and their values.
         Will be automatically added to the results_dict if correct type is passed.
     '''
-        
     reranker_name = reranker.model_name if reranker else "None"
     
     results_dict = {'n':retrieve_limit, 
@@ -245,75 +243,65 @@ def execute_evaluation(dataset: dict,
                     'Retriever': retriever.model_name_or_path, 
                     'Ranker': reranker_name,
                     'chunk_size': chunk_size,
-                    'hybrid_hit_rate':0,
-                    'hybrid_mrr': 0,
+                    'query_props': query_properties,
+                    'total_misses': 0,
+                    'total_questions':0
                     }
-    #add extra params to results_dict
-    kw_vector_metrics = {
-                         'kw_hit_rate': 0,
-                         'kw_mrr': 0,
-                         'vector_hit_rate': 0,
-                         'vector_mrr': 0
-                         }
-    if search_type == 'all':
-        results_dict = {**results_dict, **kw_vector_metrics}
-    results_dict['total_questions'] = 0
-    results_dict['total_misses'] = 0
-    results_dict = add_params(retriever, class_name, results_dict, user_def_params, hnsw_config_keys)
-        
+    search_type = ['kw', 'vector', 'hybrid'] if search_type == ['all'] else search_type
+    results_dict = _add_metrics(results_dict, search_type)
+    results_dict = add_params(results_dict, user_def_params) if user_def_params else results_dict
+    
     start = time.perf_counter()
     miss_info_list = []
-    for query_id, q in tqdm(dataset.queries.items(), 'Queries'):
+    for query_id, q in tqdm(dataset['queries'].items(), 'Queries'):
         results_dict['total_questions'] += 1
         hit = False
         #make Keyword, Vector, and Hybrid calls to Weaviate host
         try:
-            hybrid_response = retriever.hybrid_search(request=q, class_name=class_name, properties=search_properties, alpha=alpha, limit=retrieve_limit, display_properties=display_properties)  
-            if search_type == 'all':
-                kw_response = retriever.keyword_search(request=q, class_name=class_name, properties=search_properties, limit=retrieve_limit, display_properties=display_properties)
-                vector_response = retriever.vector_search(request=q, class_name=class_name, limit=retrieve_limit, display_properties=display_properties)         
-            #rerank returned responses if reranker is provided
-            if reranker:
-                hybrid_response = reranker.rerank(hybrid_response, q, top_k=top_k)
-                if search_type == 'all':
-                    kw_response = reranker.rerank(kw_response, q, top_k=top_k)
-                    vector_response = reranker.rerank(vector_response, q, top_k=top_k)
-                
-            
-            #collect doc_ids to check for document matches (include only results_top_k)
-            hybrid_doc_ids = {result['doc_id']:i for i, result in enumerate(hybrid_response[:top_k], 1)}
-            if search_type == 'all':
-                kw_doc_ids = {result['doc_id']:i for i, result in enumerate(kw_response[:top_k], 1)}
-                vector_doc_ids = {result['doc_id']:i for i, result in enumerate(vector_response[:top_k], 1)}
+            if 'hybrid' in search_type:
+                hybrid_doc_ids,hybrid_response = get_doc_ids('hybrid', retriever, q, collection_name, reranker, return_properties, 
+                                                 retrieve_limit, top_k, alpha, query_properties)
+            if 'kw' in search_type:
+                kw_doc_ids,kw_response = get_doc_ids('kw', retriever, q, collection_name, reranker, return_properties, 
+                                         retrieve_limit, top_k, query_properties=query_properties)
+            if 'vector' in search_type:
+                vector_doc_ids,vector_response = get_doc_ids('vector', retriever, q, collection_name, reranker,
+                                                 return_properties,retrieve_limit, top_k)
+
             #extract doc_id for scoring purposes
-            doc_id = dataset.relevant_docs[query_id][0]
+            doc_id = dataset['relevant_docs'][query_id]
      
             #increment hit_rate counters and mrr scores
-            if doc_id in hybrid_doc_ids:
-                results_dict['hybrid_hit_rate'] += 1
-                results_dict['hybrid_mrr'] += 1/hybrid_doc_ids[doc_id]
-                hit = True
-            if search_type == 'all':
+            if 'hybrid_doc_ids' in locals():
+                if doc_id in hybrid_doc_ids:
+                    results_dict['hybrid_hit_rate'] += 1
+                    results_dict['hybrid_mrr'] += 1/hybrid_doc_ids[doc_id]
+                    hit = True
+            if 'kw_doc_ids' in locals():
                 if doc_id in kw_doc_ids:
                     results_dict['kw_hit_rate'] += 1
                     results_dict['kw_mrr'] += 1/kw_doc_ids[doc_id]
                     hit = True
+            if 'vector_doc_ids' in locals():
                 if doc_id in vector_doc_ids:
                     results_dict['vector_hit_rate'] += 1
                     results_dict['vector_mrr'] += 1/vector_doc_ids[doc_id]
                     hit = True
+
             # if no hits, let's capture that
             if not hit:
                 results_dict['total_misses'] += 1
-                miss_info = {'query': q, 
-                             'answer': dataset.corpus[doc_id],
-                             'doc_id': doc_id,
-                             'hybrid_response': hybrid_response}
-                if search_type == 'all':
-                    miss_info = {**miss_info, 
-                                 'kw_response': kw_response,
-                                 'vector_response': vector_response}
-                miss_info_list.append(miss_info)
+                response_misses = []
+                if 'hybrid_response' in locals():
+                    hybrid_miss_info = _create_miss_info('hybrid', q, hybrid_response, dataset, doc_id)
+                    response_misses.append(hybrid_miss_info)
+                if 'kw_response' in locals():
+                    kw_miss_info = _create_miss_info('kw', q, kw_response, dataset, doc_id)
+                    response_misses.append(kw_miss_info)
+                if 'vector_response' in locals():
+                    vector_miss_info = _create_miss_info('vector', q, vector_response, dataset, doc_id)
+                    response_misses.append(vector_miss_info)
+                miss_info_list.append(response_misses)
 
         except Exception as e:
             print(e)
@@ -328,28 +316,34 @@ def execute_evaluation(dataset: dict,
     record_results(results_dict, chunk_size, dir_outpath=dir_outpath, as_text=True)
     
     if include_miss_info:
-        return results_dict, miss_info
+        return results_dict, miss_info_list
     return results_dict
 
 def calc_hit_rate_scores(results_dict: dict[str, str | int], 
-                         search_type: Literal['kw', 'vector', 'hybrid', 'all']='all'
+                         search_type: Literal['kw', 'vector', 'hybrid', 'all']=['all']
                          ) -> None:
     '''
     Helper function to calculate hit rate scores
     '''
-    search_type = ['kw', 'vector', 'hybrid'] if search_type == 'all' else search_type
+    accepted_search_types = ['kw', 'vector', 'hybrid']
+    _check_search_type_param(search_type)
+    search_type = ['kw', 'vector', 'hybrid'] if search_type == ['all'] else search_type
     for prefix in search_type:
-        results_dict[f'{prefix}_hit_rate'] = round(results_dict[f'{prefix}_hit_rate']/results_dict['total_questions'],2)
+        if prefix in accepted_search_types:
+            results_dict[f'{prefix}_hit_rate'] = round(results_dict[f'{prefix}_hit_rate']/results_dict['total_questions'],2)
 
 def calc_mrr_scores(results_dict: dict[str, str | int],
-                    search_type: Literal['kw', 'vector', 'hybrid', 'all']='all'
+                    search_type: Literal['kw', 'vector', 'hybrid', 'all']=['all']
                     ) -> None:
     '''
     Helper function to calculate mrr scores
     '''
-    search_type = ['kw', 'vector', 'hybrid'] if search_type == 'all' else search_type
+    accepted_search_types = ['kw', 'vector', 'hybrid']
+    _check_search_type_param(search_type)
+    search_type = accepted_search_types if search_type == ['all'] else search_type
     for prefix in search_type:
-        results_dict[f'{prefix}_mrr'] = round(results_dict[f'{prefix}_mrr']/results_dict['total_questions'],2)
+        if prefix in accepted_search_types:
+            results_dict[f'{prefix}_mrr'] = round(results_dict[f'{prefix}_mrr']/results_dict['total_questions'],2)
 
 def create_dir(dir_path: str) -> None:
     '''
@@ -390,20 +384,85 @@ def record_results(results_dict: dict[str, str | int],
         with open(path, 'w') as f:
             json.dump(results_dict, f, indent=4)
 
-def add_params(client: WeaviateWCS, 
-               class_name: str, 
-               results_dict: dict, 
+def get_doc_ids(search_mode: str, 
+                retriever: WeaviateWCS,
+                query: str, 
+                collection_name: str, 
+                reranker: ReRanker, 
+                return_properties: list[str], 
+                retrieve_limit: int,
+                top_k: int,
+                alpha: float=None,
+                query_properties: list[str]=None
+                ) -> list[str]:
+    if search_mode == 'hybrid':
+        response = retriever.hybrid_search(request=query, collection_name=collection_name, query_properties=query_properties, 
+                                           alpha=alpha,limit=retrieve_limit,return_properties=return_properties)  
+    elif search_mode == 'kw':
+        response = retriever.keyword_search(request=query, collection_name=collection_name, query_properties=query_properties, 
+                                            limit=retrieve_limit, return_properties=return_properties)
+    elif search_mode == 'vector':
+        response = retriever.vector_search(request=query, collection_name=collection_name, limit=retrieve_limit, 
+                                           return_properties=return_properties)  
+    if reranker:
+        response = reranker.rerank(response, query, top_k=top_k)
+    doc_ids = {result['doc_id']:i for i, result in enumerate(response[:top_k], 1)}
+    return doc_ids, response
+
+def _check_search_type_param(search_type: list) -> None:
+    accepted_search_types = ['kw', 'vector', 'hybrid', 'all']
+    if not isinstance(search_type, list):
+        raise ValueError(f'search_type must be a list, received a {type(search_type)}')
+    if not any(search_type):
+        raise ValueError(f'search_type must contain at least one search type from {accepted_search_types}')
+    count = 0
+    for search_type_ in search_type:
+        if search_type_ in accepted_search_types:
+            count += 1
+    if count == 0:
+        raise ValueError(f'Please use one of {accepted_search_types}. Received {search_type}')
+
+def _add_metrics(results_dict: dict, 
+                 search_type: Literal['kw', 'vector', 'hybrid', 'all']=['all']
+                 ) -> dict:
+    '''
+    Helper function to add metrics to results_dict
+    '''
+    accepted_search_types = ['kw', 'vector', 'hybrid']
+    _check_search_type_param(search_type)
+    search_type = ['kw', 'vector', 'hybrid'] if search_type == ['all'] else search_type
+    for prefix in search_type:
+        if prefix in accepted_search_types:
+            results_dict = {**results_dict, 
+                            f'{prefix}_hit_rate': 0,
+                            f'{prefix}_mrr': 0}
+    return results_dict
+
+def _create_miss_info(search_type: str, 
+                      query: str, 
+                      response: list[dict], 
+                      dataset: dict, 
+                      doc_id: str) -> dict:
+    '''
+    Creates miss_info dict for queries that do not return a hit
+    '''
+    miss_info = {'query': query, 
+                 'answer': dataset['corpus'][doc_id],
+                 'answer_doc_id': doc_id,
+                 f'{search_type}_response': response}
+    return miss_info
+
+def add_params(results_dict: dict, 
                param_options: dict, 
-               hnsw_config_keys: list[str]
               ) -> dict:
     '''
     Helper function that adds parameters to the results_dict:
     - Adds HNSW Index parameters to results_dict
     - Adds optional user-defined parameters to results_dict
     '''
-    hnsw_params = {k:v for k,v in client.show_class_config(class_name)['vectorIndexConfig'].items() if k in hnsw_config_keys}
-    if hnsw_params:
-        results_dict = {**results_dict, **hnsw_params}
+    # hnsw_params = {k:v for k,v in client.show_class_config(collection_name)['vectorIndexConfig'].items() if k in hnsw_config_keys}
+    # if hnsw_params:
+    #     results_dict = {**results_dict, **hnsw_params}
     if param_options and isinstance(param_options, dict):
         results_dict = {**results_dict, **param_options}
     return results_dict
