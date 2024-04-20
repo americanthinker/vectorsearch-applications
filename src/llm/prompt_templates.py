@@ -7,7 +7,7 @@ and our health, as well as existing and emerging tools for measuring and changin
 The podcast is frequently ranked in the top 10 of all podcasts globally and is often ranked #1 in the categories 
 of Science, Education, and Health & Fitness.
 Your task is to answer questions about the Huberman Lab podcast only using the context provided in the assistant message.
-Do not use any external knowledge or resources to answer the question.
+Only use the context provided to answer the questions. Do not use any external knowledge or resources to answer the questions.
 '''
 
 question_answering_prompt_single = '''

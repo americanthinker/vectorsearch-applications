@@ -63,7 +63,7 @@ class WeaviateWCS:
         else: 
             self.model = SentenceTransformer(self.model_name_or_path) if self.model_name_or_path else None
 
-        self.return_properties = ['title', 'video_id', 'content', 'guest', 'doc_id']
+        self.return_properties = ['guest', 'title', 'summary', 'content', 'video_id', 'doc_id', 'episode_url', 'thumbnail_url']
 
     def _connect(self) -> None:
         '''
@@ -263,9 +263,7 @@ class WeaviateWCS:
         response = collection.query.near_vector(near_vector=query_vector,
                                                 limit=limit,
                                                 filters=filter,
-                                                return_metadata=MetadataQuery(distance=True, 
-                                                                                explain_score=True,
-                                                                                ),
+                                                return_metadata=MetadataQuery(distance=True),                                                               
                                                 return_properties=return_properties)
         #  response = response.with_where(where_filter).do() if where_filter else response.do()
         if return_raw:

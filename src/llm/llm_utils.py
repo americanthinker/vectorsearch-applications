@@ -1,5 +1,7 @@
 import tiktoken
 from tiktoken import Encoding
+from src.llm.llm_interface import LLM
+import os
 
 def get_token_count(content: str | list[str], 
                     encoder: Encoding=None, 
@@ -24,3 +26,17 @@ def get_token_count(content: str | list[str],
             print(f'Total tokens: {count}')
         return tokens
     return count
+
+def load_azure_openai(model_name: str='gpt-35-turbo', 
+                      api_key=os.environ['AZURE_OPENAI_API_KEY'],
+                      api_version=os.environ['AZURE_OPENAI_API_VERSION'],
+                      api_base=os.environ['AZURE_OPENAI_ENDPOINT']
+                      ) -> LLM:
+    '''
+    Loads an Azure OpenAI LLM from preset defaults.
+    '''
+    llm = LLM(model_name=f'azure/{model_name}', 
+              api_key=api_key, 
+              api_version=api_version, 
+              api_base=api_base)
+    return llm
