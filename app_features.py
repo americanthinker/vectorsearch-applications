@@ -43,8 +43,8 @@ def generate_prompt_series(query: str,
             List of results from the Weaviate client
     """
     context_series = f'\n'.join([context_block.format(summary=res[summary_key],
-                                                                 guest=res[guest_key],
-                                                                 transcript=res[content_key]) 
+                                                      guest=res[guest_key],
+                                                      transcript=res[content_key]) 
                                 for res in results]).strip()
     prompt = question_answering_prompt_series.format(question=query, series=context_series)
     return prompt
