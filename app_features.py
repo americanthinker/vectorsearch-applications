@@ -1,32 +1,34 @@
 import time
 import json
 from src.preprocessor.preprocessing import FileIO
-from typing import List
+from typing import Literal
 import tiktoken 
 from loguru import logger
-from src.llm.prompt_templates import context_block, question_answering_prompt_series
+from src.llm.prompt_templates import (context_block, question_answering_prompt_series, 
+                                      verbosity_options)
 import streamlit as st  
 
 @st.cache_data
-def load_content_cache(data_path: str):
+def load_content_cache(data_path: str) -> dict:
     data = FileIO().load_parquet(data_path)
     content_data = {d['doc_id']: d['content'] for d in data}
     return content_data
 
 @st.cache_data
-def load_data(data_path: str):
+def load_data(data_path: str) -> dict | list[dict]:
     with open(data_path, 'r') as f:
         data = json.load(f)
     return data
 
-def convert_seconds(seconds: int):
+def convert_seconds(seconds: int) -> str:
     """
     Converts seconds to a string of format Hours:Minutes:Seconds
     """
     return time.strftime("%H:%M:%S", time.gmtime(seconds))
 
 def generate_prompt_series(query: str, 
-                           results: List[dict], 
+                           results: list[dict], 
+                           verbosity_level: Literal[0, 1, 2]=0,
                            summary_key: str='summary',
                            guest_key: str='guest',
                            content_key: str='content'
@@ -39,24 +41,27 @@ def generate_prompt_series(query: str,
     -----
         query : str
             User query
-        results : List[dict]
+        results : list[dict]
             List of results from the Weaviate client
     """
+    if not isinstance(verbosity_level, int) or verbosity_level not in [0, 1, 2]:
+        raise ValueError('Verbosity level must be an integer, either 0, 1, or 2')
+    verbosity = verbosity_options[verbosity_level]
     context_series = f'\n'.join([context_block.format(summary=res[summary_key],
                                                       guest=res[guest_key],
                                                       transcript=res[content_key]) 
                                 for res in results]).strip()
-    prompt = question_answering_prompt_series.format(question=query, series=context_series)
+    prompt = question_answering_prompt_series.format(question=query, series=context_series, verbosity=verbosity)
     return prompt
 
-def validate_token_threshold(ranked_results: List[dict], 
+def validate_token_threshold(ranked_results: list[dict], 
                              base_prompt: str,
                              query: str,
                              tokenizer: tiktoken.Encoding, 
                              token_threshold: int,
                              content_field: str='content', 
                              verbose: bool = False
-                             ) -> List[dict]:
+                             ) -> list[dict]:
         """
         Validates that prompt is below the set token threshold by adding lengths of:
             1. Base prompt
@@ -85,7 +90,7 @@ def validate_token_threshold(ranked_results: List[dict],
             logger.info(f'Total Final Token Count: {token_count}')
         return ranked_results
 
-def _get_batch_length(ranked_results: List[dict], 
+def _get_batch_length(ranked_results: list[dict], 
                       tokenizer: tiktoken.Encoding, 
                       content_field: str='content'
                       ) -> int:
