@@ -1,7 +1,7 @@
 from tiktoken import get_encoding
-from src.weaviate_stuff.weaviate_interface import WeaviateClient
-from src.llm.openai_interface import GPT_Turbo
-from src.llm.prompt_templates import question_answering_prompt_series, question_answering_system
+from src.database.weaviate_interface_v4 import WeaviateWCS
+from src.llm.llm_interface import LLM
+from src.llm.prompt_templates import question_answering_prompt_series, huberman_system_message
 from app_features import (convert_seconds, generate_prompt_series, search_result,
                           validate_token_threshold, load_content_cache, load_data)
 from src.reranker import ReRanker
@@ -26,7 +26,7 @@ st.set_page_config(page_title="Impact Theory",
 ##############
 # START CODE #
 ##############
-data_path = './data/impact_theory_data.json'
+data_path = './data/huberman_labs.json'
 ## RETRIEVER
 
 ## RERANKER
