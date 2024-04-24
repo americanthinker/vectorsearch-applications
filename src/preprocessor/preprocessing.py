@@ -14,7 +14,8 @@ class FileIO:
     to/from disk.
     '''
 
-    def save_as_parquet(self, 
+    @classmethod
+    def save_as_parquet(cls,
                         file_path: str, 
                         data: Union[List[dict], pd.DataFrame], 
                         overwrite: bool=False) -> None:
@@ -33,10 +34,10 @@ class FileIO:
             Overwrite existing file if True, otherwise raise FileExistsError.
         '''
         if isinstance(data, list):
-           data = self._convert_toDataFrame(data)
+           data = cls._convert_toDataFrame(data)
         if not file_path.endswith('parquet'):
-            file_path = self._rename_file_extension(file_path, 'parquet')
-        self._check_file_path(file_path, overwrite=overwrite)
+            file_path = cls._rename_file_extension(file_path, 'parquet')
+        cls._check_file_path(file_path, overwrite=overwrite)
         data.to_parquet(file_path, index=False)
         logger.info(f'DataFrame saved as parquet file here: {file_path}')
         
@@ -65,7 +66,8 @@ class FileIO:
             dir_structure = file_path.replace(file_name, '')
             pathlib.Path(dir_structure).mkdir(parents=True, exist_ok=True)
     
-    def load_parquet(self, file_path: str, verbose: bool=True) -> List[dict]:
+    @staticmethod
+    def load_parquet(file_path: str, verbose: bool=True) -> List[dict]:
         '''
         Loads parquet from disk, converts to pandas DataFrame as intermediate
         step and outputs a list of dicts (docs).
@@ -82,7 +84,8 @@ class FileIO:
         list_of_dicts = df.to_dict('records')
         return list_of_dicts
     
-    def load_json(self, file_path: str):
+    @staticmethod
+    def load_json(file_path: str) -> list[dict]:
         '''
         Loads json file from disk.
         '''
@@ -90,7 +93,8 @@ class FileIO:
             data = json.load(f)
         return data
     
-    def save_as_json(self, 
+    @classmethod
+    def save_as_json(cls, 
                      file_path: str, 
                      data: Union[List[dict], dict], 
                      indent: int=4,
@@ -100,8 +104,8 @@ class FileIO:
         Saves data to disk as a json file. Data can be a list of dicts or a single dict.
         '''
         if not file_path.endswith('json'):
-            file_path = self._rename_file_extension(file_path, 'json')
-        self._check_file_path(file_path, overwrite=overwrite)
+            file_path = cls._rename_file_extension(file_path, 'json')
+        cls._check_file_path(file_path, overwrite=overwrite)
         with open(file_path, 'w') as f:
             json.dump(data, f, indent=indent)
         logger.info(f'Data saved as json file here: {file_path}')
