@@ -19,7 +19,7 @@ COPY requirements.txt /rag_app/
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application code into the container
-COPY . /app/
+COPY . /rag_app/
 
 # Set entrypoint
 CMD ["bash"]
