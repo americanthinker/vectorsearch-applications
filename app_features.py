@@ -1,11 +1,13 @@
 import time
 import json
 from src.preprocessor.preprocessing import FileIO
-from typing import Literal
+from typing import Literal, Generator, Any
 import tiktoken 
+from time import sleep
 from loguru import logger
+from src.llm.llm_interface import LLM
 from src.llm.prompt_templates import (context_block, question_answering_prompt_series, 
-                                      verbosity_options)
+                                      verbosity_options, huberman_system_message)
 import streamlit as st  
 
 @st.cache_data
@@ -59,6 +61,7 @@ def validate_token_threshold(ranked_results: list[dict],
                              query: str,
                              tokenizer: tiktoken.Encoding, 
                              token_threshold: int,
+                             llm_verbosity_level: Literal[0, 1, 2]=0,
                              content_field: str='content', 
                              verbose: bool = False
                              ) -> list[dict]:
@@ -71,7 +74,7 @@ def validate_token_threshold(ranked_results: list[dict],
         combined prompt tokens are below the threshold. This function does not take into
         account every token passed to the LLM, but it is a good approximation.
         """
-        overhead_len = len(tokenizer.encode(base_prompt.format(question=query, series='')))
+        overhead_len = len(tokenizer.encode(base_prompt.format(question=query, series='', verbosity=str(llm_verbosity_level))))
         context_len = _get_batch_length(ranked_results, tokenizer, content_field=content_field)
     
         token_count = overhead_len + context_len
@@ -100,6 +103,77 @@ def _get_batch_length(ranked_results: list[dict],
     contexts = tokenizer.encode_batch([r[content_field] for r in ranked_results])
     context_len = sum(list(map(len, contexts)))
     return context_len
+
+def stream_chat(
+                llm: LLM,
+                user_message: str,
+                system_message: str=huberman_system_message,
+                max_tokens: int=250,
+                temperature: float=0.5,
+                ) -> Generator[Any, Any, None]:
+    """Generate chat responses using an LLM API.
+    Stream response out to UI.
+    """
+    completion = llm.chat_completion(system_message=system_message,
+                                     user_message=user_message,
+                                     temperature=temperature, 
+                                     max_tokens=max_tokens, 
+                                     stream=True)
+    for chunk in completion:
+        sleep(0.05)
+        if any(chunk.choices):
+            content = chunk.choices[0].delta.content
+            if content:
+                yield content
+
+def stream_json_chat(llm: LLM,
+                     user_message: str,
+                     system_message: str=huberman_system_message,
+                     max_tokens: int=250,
+                     temperature: float=0.5
+                     ) -> Generator[Any, Any, None]:
+    """Generate chat responses using an LLM API.
+    Stream response out to UI.
+    """
+
+    completion = llm.chat_completion(system_message=system_message,
+                                     user_message=user_message,
+                                     temperature=temperature, 
+                                     max_tokens=max_tokens, 
+                                     stream=True,
+                                     response_format={ "type": "json_object" })
+    colon_count = 0
+    full_json = []
+    double_quote_count = 0
+    double_quote = '"'
+    colon = ":"
+
+    for chunk in completion:
+        sleep(0.05)
+        if any(chunk.choices):
+            content = chunk.choices[0].delta.content
+            if content:
+                full_json.append(content)
+                if colon in content:
+                    colon_count += 1
+                    continue
+            if colon_count >= 1:
+                if double_quote_count == 2:
+                    continue
+                if double_quote_count < 2:
+                    yield content
+                if content and double_quote in content:
+                    double_quote_count += 1
+
+    try:
+        answer = json.loads("".join(full_json))["answer"]
+        guest = json.loads("".join(full_json))["guest"]
+        logger.info(f'GUEST: {guest}')
+        logger.info(f'ANSWER: {answer}')
+    except Exception as e:
+        json_keys = json.loads("".join(full_json)).keys()
+        logger.info(f'Exception raised in JSON parsing: {e}. Keys were parsed as: {json_keys}')
+    json_response = json.loads("".join(full_json))
 
 def search_result(i: int, 
                   url: str, 

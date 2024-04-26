@@ -81,12 +81,19 @@ class LLM:
                               api_base=self.api_base,
                               api_version=self.api_version,
                               **kwargs)
-        cost = completion_cost(response, model=self.model_name, messages=messages, call_type='completion')
+        # cost = completion_cost(completion_response=response, model=self.model_name, messages=messages, call_type='completion')
+        from loguru import logger
+        if stream:
+            # response = response.choices[0].delta.content
+            return response
         if raw_response:
             return response
-        content = response.choices[0].message.content
-        if return_cost:
-            return content, cost
+            # content = response.choices[0].delta.content
+        else:
+            content = response.choices[0].message.content
+        print(return_cost)
+        # if return_cost:
+        #     return content, cost
         return content
     
     async def achat_completion(self, 
