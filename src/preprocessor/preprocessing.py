@@ -41,10 +41,10 @@ class FileIO:
         data.to_parquet(file_path, index=False)
         logger.info(f'DataFrame saved as parquet file here: {file_path}')
         
-    def _convert_toDataFrame(self, data: List[dict]) -> pd.DataFrame:
+    def _convert_toDataFrame(data: List[dict]) -> pd.DataFrame:
         return pd.DataFrame().from_dict(data)
 
-    def _rename_file_extension(self, file_path: str, extension: str):
+    def _rename_file_extension(file_path: str, extension: str):
         '''
         Renames file with appropriate extension if file_path
         does not already have correct extension.
@@ -53,7 +53,7 @@ class FileIO:
         file_path = prefix + '.' + extension
         return file_path
 
-    def _check_file_path(self, file_path: str, overwrite: bool) -> None:
+    def _check_file_path(file_path: str, overwrite: bool) -> None:
         '''
         Checks for existence of file and overwrite permissions.
         '''
