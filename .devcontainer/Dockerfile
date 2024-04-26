@@ -2,8 +2,7 @@
 FROM mcr.microsoft.com/devcontainers/python:3.10
 
 # Set environment variables
-ENV PIP_NO_CACHE_DIR=off \
-    PIP_DISABLE_PIP_VERSION_CHECK=on
+ENV PIP_DISABLE_PIP_VERSION_CHECK=on
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
