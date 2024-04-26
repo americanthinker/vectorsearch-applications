@@ -1,10 +1,8 @@
 {
-    "name": "Python 3",
-    "image": "mcr.microsoft.com/devcontainers/python:3.10",
-	
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	//"features": {}
-	// Configure tool-specific properties.
+    "build": { 
+		"context": "..",
+		"dockerfile": "Dockerfile" 
+	},
 	"customizations": {
 		// Configure properties specific to VS Code.
 		"vscode": {
@@ -24,6 +22,5 @@
 			"label": "Jupyter Notebook",
 			"onAutoForward": "openBrowser"
 		}
-	},
-	"postCreateCommand": "pip install -r requirements.txt"
+	}
 }
