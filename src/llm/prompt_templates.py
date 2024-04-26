@@ -37,11 +37,10 @@ Question:\n
 state that you cannot answer the question with the provided context.
 2. Do not use any external knowledge or resources to answer the question.
 3. Answer the question directly and {verbosity}.
-{json_message}
 ------------------------
 Answer:
 '''
-verbosity_options = ['concisely', 'thoroughly', 'with as much detail as possible, within the limits of the context']
+verbosity_options = ['concisely', 'use about four sentences', 'with as much detail as possible, within the limits of the context']
 
 context_block = '''
 Show Summary: {summary}

@@ -1,6 +1,8 @@
 from src.llm.prompt_templates import huberman_system_message
 from app_features import generate_prompt_series
 from src.llm.llm_interface import LLM
+from typing import Literal
+import asyncio
 
 async def async_llm_call(llm: LLM,
                           query: str,
@@ -24,6 +26,34 @@ async def async_llm_call(llm: LLM,
                                                  )
     return response
 
+async def main(llm: LLM,
+               queries: list[str],
+               ranked_results: list[list[dict]],
+               system_message: str=huberman_system_message,
+               verbosity: Literal[0,1,2]=0,
+               temperature: float=1.0,
+               max_tokens: int=250,
+               show_cost: bool=True
+              ) -> list[dict]:
+    '''
+    Submits multiple async LLM calls for execution using asyncio library. 
+    By default, prints cost information for multiple calls summed together. 
+    '''
+    tasks = [async_llm_call(llm, 
+                            query, 
+                            result, 
+                            system_message,
+                            verbosity,
+                            temperature,
+                            max_tokens) 
+            for query, result in list(zip(queries, ranked_results))]
+    responses = await asyncio.gather(*tasks)
+    if show_cost:
+        total_cost = sum([r[1] for r in responses])
+        responses = [r[0] for r in responses]
+        print(f'Total cost for {len(ranked_results)} API calls: ${round(total_cost,4)}.')
+    return responses
+    
 def show_results(queries: list[str], responses: list[str]) -> None:
     '''
     Prints LLM call responses in the following format:

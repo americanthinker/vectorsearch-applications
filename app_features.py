@@ -49,6 +49,7 @@ def generate_prompt_series(query: str,
     if not isinstance(verbosity_level, int) or verbosity_level not in [0, 1, 2]:
         raise ValueError('Verbosity level must be an integer, either 0, 1, or 2')
     verbosity = verbosity_options[verbosity_level]
+
     context_series = f'\n'.join([context_block.format(summary=res[summary_key],
                                                       guest=res[guest_key],
                                                       transcript=res[content_key]) 
