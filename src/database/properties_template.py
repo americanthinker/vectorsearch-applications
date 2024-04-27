@@ -60,9 +60,10 @@ properties = [
                          data_type=DataType.TEXT,
                          description='URL of the video episode on YouTube',
                          index_filterable=False,
-                         index_searchable=False)
-                # Property(name='content_window',
-                #          data_type=DataType.TEXT,
-                #          index_filterable=False,
-                #          index_searchable=True),
+                         index_searchable=False),
+                Property(name='expanded_content',
+                         description='Expanded window of the content field for additional context',
+                         data_type=DataType.TEXT,
+                         index_filterable=False,
+                         index_searchable=True)
               ]
