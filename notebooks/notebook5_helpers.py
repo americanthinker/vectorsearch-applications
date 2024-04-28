@@ -1,5 +1,4 @@
-from src.llm.prompt_templates import huberman_system_message
-from app_features import generate_prompt_series
+from src.llm.prompt_templates import huberman_system_message, generate_prompt_series
 from src.llm.llm_interface import LLM
 from typing import Literal
 import asyncio
