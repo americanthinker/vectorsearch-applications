@@ -1,5 +1,7 @@
+anthropic==0.25.6
 beautifulsoup4==4.12.2
 datasets==2.14.3
+deepeval==0.21.34
 ipykernel==6.23.1
 ipython==8.14.0
 ipywidgets==8.1.1

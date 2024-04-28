@@ -11,7 +11,7 @@ from tqdm.notebook import tqdm
 
 #external files
 from src.preprocessor.preprocessing import FileIO # bad ass tokenizer library for use with OpenAI LLMs 
-from llama_index.legacy.text_splitter import SentenceSplitter #one of the best on the market
+from llama_index.text_splitter import SentenceSplitter #one of the best on the market
 from sentence_transformers import SentenceTransformer
 
 def chunk_data(data: List[dict], text_splitter: SentenceSplitter, content_field='content') -> List[List[str]]:
