@@ -1,4 +1,5 @@
 from deepeval.models.base_model import DeepEvalBaseLLM
+from deepeval.models.gpt_model import GPTModel
 from deepeval.metrics import GEval
 from deepeval.test_case import LLMTestCaseParams, LLMTestCase
 from anthropic import Anthropic, AsyncAnthropic
@@ -64,7 +65,7 @@ class CustomAnthropic(DeepEvalBaseLLM):
         return "Custom Anthropic Model"
     
 
-class CustomAzureOpenAI(DeepEvalBaseLLM):
+class CustomAzureOpenAI(GPTModel):
     def __init__(
                 self,
                 deployment_name: str
@@ -114,31 +115,38 @@ class CustomAzureOpenAI(DeepEvalBaseLLM):
         return "Custom Azure OpenAI Model"
     
 
-class AnswerCorrectnessMetric:
+class AnswerCorrectnessMetric(GEval):
+    '''
+    Custom metric to determine correctness of an LLM generated answer
+    as related to the retrieval context. Takes in LLM model string as 
+    single param. 
+    '''
+    name = 'AnswerCorrectness'
+    evaluation_steps=['Compare the actual output with the retrieval context to verify factual accuracy.',
+        'Assess if the actual output effectively addresses the specific information requirement stated in the input.',
+        'Determine the comprehensiveness of the actual output in addressing all key aspects mentioned in the input.',
+        'Score the actual output between 0 and 1, based on the accuracy and comprehensiveness of the information provided.',
+        'If there is not enough information in the retrieval context to correctly answer the input, and the actual output indicates that the input cannot be answered with the provided context, then the score should be 1.']
+    evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.RETRIEVAL_CONTEXT]
 
-    def __init__(self, model: str | DeepEvalBaseLLM, strict: bool=True) -> None:
-        self.name = "answer_correctness"
+    def __init__(self, model: str | DeepEvalBaseLLM) -> None:
         self.model = model
-        self.strict = strict
-
-    def get_metric(self) -> GEval:
-        return GEval(
-            name=self.name,
-            criteria="Answer Correctness - Given the information provided in the retrieval context, how accurate \
-                     is the actual output and does this output address the information requirement of the input?",
-            model=self.model,
-            evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.RETRIEVAL_CONTEXT],
-            strict_mode=self.strict
-            )
+        super().__init__(name=self.name,
+                         evaluation_steps=self.evaluation_steps,
+                         model=self.model,
+                         evaluation_params=self.evaluation_params)
+    
 @dataclass
 class EvalResponse:
-    metric: str
-    model: str
-    input: str
-    actual_output: str
-    retrieval_context: list[str]
     score: float
     reason: str
+    metric: str
+    cost: float
+    eval_model: str
+    eval_steps: list[str]
+    input: str = None
+    actual_output: str = None
+    retrieval_context: list[str] = None
 
 @dataclass
 class TestCaseBundle:

@@ -28,35 +28,6 @@ def convert_seconds(seconds: int) -> str:
     """
     return time.strftime("%H:%M:%S", time.gmtime(seconds))
 
-def generate_prompt_series(query: str, 
-                           results: list[dict], 
-                           verbosity_level: Literal[0, 1, 2]=0,
-                           summary_key: str='summary',
-                           guest_key: str='guest',
-                           content_key: str='content'
-                           ) -> str:
-    """
-    Generates a prompt for the OpenAI API by joining the context blocks of the top results.
-    Provides context to the LLM by supplying the summary, guest, and retrieved content of each result.
-
-    Args:
-    -----
-        query : str
-            User query
-        results : list[dict]
-            List of results from the Weaviate client
-    """
-    if not isinstance(verbosity_level, int) or verbosity_level not in [0, 1, 2]:
-        raise ValueError('Verbosity level must be an integer, either 0, 1, or 2')
-    verbosity = verbosity_options[verbosity_level]
-
-    context_series = f'\n'.join([context_block.format(summary=res[summary_key],
-                                                      guest=res[guest_key],
-                                                      transcript=res[content_key]) 
-                                for res in results]).strip()
-    prompt = question_answering_prompt_series.format(question=query, series=context_series, verbosity=verbosity)
-    return prompt
-
 def validate_token_threshold(ranked_results: list[dict], 
                              base_prompt: str,
                              query: str,

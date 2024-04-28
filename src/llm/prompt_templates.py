@@ -1,3 +1,5 @@
+from typing import Literal
+
 huberman_system_message = '''
 You are a repository of knowledge and wisdom about the Huberman Lab podcast.
 The Huberman Lab podcast is hosted by Dr. Andrew Huberman, a neuroscientist and tenured professor of neurobiology 
@@ -71,3 +73,43 @@ given the transcript content and no other information. Follow these rules explic
     2. The question generated and the transcript chunk should be highly semantically related.  If I were to measure their respective vector embeddings using cosine similarity, the outcome would be close to 1.0.\n
     3. The question(s) should randomly start with How, Why, or What.   
 '''
+
+def create_context_blocks(results: list[dict],
+                          summary_key: str='summary',
+                          guest_key: str='guest',
+                          content_key: str='content'
+                          ) -> list[str]:
+    '''
+    Creates a list of context blocks (strings) from a list of dictionaries 
+    containing the summary, guest, and transcript content.
+    '''
+    context_series = [context_block.format(summary=res[summary_key],
+                                          guest=res[guest_key],
+                                          transcript=res[content_key]) 
+                      for res in results]
+    return context_series
+
+def generate_prompt_series(query: str, 
+                           results: list[dict], 
+                           verbosity_level: Literal[0, 1, 2]=0,
+                           summary_key: str='summary',
+                           guest_key: str='guest',
+                           content_key: str='content'
+                           ) -> str:
+    """
+    Generates a prompt for the OpenAI API by joining the context blocks of the top results.
+    Provides context to the LLM by supplying the summary, guest, and retrieved content of each result.
+
+    Args:
+    -----
+        query : str
+            User query
+        results : list[dict]
+            List of results from the Weaviate client
+    """
+    if not isinstance(verbosity_level, int) or verbosity_level not in [0, 1, 2]:
+        raise ValueError('Verbosity level must be an integer, either 0, 1, or 2')
+    verbosity = verbosity_options[verbosity_level]
+    context_series = f'\n'.join(create_context_blocks(results, summary_key, guest_key, content_key)).strip()
+    prompt = question_answering_prompt_series.format(question=query, series=context_series, verbosity=verbosity)
+    return prompt

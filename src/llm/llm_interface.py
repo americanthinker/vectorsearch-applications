@@ -1,5 +1,5 @@
-from litellm import completion, acompletion, completion_cost
-from typing import Literal
+from litellm import completion, acompletion
+from litellm.utils import CustomStreamWrapper, ModelResponse
 import os
 
 class LLM:
@@ -7,6 +7,24 @@ class LLM:
     Creates primary Class instance for interacting with various LLM model APIs.
     Primary APIs supported are OpenAI and Anthropic.
     '''
+    # non-exhaustive list of supported models 
+    # these models were tested and are known to work with the LLM class (April 2024)
+    valid_models = {'cohere': ['command-r','command-r-plus'],
+                    'anthropic': [ 'claude-3-haiku-20240307', 
+                                   'claude-3-sonnet-2024022',
+                                   'claude-3-opus-20240229'],
+                    'openai': [
+                        "gpt-4-turbo-preview",
+                        "gpt-4-0125-preview",
+                        "gpt-4-1106-preview",
+                        "gpt-4",
+                        "gpt-4-0613",
+                        "gpt-3.5-turbo",
+                        "gpt-3.5-turbo-1106",
+                        "gpt-3.5-turbo-0125",
+                        ]
+                    }
+
     def __init__(self, 
                  model_name: str='gpt-3.5-turbo-0125',
                  api_key: str=os.environ['OPENAI_API_KEY'],
@@ -17,23 +35,8 @@ class LLM:
         self._api_key = api_key
         self.api_version = api_version
         self.api_base = api_base
-        self.valid_anthropic_models = ['claude-3-haiku-20240307', 
-                                       'claude-3-sonnet-2024022',
-                                       'claude-3-opus-20240229']
-        self.valid_openai_models = [
-                                    "gpt-4-turbo-preview",
-                                    "gpt-4-0125-preview",
-                                    "gpt-4-1106-preview",
-                                    "gpt-4",
-                                    "gpt-4-32k",
-                                    "gpt-4-0613",
-                                    "gpt-4-32k-0613",
-                                    "gpt-3.5-turbo",
-                                    "gpt-3.5-turbo-1106",
-                                    "gpt-3.5-turbo-16k",
-                                    "gpt-3.5-turbo-0125",
-                                   ]
 
+  
     def chat_completion(self, 
                         system_message: str,
                         user_message: str='',
@@ -42,7 +45,7 @@ class LLM:
                         stream: bool=False,
                         raw_response: bool=False,
                         **kwargs
-                        ) -> str:
+                        ) -> str | CustomStreamWrapper | ModelResponse:
         '''
         Generative text completion method.
 
@@ -94,7 +97,7 @@ class LLM:
                                stream: bool=False,
                                raw_response: bool=False,
                                **kwargs
-                               ) -> str:
+                               ) -> str | CustomStreamWrapper | ModelResponse:
         '''
         Asynchronous generative text completion method.
 

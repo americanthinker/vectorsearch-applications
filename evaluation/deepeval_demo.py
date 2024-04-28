@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 from dotenv import load_dotenv, find_dotenv
 envs = load_dotenv(find_dotenv(), override=True)
 
@@ -17,7 +14,6 @@ from deepeval.dataset import EvaluationDataset
 from src.database.database_utils import get_weaviate_client
 from src.database.weaviate_interface_v4 import WeaviateWCS
 from src.llm.llm_interface import LLM
-from src.llm.prompt_templates import question_answering_prompt_series, huberman_system_prompt
 from app_features import generate_prompt_series
 
 from loguru import logger
