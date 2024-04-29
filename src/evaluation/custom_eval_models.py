@@ -65,7 +65,7 @@ class CustomAnthropic(DeepEvalBaseLLM):
         return "Custom Anthropic Model"
     
 
-class CustomAzureOpenAI(GPTModel):
+class CustomAzureOpenAI(DeepEvalBaseLLM):
     def __init__(
                 self,
                 deployment_name: str
