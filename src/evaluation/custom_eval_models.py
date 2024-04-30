@@ -1,5 +1,4 @@
 from deepeval.models.base_model import DeepEvalBaseLLM
-from deepeval.models.gpt_model import GPTModel
 from deepeval.metrics import GEval
 from deepeval.test_case import LLMTestCaseParams, LLMTestCase
 from anthropic import Anthropic, AsyncAnthropic
@@ -17,9 +16,9 @@ class CustomAnthropic(DeepEvalBaseLLM):
     """
     def __init__(
                 self,
-                model: Literal['claude-3-haiku-20240307', 'claude-3-sonnet-2024022', 'claude-3-opus-20240229']
+                model: Literal['claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 'claude-3-opus-20240229']
                 ):
-        self.accepted_model_types = ['claude-3-haiku-20240307', 'claude-3-sonnet-2024022', 'claude-3-opus-20240229']
+        self.accepted_model_types = ['claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 'claude-3-opus-20240229']
         if model not in self.accepted_model_types:
             raise ValueError(f'{model} is not found in {self.accepted_model_types}. Retry with acceptable model type')
         self.model = model
@@ -62,7 +61,7 @@ class CustomAnthropic(DeepEvalBaseLLM):
         return "no message returned"
 
     def get_model_name(self) -> str:
-        return "Custom Anthropic Model"
+        return self.model
     
 
 class CustomAzureOpenAI(DeepEvalBaseLLM):
@@ -112,7 +111,7 @@ class CustomAzureOpenAI(DeepEvalBaseLLM):
         return "no message returned"
 
     def get_model_name(self) -> str:
-        return "Custom Azure OpenAI Model"
+        return self.model
     
 
 class AnswerCorrectnessMetric(GEval):
@@ -122,11 +121,11 @@ class AnswerCorrectnessMetric(GEval):
     single param. 
     '''
     name = 'AnswerCorrectness'
-    evaluation_steps=['Compare the actual output with the retrieval context to verify factual accuracy.',
-        'Assess if the actual output effectively addresses the specific information requirement stated in the input.',
-        'Determine the comprehensiveness of the actual output in addressing all key aspects mentioned in the input.',
-        'Score the actual output between 0 and 1, based on the accuracy and comprehensiveness of the information provided.',
-        'If there is not enough information in the retrieval context to correctly answer the input, and the actual output indicates that the input cannot be answered with the provided context, then the score should be 1.']
+    evaluation_steps=[  'Compare the actual output with the retrieval context to verify factual accuracy.',
+                        'Assess if the actual output effectively addresses the specific information requirement stated in the input.',
+                        'Determine the comprehensiveness of the actual output in addressing all key aspects mentioned in the input.',
+                        'Score the actual output between 0 and 10, based on the accuracy and comprehensiveness of the information provided, with 10 being exactly correct and 0 being completely incorrect.',
+                        'If there is not enough information in the retrieval context to correctly answer the input, and the actual output indicates that the input cannot be answered with the provided context, then return a score of 10.']
     evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.RETRIEVAL_CONTEXT]
 
     def __init__(self, model: str | DeepEvalBaseLLM) -> None:
