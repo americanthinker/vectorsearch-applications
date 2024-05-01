@@ -1,6 +1,7 @@
 from deepeval.models.base_model import DeepEvalBaseLLM
 from deepeval.metrics import GEval, BaseMetric
 from deepeval.test_case import LLMTestCaseParams, LLMTestCase
+from deepeval.evaluate import TestResult
 from anthropic import Anthropic, AsyncAnthropic
 from cohere import Client, AsyncClient
 from openai import AzureOpenAI, AsyncAzureOpenAI
@@ -33,14 +34,14 @@ class CustomCohere(DeepEvalBaseLLM):
         client = self.load_model()
         response = client.chat(message=prompt, model=self.model, max_tokens=1024)
         if response:
-            return response
+            return response.text
         return "No message returned"
 
     async def a_generate(self, prompt: str) -> str:
         aclient = self.load_model(async_mode=True)
         response = await aclient.chat(message=prompt, model=self.model, max_tokens=1024)
         if response:
-            return response
+            return response.text
         return "No message returned"
 
     def get_model_name(self) -> str:
@@ -188,14 +189,18 @@ class EvalResponse:
         return self.__dict__
 
 
-def load_eval_response(metric: BaseMetric, 
-                       test_case: LLMTestCase, 
+def load_eval_response(metric: BaseMetric | AnswerCorrectnessMetric,
+                       test_case: LLMTestCase | TestResult,
                        return_context_data: bool=True
                        ) -> EvalResponse:
     '''
     Parses and loads select data from metric and test_case and 
     combines into a single EvalResponse package for ease of viewing. 
     '''
+    if isinstance(test_case, TestResult) and isinstance(metric, list):
+        if len(metric) > 1:
+            raise NotImplementedError("Multiple metrics not supported yet for this loading function")
+        metric = metric[0]
     return EvalResponse(score=metric.score,
                         reason=metric.reason,
                         metric=metric.__class__.__name__,
@@ -206,6 +211,7 @@ def load_eval_response(metric: BaseMetric,
                         actual_output=test_case.actual_output if return_context_data else None,
                         retrieval_context=test_case.retrieval_context if return_context_data else None
                         )
+                            
 
 # retrieval_args = list(inspect.signature(client.hybrid_search).parameters)
 # retrieval_dict = {k:v for k,v in retrieval_kwargs.items() if k in retrieval_args}
