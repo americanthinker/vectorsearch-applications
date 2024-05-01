@@ -9,20 +9,21 @@ class LLM:
     '''
     # non-exhaustive list of supported models 
     # these models were tested and are known to work with the LLM class (April 2024)
-    valid_models = {'cohere': ['command-r','command-r-plus'],
-                    'anthropic': [ 'claude-3-haiku-20240307', 
-                                   'claude-3-sonnet-2024022',
-                                   'claude-3-opus-20240229'],
-                    'openai': [
+    valid_models = {'openai': [
                         "gpt-4-turbo-preview",
                         "gpt-4-0125-preview",
                         "gpt-4-1106-preview",
-                        "gpt-4",
-                        "gpt-4-0613",
                         "gpt-3.5-turbo",
                         "gpt-3.5-turbo-1106",
                         "gpt-3.5-turbo-0125",
-                        ]
+                        ],
+                    'anthropic': [ 'claude-3-haiku-20240307', 
+                                   'claude-3-sonnet-2024022',
+                                   'claude-3-opus-20240229'
+                                   ],
+                    'cohere': ['command-r',
+                               'command-r-plus'
+                               ]
                     }
 
     def __init__(self, 

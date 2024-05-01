@@ -97,7 +97,7 @@ def generate_prompt_series(query: str,
                            content_key: str='content'
                            ) -> str:
     """
-    Generates a prompt for the OpenAI API by joining the context blocks of the top results.
+    Generates a prompt for an LLM by joining the context blocks of the top results.
     Provides context to the LLM by supplying the summary, guest, and retrieved content of each result.
 
     Args:
