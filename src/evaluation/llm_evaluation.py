@@ -1,14 +1,51 @@
 from deepeval.models.base_model import DeepEvalBaseLLM
-from deepeval.metrics import GEval
+from deepeval.metrics import GEval, BaseMetric
 from deepeval.test_case import LLMTestCaseParams, LLMTestCase
 from anthropic import Anthropic, AsyncAnthropic
+from cohere import Client, AsyncClient
 from openai import AzureOpenAI, AsyncAzureOpenAI
 
 from dataclasses import dataclass
 from typing import Literal
 import os
 
+class CustomCohere(DeepEvalBaseLLM):
+    """
+    Creates a custom evaluation model interface that uses the Cohere API
+    for evaluation of metrics. 
+    """
 
+    def __init__(
+                self,
+                model: Literal['command-r', 'command-r-plus']
+                ) -> None:
+        self.accepted_model_types = ['command-r', 'command-r-plus']
+        if model not in self.accepted_model_types:
+            raise ValueError(f'{model} is not found in {self.accepted_model_types}. Retry with acceptable model type')
+        self.model = model
+
+    def load_model(self, async_mode: bool=False) -> Client | AsyncClient:
+        if async_mode:
+            return AsyncClient(api_key=os.environ['COHERE_API_KEY'])
+        return Client(api_key=os.environ['COHERE_API_KEY'])
+
+    def generate(self, prompt: str) -> str:
+        client = self.load_model()
+        response = client.chat(message=prompt, model=self.model, max_tokens=1024)
+        if response:
+            return response
+        return "No message returned"
+
+    async def a_generate(self, prompt: str) -> str:
+        aclient = self.load_model(async_mode=True)
+        response = await aclient.chat(message=prompt, model=self.model, max_tokens=1024)
+        if response:
+            return response
+        return "No message returned"
+
+    def get_model_name(self) -> str:
+        return self.model
+    
 class CustomAnthropic(DeepEvalBaseLLM):
     """
     Creates a custom evaluation model interface that uses the Anthropic API 
@@ -124,7 +161,7 @@ class AnswerCorrectnessMetric(GEval):
     evaluation_steps=[  'Compare the actual output with the retrieval context to verify factual accuracy.',
                         'Assess if the actual output effectively addresses the specific information requirement stated in the input.',
                         'Determine the comprehensiveness of the actual output in addressing all key aspects mentioned in the input.',
-                        'Score the actual output between 0 and 10, based on the accuracy and comprehensiveness of the information provided, with 10 being exactly correct and 0 being completely incorrect.',
+                        # 'Score the actual output between 0 and 10, based on the accuracy and comprehensiveness of the information provided, with 10 being exactly correct and 0 being completely incorrect.',
                         'If there is not enough information in the retrieval context to correctly answer the input, and the actual output indicates that the input cannot be answered with the provided context, then return a score of 10.']
     evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.RETRIEVAL_CONTEXT]
 
@@ -134,7 +171,7 @@ class AnswerCorrectnessMetric(GEval):
                          evaluation_steps=self.evaluation_steps,
                          model=self.model,
                          evaluation_params=self.evaluation_params)
-    
+
 @dataclass
 class EvalResponse:
     score: float
@@ -147,9 +184,30 @@ class EvalResponse:
     actual_output: str = None
     retrieval_context: list[str] = None
 
-@dataclass
-class TestCaseBundle:
-    inputs: list[str]
-    actual_outputs: list[str]
-    retrieval_contexts: list[list[str]]
-    test_cases: list[LLMTestCase]
+    def to_dict(self) -> dict:
+        return self.__dict__
+
+
+def load_eval_response(metric: BaseMetric, 
+                       test_case: LLMTestCase, 
+                       return_context_data: bool=True
+                       ) -> EvalResponse:
+    '''
+    Parses and loads select data from metric and test_case and 
+    combines into a single EvalResponse package for ease of viewing. 
+    '''
+    return EvalResponse(score=metric.score,
+                        reason=metric.reason,
+                        metric=metric.__class__.__name__,
+                        cost=metric.evaluation_cost, 
+                        eval_model=metric.evaluation_model,
+                        eval_steps=metric.evaluation_steps if metric.__dict__['evaluation_steps'] else None,
+                        input=test_case.input if return_context_data else None,
+                        actual_output=test_case.actual_output if return_context_data else None,
+                        retrieval_context=test_case.retrieval_context if return_context_data else None
+                        )
+
+# retrieval_args = list(inspect.signature(client.hybrid_search).parameters)
+# retrieval_dict = {k:v for k,v in retrieval_kwargs.items() if k in retrieval_args}
+# llm_args = list(inspect.signature(self.llm.chat_completion).parameters)
+# llm_dict = {k:v for k,v in llm_kwargs.items() if k in llm_args}
