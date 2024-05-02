@@ -211,7 +211,33 @@ def load_eval_response(metric: BaseMetric | AnswerCorrectnessMetric,
                         actual_output=test_case.actual_output if return_context_data else None,
                         retrieval_context=test_case.retrieval_context if return_context_data else None
                         )
-                            
+
+# def get_answer_score(query: str,
+#                      rag_pipeline: RAGPipeline,
+#                      evaluation_llm: str='gpt-4-turbo',
+#                      return_context_data: bool=False
+#                      ):
+#     #define our metric, in this case AnswerCorrectness
+#     metric = AnswerCorrectnessMetric(model=evaluation_llm)
+    
+#     #this is an instance of the RAGPipeline Class
+#     data = rag_pipeline(query, verbosity=2)
+
+#     #unpack the results of executing the pipeline
+#     query, actual_output, context = data['query'], data['answer'], data['context']
+
+#     #reformat context from list of dicts into list of strings
+#     retrieval_context = create_context_blocks(context)
+    
+#     #define a LLM Test Case on the fly
+#     test_case = LLMTestCase(input=query, actual_output=actual_output, retrieval_context=retrieval_context)
+
+#     #execute call to evaluation LLM to evaluate AnswerCorrectness
+#     metric.measure(test_case)
+
+#     #return response as an EvalResponse (nothing special just an easier way to organize info
+#     response = load_eval_response(metric, test_case, return_context_data=return_context_data)
+#     return response
 
 # retrieval_args = list(inspect.signature(client.hybrid_search).parameters)
 # retrieval_dict = {k:v for k,v in retrieval_kwargs.items() if k in retrieval_args}
