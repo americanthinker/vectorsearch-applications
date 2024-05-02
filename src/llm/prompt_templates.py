@@ -84,8 +84,8 @@ def create_context_blocks(results: list[dict],
     containing the summary, guest, and transcript content.
     '''
     context_series = [context_block.format(summary=res[summary_key],
-                                          guest=res[guest_key],
-                                          transcript=res[content_key]) 
+                                           guest=res[guest_key],
+                                           transcript=res[content_key]) 
                       for res in results]
     return context_series
 
@@ -107,8 +107,9 @@ def generate_prompt_series(query: str,
         results : list[dict]
             List of results from the Weaviate client
     """
-    if not isinstance(verbosity_level, int) or verbosity_level not in [0, 1, 2]:
-        raise ValueError('Verbosity level must be an integer, either 0, 1, or 2')
+    verbosity_levels = [0, 1, 2]
+    if not isinstance(verbosity_level, int) or verbosity_level not in verbosity_levels:
+        raise ValueError(f'verbosity_level must be an integer: {verbosity_levels}')
     verbosity = verbosity_options[verbosity_level]
     context_series = f'\n'.join(create_context_blocks(results, summary_key, guest_key, content_key)).strip()
     prompt = question_answering_prompt_series.format(question=query, series=context_series, verbosity=verbosity)
