@@ -1,4 +1,6 @@
+anthropic
 beautifulsoup4==4.12.2
+cohere
 datasets==2.14.3
 deepeval==0.21.34
 ipykernel==6.23.1
