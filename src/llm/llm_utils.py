@@ -28,9 +28,9 @@ def get_token_count(content: str | list[str],
     return count
 
 def load_azure_openai(model_name: str='gpt-35-turbo', 
-                      api_key=os.environ['AZURE_OPENAI_API_KEY'],
-                      api_version=os.environ['AZURE_OPENAI_API_VERSION'],
-                      api_base=os.environ['AZURE_OPENAI_ENDPOINT']
+                      api_key=os.getenv('AZURE_OPENAI_API_KEY'),
+                      api_version=os.getenv('AZURE_OPENAI_API_VERSION'),
+                      api_base=os.getenv('AZURE_OPENAI_ENDPOINT')
                       ) -> LLM:
     '''
     Loads an Azure OpenAI LLM from preset defaults.
