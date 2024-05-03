@@ -164,7 +164,21 @@ class WeaviateWCS:
                 print(f'Error deleting collection, due to: {e}')
         else: 
             print(f'Collection "{collection_name}" not found on host')
-        
+    
+    def get_doc_count(self, collection_name: str) -> str:
+        '''
+        Returns the number of documents in a collection.
+        '''
+        self._connect()
+        if self._client.collections.exists(collection_name):
+            collection = self._client.collections.get(collection_name)
+            aggregate = collection.aggregate.over_all()
+            total_count = aggregate.total_count
+            print(f'Found {total_count} documents in collection "{collection_name}"')
+            return total_count
+        else:
+            print(f'Collection "{collection_name}" not found on host')
+            
     def format_response(self, 
                         response: QueryReturn,
                         ) -> list[dict]:
