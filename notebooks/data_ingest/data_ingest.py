@@ -8,7 +8,10 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 class DataIngest:
-
+    '''
+    Arrangement of methods designed to download YouTube videos as audio files,
+    transcribe the audio files, and join the metadata with the transcripts.
+    '''
     def __init__(self, playlist_url: str, show_url: str=None) -> None:
         self.playlist_url = playlist_url
         self.primary_keys =  ['video_id',
@@ -146,7 +149,7 @@ class DataIngest:
         """
         return [path for path in Path(transcript_dir).iterdir() if path.name.endswith('.txt')]
     
-    def _get_thumbnail_url(self, episode_dict: str, default_url: str=''):
+    def _get_thumbnail_url(self, episode_dict: str):
         """
         Get thumbnail url from episode dict.  If not found, returns self.show_url
         as a backup url.
