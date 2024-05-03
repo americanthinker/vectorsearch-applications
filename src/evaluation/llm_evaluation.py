@@ -27,8 +27,8 @@ class CustomCohere(DeepEvalBaseLLM):
 
     def load_model(self, async_mode: bool=False) -> Client | AsyncClient:
         if async_mode:
-            return AsyncClient(api_key=os.environ['COHERE_API_KEY'])
-        return Client(api_key=os.environ['COHERE_API_KEY'])
+            return AsyncClient(api_key=os.getenv('COHERE_API_KEY'))
+        return Client(api_key=os.getenv('COHERE_API_KEY'))
 
     def generate(self, prompt: str) -> str:
         client = self.load_model()
@@ -63,8 +63,8 @@ class CustomAnthropic(DeepEvalBaseLLM):
 
     def load_model(self, async_mode: bool=False) -> AsyncAnthropic | Anthropic:
         if async_mode:
-            return AsyncAnthropic(api_key=os.environ['ANTHROPIC_API_KEY'])
-        return Anthropic(api_key=os.environ['ANTHROPIC_API_KEY'])
+            return AsyncAnthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
+        return Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
 
     def generate(self, prompt: str) -> str:
         client = self.load_model()
@@ -111,13 +111,13 @@ class CustomAzureOpenAI(DeepEvalBaseLLM):
 
     def load_model(self, async_mode: bool=False) -> AzureOpenAI | AsyncAzureOpenAI:
         if async_mode:
-            return AsyncAzureOpenAI(azure_endpoint=os.environ['AZURE_OPENAI_ENDPOINT'],
-                                    api_key=os.environ['AZURE_OPENAI_API_KEY'],
-                                    api_version=os.environ['AZURE_OPENAI_API_VERSION'],
+            return AsyncAzureOpenAI(azure_endpoint=os.getenv('AZURE_OPENAI_ENDPOINT'),
+                                    api_key=os.getenv('AZURE_OPENAI_API_KEY'),
+                                    api_version=os.getenv('AZURE_OPENAI_API_VERSION'),
                                     )
-        return AzureOpenAI(azure_endpoint=os.environ['AZURE_OPENAI_ENDPOINT'],
-                           api_key=os.environ['AZURE_OPENAI_API_KEY'],
-                           api_version=os.environ['AZURE_OPENAI_API_VERSION'],
+        return AzureOpenAI(azure_endpoint=os.getenv('AZURE_OPENAI_ENDPOINT'),
+                           api_key=os.getenv('AZURE_OPENAI_API_KEY'),
+                           api_version=os.getenv('AZURE_OPENAI_API_VERSION'),
                            )
 
     def generate(self, prompt: str) -> str:
