@@ -3,8 +3,6 @@ from torch.nn import Sigmoid
 from typing import List, Union
 import numpy as np
 from loguru import logger
-from src.preprocessor.preprocessing import FileIO
-from src.pipelines.pipeline import chunk_data
 
 class ReRanker(CrossEncoder):
     '''
