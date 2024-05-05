@@ -2,10 +2,17 @@ from deepeval.models.base_model import DeepEvalBaseLLM
 from deepeval.metrics import GEval, BaseMetric
 from deepeval.test_case import LLMTestCaseParams, LLMTestCase
 from deepeval.evaluate import TestResult
+
 from anthropic import Anthropic, AsyncAnthropic
 from cohere import Client, AsyncClient
 from openai import AzureOpenAI, AsyncAzureOpenAI
 
+from src.reranker import ReRanker
+from src.database.weaviate_interface_v4 import WeaviateWCS
+from src.llm.llm_interface import LLM
+from src.llm.prompt_templates import huberman_system_message, generate_prompt_series, create_context_blocks
+from tqdm.asyncio import tqdm_asyncio 
+from tqdm import tqdm
 from dataclasses import dataclass
 from typing import Literal
 import os
@@ -211,6 +218,54 @@ def load_eval_response(metric: BaseMetric | AnswerCorrectnessMetric,
                         actual_output=test_case.actual_output if return_context_data else None,
                         retrieval_context=test_case.retrieval_context if return_context_data else None
                         )
+
+class EvaluationUtilties:
+
+    def __init__(self, 
+                 llm: LLM,
+                 retriever: WeaviateWCS,
+                 reranker: ReRanker
+                 ) -> None:
+        self.llm = llm
+        self.retriever = retriever
+        self.reranker = reranker
+
+    def retrieve_results(self,
+                         queries: list[str],
+                         collection_name: str,
+                         limit: int=200,
+                         top_k: int=3
+                         ) -> list[dict]:
+        results = [self.retriever.hybrid_search(query, collection_name, limit=limit) for query in tqdm(queries, 'QUERIES', position=0, leave=True)]
+        reranked = [self.reranker.rerank(result, queries[i], top_k=top_k) for i, result in enumerate(tqdm(results, 'RERANKING'))]
+        return reranked
+
+    async def aget_actual_outputs(self,
+                                  user_messages: list[str],
+                                  temperature: float=1.0,
+                                  max_tokens: int=500,
+                                  **kwargs) -> list[str]:
+        tasks = [self.llm.achat_completion(huberman_system_message, user_message, temperature=temperature, max_tokens=max_tokens, **kwargs) 
+                 for user_message in user_messages]
+        responses = await tqdm_asyncio.gather(*tasks, desc='LLM CALLS')
+        return responses
+    
+    async def acreate_test_cases(self,
+                                 queries: list[str],
+                                 collection_name: str,
+                                 limit: int=200,
+                                 top_k: int=3
+                                 ) -> list[LLMTestCase]:
+        '''
+        Creates a list of LLM Test Cases based on query retrievals. 
+        '''
+        reranked_results = self.retrieve_results(queries, collection_name, limit, top_k)
+        user_messages = [generate_prompt_series(queries[i], rerank) for i, rerank in enumerate(reranked_results)]
+        actual_outputs = await self.aget_actual_outputs(user_messages)
+        retrieval_contexts = [create_context_blocks(rerank) for rerank in reranked_results]
+        test_cases = [LLMTestCase(input=input, actual_output=output, retrieval_context=context) \
+                    for input, output, context in list(zip(queries, actual_outputs, retrieval_contexts))]
+        return test_cases
 
 # def get_answer_score(query: str,
 #                      rag_pipeline: RAGPipeline,
