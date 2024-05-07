@@ -2,6 +2,7 @@ from deepeval.models.base_model import DeepEvalBaseLLM
 from deepeval.metrics import GEval, BaseMetric
 from deepeval.test_case import LLMTestCaseParams, LLMTestCase
 from deepeval.evaluate import TestResult
+from deepeval import evaluate
 
 from anthropic import Anthropic, AsyncAnthropic
 from cohere import Client, AsyncClient
@@ -14,7 +15,9 @@ from src.llm.prompt_templates import huberman_system_message, generate_prompt_se
 from tqdm.asyncio import tqdm_asyncio 
 from tqdm import tqdm
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, Any
+from math import ceil
+import numpy as np
 import os
 
 class CustomCohere(DeepEvalBaseLLM):
@@ -219,7 +222,7 @@ def load_eval_response(metric: BaseMetric | AnswerCorrectnessMetric,
                         retrieval_context=test_case.retrieval_context if return_context_data else None
                         )
 
-class EvaluationUtilties:
+class TestCaseGenerator:
 
     def __init__(self, 
                  llm: LLM,
@@ -267,6 +270,84 @@ class EvaluationUtilties:
                     for input, output, context in list(zip(queries, actual_outputs, retrieval_contexts))]
         return test_cases
 
+class PollingEvaluation:
+
+    def __init__(self,
+                 batch_size: int=10
+                ):
+        
+        if batch_size <= 1:
+            raise ValueError("Batch size must be greater than 1")
+        self.batch_size = batch_size
+
+    def evaluate_answer_correctness(self,
+                                    test_cases: list[LLMTestCase],
+                                    model: str | DeepEvalBaseLLM,
+                                    show_eval_progress: bool=False,
+                                    return_raw: bool=False
+                                    ) -> dict[str, Any]:
+        '''
+        Uses a single model to evaluate the correctness of the LLM generated answers
+        over a list of test cases.
+        '''
+        model_name = model if isinstance(model, str) else model.model
+        ac_metric = AnswerCorrectnessMetric(model=model)
+        responses = evaluate(test_cases, [ac_metric], print_results=False, show_indicator=show_eval_progress)
+        if return_raw:
+            return responses
+        eval_responses = [load_eval_response(r.metrics[0], r) for r in responses]
+        scores = [r.score for r in eval_responses]
+        cost = [r.cost for r in eval_responses if r.cost]
+        cost = sum(cost) if any(cost) else 'N/A'
+        results_dict = {'model': model_name, 'results': eval_responses, 'scores': scores, 'cost': cost}
+        return results_dict
+    
+    def polling_evaluation(self,
+                           test_cases: list[LLMTestCase],
+                           models: list[str | DeepEvalBaseLLM],
+                           show_eval_progress: bool=False,
+                           ) -> dict[str,Any]:
+        '''
+        Iteratively loops through list of models and executes deepeval evaluation function. 
+        This function implements "polling evaluation" wherein multiple model scores are 
+        crowdsourced vs. an evaluation that uses a single monolithic model. 
+        
+        Batch size no greater than 10 is recommended to avoid Rate Limit Errors, given that 
+        there is no internal backoff/retry support for this function. 
+        '''
+        test_cases = self._check_test_case_types(test_cases)
+        num_batches = ceil(len(test_cases)/self.batch_size)
+        model_names = [model if isinstance(model, str) else model.model for model in models]
+        results_dict = {name: {'results':[], 'scores': [], 'cost_per_batch': []} for name in model_names}
+        for i in range(num_batches):
+            batch = test_cases[i*self.batch_size:(i+1)*self.batch_size]
+            for model in tqdm(models, desc=f'Batch: {i+1} of {num_batches}'):
+                model_name = model if isinstance(model, str) else model.model
+                model_results = self.evaluate_answer_correctness(batch, model, show_eval_progress, return_raw=False)
+                results_dict[model_name]['results'].extend(model_results['results'])
+                results_dict[model_name]['scores'].extend(model_results['scores'])
+                results_dict[model_name]['cost_per_batch'].append(model_results['cost'])
+                print(f'Completed batch {i+1} results for model: {model_name}')
+        model_scores = np.array([results_dict[model_name]['scores'] for model_name in model_names])
+        mean_scores = np.mean(model_scores, axis=0)
+        evaluation_score = np.mean(mean_scores)
+        evaluation_results = {'model_results': results_dict, 'mean_scores': mean_scores, 'evaluation_score': round(evaluation_score,3)}
+        return evaluation_results
+    
+    def _check_test_case_types(self, test_cases: list[LLMTestCase]) -> bool:
+        if all(isinstance(test_case, LLMTestCase) for test_case in test_cases):
+            return test_cases
+        if isinstance(test_cases[0], dict):
+            try:
+                test_cases = [LLMTestCase(**data) for data in test_cases]
+                return test_cases
+            except Exception as _:
+                raise ValueError("Test cases must be a list of LLMTestCase objects or a list of dictionaries containing the keys: ['input', 'actual_output', 'retrieval_context']")
+
+
+
+
+    
 # def get_answer_score(query: str,
 #                      rag_pipeline: RAGPipeline,
 #                      evaluation_llm: str='gpt-4-turbo',
