@@ -3,6 +3,20 @@ from src.llm.llm_interface import LLM
 from typing import Literal
 import asyncio
 
+
+def generate_project2_submission_file(eval_dict: dict, 
+                                      outpath: str='./project2_submission.txt',
+                                      response_key: str='responses'
+                                      ) -> None:
+    '''
+    Generates a text file for Project 2 submission.  Writes all key-value pairs
+    except for the response_key.  Default response_key is 'responses'.
+    '''
+    with open(outpath, 'w') as f:
+        for key, value in eval_dict.items():
+            if key != response_key:
+                f.write(f'{key}: {value}\n')
+
 async def async_llm_call(llm: LLM,
                           query: str,
                           ranked_result: list[dict],
