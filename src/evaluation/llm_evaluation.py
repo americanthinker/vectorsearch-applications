@@ -331,7 +331,7 @@ class PollingEvaluation:
         model_scores = np.array([results_dict[model_name]['scores'] for model_name in model_names])
         mean_scores = np.mean(model_scores, axis=0)
         evaluation_score = np.mean(mean_scores)
-        evaluation_results = {'model_results': results_dict, 'mean_scores': mean_scores, 'evaluation_score': round(evaluation_score,3)}
+        evaluation_results = {'responses': results_dict, 'mean_scores': mean_scores, 'evaluation_score': round(evaluation_score,3)}
         return evaluation_results
     
     def _check_test_case_types(self, test_cases: list[LLMTestCase]) -> bool:

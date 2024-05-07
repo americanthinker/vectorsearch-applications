@@ -20,6 +20,7 @@ notebooks/videos
 notebooks/transcripts
 notebooks/data_ingest/videos
 notebooks/data_ingest/transcripts
+notebooks/.deepeval-cache.json
 
 # Distribution / packaging
 .Python
