@@ -19,7 +19,7 @@ def chunk_data(data: List[dict], text_splitter: SentenceSplitter, content_field=
 
 def create_vectors(content_splits: List[List[str]], 
                    model: SentenceTransformer, 
-                   device: str
+                   device: str='cuda:0' if cuda.is_available() else 'cpu'
                    ) -> list[tuple[str, ndarray[float]]]:
     text_vector_tuples = []
     for chunk in tqdm(content_splits, 'VECTORS'):
@@ -29,6 +29,7 @@ def create_vectors(content_splits: List[List[str]],
 
 def join_docs(corpus: List[dict], 
               tuples: List[Tuple[str, float]],
+              expanded_content: list[str]=None,
               unique_id_field: str='video_id',
               content_field: str='content',
               embedding_field: str='content_embedding'
@@ -40,6 +41,8 @@ def join_docs(corpus: List[dict],
             unique_id = doc[unique_id_field]
             doc['doc_id'] = f'{unique_id}_{j}'
             doc[content_field] = episode[0]
+            if expanded_content:
+                doc['expanded_content'] = expanded_content[i][j]
             doc[embedding_field] = episode[1].tolist()
             docs.append(doc)
     return docs

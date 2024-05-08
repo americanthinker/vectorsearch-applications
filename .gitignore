@@ -8,6 +8,7 @@ __pycache__/
 *.so
 # hiding
 notebooks/experimental/
+src/pipelines/
 
 # Large Files
 models/
