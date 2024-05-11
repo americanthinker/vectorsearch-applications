@@ -27,8 +27,8 @@ Your task is to follow the below instructions explicitly:\n
     4. The questions should randomly start with How, Why, or What.\n   
     5. Return your answer in JSON format with the following structure:\n
         {{
-            "positive": "How does Andy Galpin describe the process for increasing muscle hypertrophy?",
-            "hard_negative": "How does Andy Galpin decide on which exercises to use for building endurance?"
+            "positive": "How is the process of increasing muscle hypertrophy described?",
+            "hard_negative": "How is the process of increasing bone density described?"
         }}
 
 Example: 
@@ -39,8 +39,8 @@ Transcript: "Another academic who's superb in this whole space of muscle physiol
 ---------------------
 Response: 
 {{
-    "positive": "What does Andy Galpin say is required for muscle to change?", 
-    "hard_negative": "What does Andy Galpin say about the sport of bodybuilding?"
+    "positive": "What is required for muscle to change?", 
+    "hard_negative": "What is required to do well in the sport of bodybuilding?"
 }}
 
 
