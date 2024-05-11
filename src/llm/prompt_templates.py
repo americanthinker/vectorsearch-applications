@@ -51,28 +51,6 @@ Transcript: {transcript}
 ------------------------
 '''
 
-# ---------------------
-# Summary: {summary}
-
-qa_generation_prompt = '''
-Huberman Lab episode guest and transcript are below:
-
----------------------
-Guest: {guest}
----------------------
-Given the Guest of the episode as context use the following snippet of episode transcript \
-and not prior knowledge, generate questions that can be answered by the transcript section: 
-
----------------------
-Transcript: {transcript}
----------------------
-
-Your task is to create {num_questions_per_chunk} questions that can only be answered \
-given the transcript content and no other information. Follow these rules explicitly:\n
-    1. Do not make any reference to the transcript or episode when generating the question(s), simply generate the question(s).\n
-    2. The question generated and the transcript chunk should be highly semantically related.  If I were to measure their respective vector embeddings using cosine similarity, the outcome would be close to 1.0.\n
-    3. The question(s) should randomly start with How, Why, or What.   
-'''
 
 def create_context_blocks(results: list[dict],
                           summary_key: str='summary',

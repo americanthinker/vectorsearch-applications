@@ -9,6 +9,7 @@ __pycache__/
 # hiding
 notebooks/experimental/
 src/pipelines/
+src/llm/azure_aad.py 
 
 # Large Files
 models/
