@@ -1,5 +1,6 @@
 #external files
 from src.database.weaviate_interface_v4 import WeaviateWCS
+from src.evaluation.eval_prompt_templates import qa_triplet_generation_prompt
 from src.llm.llm_interface import LLM
 from src.reranker import ReRanker
 
@@ -10,6 +11,7 @@ import uuid
 import os
 import re
 import random
+from loguru import logger
 from typing import Literal
 from datetime import datetime
 import pandas as pd
@@ -34,10 +36,14 @@ class QueryContextGenerator:
         LLM object used for generating questions from a given corpus
     '''
     def __init__(self, 
-                 llm: LLM
+                 llm: LLM,
+                 system_message: str=None,
+                 user_message: str=None
                  ):
         self.llm = llm
         self.reranker = ReRanker()
+        self.system_message = system_message
+        self.user_message = user_message
 
     def _clean_validate_data(self,
                              data: list[dict], 
@@ -174,6 +180,90 @@ class QueryContextGenerator:
                 
         # construct dataset
         return dict(queries=queries, corpus=corpus, relevant_docs=relevant_docs)
+
+    def generate_qa_triplets(self,
+                             data: list[dict],
+                             num_total_samples: int,
+                             total_chars: int=None,
+                             threshold: float=None
+                             ) -> dict:
+        """
+        Generate query/context pairs from a list of documents. The query/context pairs
+        can be used for fine-tuning an embedding model using a MultipleNegativesRankingLoss
+        or can be used to create an evaluation dataset for retrieval models.
+        """
+        default_system_message = '''
+        You are a machine learning expert who specializes in generating datasets for fine-tuning embedding models.\n
+        You are particularly adept at generating sentence triplets for use in a Multiple Negatives Ranking Loss function.
+        '''
+        system_message = self.system_message if self.system_message else default_system_message
+        user_message = self.user_message if self.user_message else qa_triplet_generation_prompt
+        if user_message != qa_triplet_generation_prompt:
+            logger.warning('You are using a custome user message, which will require a "guest" and "transcript" field in your prompt.')
+        question_bank = []
+        corpus = {}
+        queries = {}
+        relevant_docs = {}
+        clean_data = self._clean_validate_data(data, total_chars=total_chars)
+        print(clean_data)
+        random.shuffle(clean_data)
+        print(len(clean_data))
+        counter = 0
+        
+        while len(question_bank) < num_total_samples:
+            chunk = clean_data[counter]
+            guest = chunk['guest']
+            transcript = chunk['content']
+            doc_id = chunk['doc_id']
+            counter += 1
+            user_message = user_message.format(guest=guest,
+                                               transcript=transcript)
+            try:
+                logger.info('Calling LLM')
+                response = self.llm.chat_completion(system_message, 
+                                                    user_message, 
+                                                    temperature=1.0, 
+                                                    max_tokens=100,
+                                                    raw_response=False,
+                                                    response_format={ "type": "json_object" }
+                                                    )
+                print(response)
+                break
+                # return response
+            except Exception as e:
+                print(e)
+                continue
+                
+            result = response.strip().split("\n")
+            questions = [
+                re.sub(r"^\d+[\).\s]", "", question).strip() for question in result
+            ]
+            questions = self._remove_bad_questions(questions)
+            questions = [question for question in questions if len(question) > 0]
+            if not any(questions):
+                print('No good questions returned')
+                continue
+            if threshold:
+                pairs = [[question,transcript] for question in questions]
+                scores = self.reranker.predict(sentences=pairs, activation_fct=self.reranker.activation_fct)
+                indexes_to_keep = np.argwhere(scores >= threshold)
+                questions = np.array(questions)[indexes_to_keep]
+            if any(questions):
+                if len(question_bank) < num_total_questions:
+                    corpus[doc_id] = transcript
+                    for question in questions:
+                        if len(question_bank) < num_total_questions:
+                            question_bank.append(question)
+                            question_id = str(uuid.uuid4())
+                            queries[question_id] = question[0] if isinstance(question, (np.ndarray, list)) else question
+                            relevant_docs[question_id] = doc_id
+            else:
+                print('No questions retrieved for this chunk')
+            if len(question_bank) % int((num_total_questions * 0.2)) == 0 and len(question_bank) != 0:
+                print(f'{len(question_bank)} questions generated')
+                
+        # # construct dataset
+        # return dict(queries=queries, corpus=corpus, relevant_docs=relevant_docs)
 
 def execute_evaluation(dataset: dict, 
                        collection_name: str, 
