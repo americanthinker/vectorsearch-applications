@@ -96,7 +96,7 @@ def main(retriever: WeaviateWCS):
         query = st.text_input('Enter your question: ')
         st.write('\n\n\n\n\n')
         if query:
-            st.write('This app is not currently functioning as intended. Uncomment lines 100-172 to enable qa functionality.')
+            st.write('This app is not currently functioning as intended. Uncomment lines 100-172 to enable Q&A functionality.')
     ########################
     ##### SEARCH + LLM #####
     ########################
