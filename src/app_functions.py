@@ -5,8 +5,8 @@ import tiktoken
 from time import sleep
 from loguru import logger
 from src.llm.llm_interface import LLM
-from src.llm.prompt_templates import (context_block, question_answering_prompt_series, 
-                                      generate_prompt_series, verbosity_options, huberman_system_message)
+from src.llm.prompt_templates import (generate_prompt_series,
+                                      huberman_system_message)
 import streamlit as st  
 
 @st.cache_data
@@ -27,7 +27,6 @@ def validate_token_threshold(ranked_results: list[dict],
                              tokenizer: tiktoken.Encoding, 
                              token_threshold: int,
                              llm_verbosity_level: Literal[0, 1, 2]=0,
-                             content_field: str='content', 
                              verbose: bool = False
                              ) -> list[dict]:
         """
