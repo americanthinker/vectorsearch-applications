@@ -2,7 +2,7 @@
 
 from typing import Deque, List, Dict
 from collections import deque
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 from typing import Literal
 
 
@@ -15,7 +15,7 @@ class Message(BaseModel):
     content: str
 
     # Optional: Add a validator to ensure content is not empty
-    @validator("content")
+    @field_validator("content")
     def content_must_not_be_empty(cls, v):
         if not v:
             raise ValueError("Content must not be empty")
