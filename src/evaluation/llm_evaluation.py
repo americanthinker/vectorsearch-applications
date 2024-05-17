@@ -15,7 +15,7 @@ from src.llm.prompt_templates import huberman_system_message, generate_prompt_se
 from tqdm.asyncio import tqdm_asyncio 
 from tqdm import tqdm
 from dataclasses import dataclass
-from typing import Literal, Any
+from typing import Literal, Any, Optional
 from math import ceil
 import numpy as np
 import os
@@ -190,10 +190,11 @@ class EvalResponse:
     metric: str
     cost: float
     eval_model: str
-    eval_steps: list[str]
-    input: str = None
-    actual_output: str = None
-    retrieval_context: list[str] = None
+    eval_steps: Optional[list[str]] = None
+    verdicts: Optional[list[str]] = None    
+    input: Optional[str] = None
+    actual_output: Optional[str] = None
+    retrieval_context: Optional[list[str]] = None
 
     def to_dict(self) -> dict:
         return self.__dict__
@@ -216,7 +217,8 @@ def load_eval_response(metric: BaseMetric | AnswerCorrectnessMetric,
                         metric=metric.__class__.__name__,
                         cost=metric.evaluation_cost, 
                         eval_model=metric.evaluation_model,
-                        eval_steps=metric.evaluation_steps if metric.__dict__['evaluation_steps'] else None,
+                        eval_steps=metric.evaluation_steps if metric.__dict__.get('evaluation_steps') else None,
+                        verdicts=metric.verdicts if metric.__dict__.get('verdicts') else None,
                         input=test_case.input if return_context_data else None,
                         actual_output=test_case.actual_output if return_context_data else None,
                         retrieval_context=test_case.retrieval_context if return_context_data else None
