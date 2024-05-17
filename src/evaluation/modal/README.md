@@ -40,9 +40,11 @@ From the root of the repository run: `modal run src/evaluation/modal/evaluate.py
 ## Results
 
 Here's a summary of the results:
+* Chunk size of 128 is too small to produce high-quality results.
+* Re-ranker + hybrid search is able to bridge the gap between base models but has a pretty high latency cost.
 * The best performing combination is using the `BAAI/bge-base-en-v1.5` embedding model, `cross-encoder/ms-marco-MiniLM-L-6-v2` re-ranker model with a chunk size of 512, a N of 250 and an alpha of 0.5 or 0.75.
 * This is inline with the experimentation I have done in week 1. The same model with a chunk size of 512 performed the best in that evaluation.
-* However, this model is potentially too slow for our use case.
+* However, this model could be too slow for our use case, once we combine it with the LLM step.
 * And further inspection suggests the base model we used (`sentence-transformers/all-MiniLM-L6-v2`) is able to achieve the highest hybrid MRR while being much faster using an alpha of 0.5 or 0.75 with a chunk size of 512, N of 50.
 * In summary, my parameters going forward will be:
   * Embedding model: `sentence-transformers/all-MiniLM-L6-v2`
@@ -50,9 +52,17 @@ Here's a summary of the results:
   * N: 50
   * Alpha: 0.5
   * Chunk size: 512
+  * Collection name: `Huberman_all_minilm_l6_v2_512`
+* If speed ends up not being a problem, more future-proof parameters could be:
+  * Embedding model: `BAAI/bge-base-en-v1.5`
+  * Re-ranker model: `cross-encoder/ms-marco-MiniLM-L-6-v2`
+  * N: 250
+  * Alpha: 0.5
+  * Chunk size: 512
+  * Collection name: `Huberman_bge_base_en_v15_512`
 
 Not the prettiest visualization, but here's a figure for a rough idea of the parameters:
-![Analysis summary](output.png)
+![Full sweep analysis summary](full_sweep.png)
 
 ## Cost
 
