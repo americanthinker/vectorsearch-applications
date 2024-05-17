@@ -2,7 +2,7 @@
 
 ## Context
 
-The [evaluate.py](./evaluate.py) script is a utility script that does a hyperparameter sweep along the axes of embedding models, re-ranking models, chunk size, alpha and limit values. Because the combination of parameters create 240 configurations, testing on a single GPU was too slow. These are the parameters that I am testing by default:
+The [evaluate.py](./evaluate.py) script is a utility script that does a hyperparameter sweep along the axes of embedding models, re-ranking models, chunk size, alpha and limit values. Because the combination of parameters create 108 configurations, testing on a single GPU was too slow. These are the parameters that I am testing by default:
 
 ```{python}
 EMBEDDING_MODELS = [
@@ -15,7 +15,7 @@ RERANKER_MODELS = [
 ]
 CHUNK_SIZES = [128, 256, 512]
 LIMITS = [50, 100, 250, 500]
-ALPHAS = [0, 0.25, 0.5, 0.75, 1]
+ALPHAS = [0.25, 0.5, 0.75]
 ```
 
 And here's what they mean:
@@ -39,8 +39,21 @@ From the root of the repository run: `modal run src/evaluation/modal/evaluate.py
 
 ## Results
 
-TBD!
+Here's a summary of the results:
+* The best performing combination is using the `BAAI/bge-base-en-v1.5` embedding model, `cross-encoder/ms-marco-MiniLM-L-6-v2` re-ranker model with a chunk size of 512, a N of 250 and an alpha of 0.5 or 0.75.
+* This is inline with the experimentation I have done in week 1. The same model with a chunk size of 512 performed the best in that evaluation.
+* However, this model is potentially too slow for our use case.
+* And further inspection suggests the base model we used (`sentence-transformers/all-MiniLM-L6-v2`) is able to achieve the highest hybrid MRR while being much faster using an alpha of 0.5 or 0.75 with a chunk size of 512, N of 50.
+* In summary, my parameters going forward will be:
+  * Embedding model: `sentence-transformers/all-MiniLM-L6-v2`
+  * Re-ranker model: `cross-encoder/ms-marco-MiniLM-L-6-v2`
+  * N: 50
+  * Alpha: 0.5
+  * Chunk size: 512
+
+Not the prettiest visualization, but here's a figure for a rough idea of the parameters:
+![Analysis summary](output.png)
 
 ## Cost
 
-TBD!
+Using 10 T4 GPUs in parallel, this job cost ~$25.

@@ -507,6 +507,8 @@ def execute_evaluation(
         "query_props": query_properties,
         "total_misses": 0,
         "total_questions": 0,
+        "total_duration": 0,
+        "duration_per_query": 0,
     }
     search_type = ["kw", "vector", "hybrid"] if search_type == ["all"] else search_type
     results_dict = _add_metrics(results_dict, search_type)
@@ -608,6 +610,9 @@ def execute_evaluation(
     calc_mrr_scores(results_dict, search_type=search_type)
 
     end = time.perf_counter() - start
+    results_dict["total_duration"] = end
+    results_dict["duration_per_query"] = end / results_dict["total_questions"]
+
     print(f"Total Processing Time: {round(end/60, 2)} minutes")
     record_results(results_dict, chunk_size, dir_outpath=dir_outpath, as_text=True)
 

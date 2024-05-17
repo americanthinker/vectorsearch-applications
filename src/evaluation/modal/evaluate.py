@@ -18,8 +18,8 @@ RERANKER_MODELS = [
     "BAAI/bge-reranker-base",  # Higher ranked model on the MTEB
 ]
 CHUNK_SIZES = [128, 256, 512]
-LIMITS = [50, 100, 250, 500]
-ALPHAS = [0, 0.25, 0.5, 0.75, 1]
+LIMITS = [50, 100, 250]
+ALPHAS = [0.25, 0.5, 0.75]
 
 # GPU Configuration
 gpu_config = gpu.A10G()
@@ -73,7 +73,7 @@ def generate_configs():
     gpu=gpu_config,
     concurrency_limit=10,
     allow_concurrent_inputs=True,
-    timeout=600,  # in seconds, corresponds to 10 minutes
+    timeout=1200,  # in seconds, corresponds to 20 minutes
     secrets=[Secret.from_dotenv()],
     mounts=[Mount.from_local_dir(DATA_DIR, remote_path="/data")],
 )
