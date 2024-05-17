@@ -446,7 +446,7 @@ def execute_evaluation(
     search_type: Literal["hybrid", "kw", "vector", "all"] = ["all"],
     query_properties: list[str] = ["content"],
     return_properties: list[str] = ["doc_id", "content"],
-    dir_outpath: str = "./eval_results",
+    dir_outpath: str | None = None,
     include_miss_info: bool = False,
     user_def_params: dict = None,
 ) -> dict | tuple[dict, list[dict]]:
@@ -614,7 +614,8 @@ def execute_evaluation(
     results_dict["duration_per_query"] = end / results_dict["total_questions"]
 
     print(f"Total Processing Time: {round(end/60, 2)} minutes")
-    record_results(results_dict, chunk_size, dir_outpath=dir_outpath, as_text=True)
+    if dir_outpath is not None:
+        record_results(results_dict, chunk_size, dir_outpath=dir_outpath, as_text=True)
 
     if include_miss_info:
         return results_dict, miss_info_list

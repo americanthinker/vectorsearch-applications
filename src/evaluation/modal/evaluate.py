@@ -17,12 +17,12 @@ RERANKER_MODELS = [
     "cross-encoder/ms-marco-MiniLM-L-6-v2",  # Baseline for the course
     # "BAAI/bge-reranker-base",  # Higher ranked model on the MTEB
 ]
-CHUNK_SIZES = [256, 512]
+CHUNK_SIZES = [128, 256, 512]
 LIMITS = [50, 100, 250]
 ALPHAS = [0.25, 0.5, 0.75]
 
 # GPU Configuration
-gpu_config = gpu.A10G()
+gpu_config = gpu.T4()
 
 current_working_directory = os.getcwd()
 DATA_DIR = os.path.join(current_working_directory, "data")
@@ -113,7 +113,6 @@ def evaluate(
         retrieve_limit=limit,
         alpha=alpha,
         dir_outpath=None,
-        search_type=["hybrid"],
     )
 
 

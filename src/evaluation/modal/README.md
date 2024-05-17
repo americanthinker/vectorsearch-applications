@@ -61,6 +61,9 @@ Here's a summary of the results:
   * Chunk size: 512
   * Collection name: `Huberman_bge_base_en_v15_512`
 
+### Update as of 05/17 (post release of the "hard" test dataset)
+* The go to parameters won't change, but there's more variation in the results, so a more in-depth sweey may be needed to get the best results.
+
 Not the prettiest visualization, but here's a figure for a rough idea of the parameters:
 ![Full sweep analysis summary](full_sweep.png)
 
