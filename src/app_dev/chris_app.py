@@ -15,7 +15,6 @@ from dotenv import load_dotenv
 from src.llm.prompt_templates import (
     huberman_system_message,
     generate_prompt_series,
-    # ui_introduction_message
 )
 from app_functions import (
     validate_token_threshold,
@@ -25,6 +24,12 @@ from app_functions import (
     get_llm
 )
 from src.conversation import Conversation, Message
+from src.app_dev.query import (
+    CompletedQueryQueue,
+    CompletedQuery,
+    parse_context_results,
+    parse_llm_response
+)
 
 ## Page Configuration
 st.set_page_config(
@@ -42,13 +47,13 @@ claude = 'claude-3-haiku-20240307'
 anthro_api_key = os.getenv('ANTHROPIC_API_KEY')
 data_path = '../data/huberman_labs.json'
 UI_CONVERSATION_KEY = "ui_conversation"
-CONTEXT_CONVERSATION_KEY = "context_conversation"
+LLM_CONTEXT_QUEUE = "llm_context_queue"
 MESSAGE_BUILDER_KEY = "message_builder"
 EMBEDDING_MODEL_PATH = "sentence-transformers/all-MiniLM-L6-v2" #"BAAI/bge-base-en"
 TITLES = "titles"
 PAGES = "pages"
-huberman_icon = "../app_assets/huberman_logo.png"
-uplimit_icon = '../app_assets/uplimit_logo.jpg'
+huberman_icon = "/workspaces/vectorsearch-applications/src/app_assets/huberman_logo.png"
+uplimit_icon = '/workspaces/vectorsearch-applications/src/app_assets/uplimit_logo.jpg'
 
 
 ## Get cached resouces
@@ -127,53 +132,57 @@ def set_new_conversations():
         Conversation: The newly created conversation object.
     """
     st.session_state[UI_CONVERSATION_KEY] = Conversation(
-        conversation_id=str(uuid.uuid4()),
-        system_message=Message(role="assistant", content="Welcome to the Huberman Lab podcast!"),
-    )
-    st.session_state[CONTEXT_CONVERSATION_KEY] = Conversation(
-        conversation_id=str(uuid.uuid4()),
-        system_message=Message(role="system", content=huberman_system_message),
-    )
+            conversation_id=str(uuid.uuid4()),
+            system_message=Message(role="assistant", content="Welcome to the Huberman Lab podcast!"),
+        )
+    st.session_state[LLM_CONTEXT_QUEUE] = CompletedQueryQueue()
 
 
 def process_user_input(user_input):
     """Process the user input and generate the assistant response."""
     if user_input:
-        # 1. Run rag search
+        # 1. Submit user input with previous context to LLM for possible rewrite
+        context_queue = st.session_state[LLM_CONTEXT_QUEUE]
+        query_rewrite_prompt = context_queue.generate_prompt(user_input)
+        llm_rewrite_response = llm.chat_completion(huberman_system_message,
+            user_message=query_rewrite_prompt,
+            temperature=0.5,
+            max_tokens=1000)
+        
+        llm_rewrite_query_type, llm_rewrite_query_text = parse_llm_response(llm_rewrite_response)
+
+        # 2. Run rag search
         results = retriever.hybrid_search(
-            user_input, collection_name=collection_name, return_properties=app_display_fields, limit=50
+            llm_rewrite_query_text, collection_name=collection_name, return_properties=app_display_fields, limit=50
         )
 
-        # 2. Rerank search results using semantic reranker
+        # 3. Rerank search results using semantic reranker
         reranked_results = reranker.rerank(
-            results, user_input, apply_sigmoid=False, top_k=4
+            results, llm_rewrite_query_text, apply_sigmoid=False, top_k=4
         )
 
-        # 3. Validate token threshold
+        # 4. Validate token threshold
         valid_results = validate_token_threshold(
             reranked_results,
-            user_input,
+            llm_rewrite_query_text,
             huberman_system_message,
             tokenizer=encoding,
             token_threshold=6000,
             llm_verbosity_level=llm_verbsoity
         )
 
-        # 4. Generate context series
-        context_series = generate_prompt_series(user_input, valid_results, llm_verbsoity)
+        # 5. Parse context results for adding to the context queue
+        parsed_context_results = parse_context_results(valid_results)
+
+        # 6. Generate context series
+        context_series = generate_prompt_series(llm_rewrite_query_text, valid_results, llm_verbsoity)
         
-        # 5. Add messages to conversations
+        # 7. Add messages to conversations
         st.session_state[UI_CONVERSATION_KEY].add_message(
             Message(role="user", content=user_input)
         )
-        st.session_state[CONTEXT_CONVERSATION_KEY].add_message(
-            Message(role="system", content=context_series)
-        )
 
-        # debugging purposes
-        # logger.info(st.session_state[UI_CONVERSATION_KEY].queue_to_list())
-
-        # 6. Generate assistant response
+        # 8. Generate assistant response
         with st.chat_message(name="assistant", avatar=huberman_icon):
             gpt_answer = st.write_stream(
                 chat(
@@ -191,15 +200,19 @@ def process_user_input(user_input):
                     st.markdown(f"{i}. **{doc[0]}**: &nbsp; &nbsp; page {doc[1]}")
             st.session_state[TITLES], st.session_state[PAGES] = [], []
 
-        # 7. Add assistant response to the conversation
+        # 9. Add assistant response to the conversation
         st.session_state[UI_CONVERSATION_KEY].add_message(
             Message(role="assistant", content=gpt_answer)
         )
-        #     st.session_state.generator = gpt_answer
-        #     st.session_state.streaming = True
-        #     st.rerun()
-        # else:
-        #     update_assistant_response()
+
+        # 10. Add the completed query to the context queue
+        completed_query = CompletedQuery(
+            user_query=user_input,
+            context_results_list=parsed_context_results,
+            llm_answer=gpt_answer,
+            llm_revised_query=llm_rewrite_query_text if llm_rewrite_query_type != "Original" else None
+        )
+        st.session_state[LLM_CONTEXT_QUEUE].add_query(completed_query)
 
 
 # Generate chat responses using the OpenAI API
