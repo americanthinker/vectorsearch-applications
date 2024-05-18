@@ -15,7 +15,7 @@ from dataclasses import dataclass
 
 class WeaviateWCS:
     '''
-    A python native Weaviate Client class that encapsulates Weaviate functionalities 
+    A python native Weaviate Client class that encapsulates Weaviate functionalities
     in one object. Several convenience methods are added for ease of use.
 
     Args
@@ -29,13 +29,13 @@ class WeaviateWCS:
 
     model_name_or_path: str='sentence-transformers/all-MiniLM-L6-v2'
         The name or path of the SentenceTransformer model to use for vector search.
-        Will also support OpenAI text-embedding-ada-002 model.  This param enables 
-        the use of most leading models on MTEB Leaderboard: 
+        Will also support OpenAI text-embedding-ada-002 model.  This param enables
+        the use of most leading models on MTEB Leaderboard:
         https://huggingface.co/spaces/mteb/leaderboard
     openai_api_key: str=None
         The API key for the OpenAI API. Only required if using OpenAI text-embedding-ada-002 model.
-    '''    
-    def __init__(self, 
+    '''
+    def __init__(self,
                  endpoint: str=None,
                  api_key: str=None,
                  model_name_or_path: str='sentence-transformers/all-MiniLM-L6-v2',
@@ -48,11 +48,11 @@ class WeaviateWCS:
         self.endpoint = endpoint
         if embedded:
             self._client = weaviate.connect_to_embedded(**kwargs)
-        else: 
-            auth_config = AuthApiKey(api_key=api_key) 
-            self._client = weaviate.connect_to_wcs(cluster_url=endpoint, 
-                                                   auth_credentials=auth_config, 
-                                                   skip_init_checks=skip_init_checks)   
+        else:
+            auth_config = AuthApiKey(api_key=api_key)
+            self._client = weaviate.connect_to_wcs(cluster_url=endpoint,
+                                                   auth_credentials=auth_config,
+                                                   skip_init_checks=skip_init_checks)
         self.model_name_or_path = model_name_or_path
         self._openai_model = False
         if self.model_name_or_path == 'text-embedding-ada-002':
@@ -60,8 +60,9 @@ class WeaviateWCS:
                 raise ValueError(f'OpenAI API key must be provided to use this model: {self.model_name_or_path}')
             self.model = OpenAI(api_key=openai_api_key)
             self._openai_model = True
-        else: 
-            self.model = SentenceTransformer(self.model_name_or_path) if self.model_name_or_path else None
+        else:
+            trust_remote_code = kwargs.pop("trust_remote_code", False)
+            self.model = SentenceTransformer(self.model_name_or_path, trust_remote_code=trust_remote_code) if self.model_name_or_path else None
 
         self.return_properties = ['guest', 'title', 'summary', 'content', 'video_id', 'doc_id', 'episode_url', 'thumbnail_url']
 
@@ -80,7 +81,7 @@ class WeaviateWCS:
                           ) -> None:
         '''
         Creates a collection (index) on the Weaviate instance.
-        
+
         Args
         ----
         collection_name: str
@@ -90,14 +91,14 @@ class WeaviateWCS:
         description: str=None
             User-defined description of the collection.
         '''
-        
+
         self._connect()
         if self._client.collections.exists(collection_name):
             print(f'Collection "{collection_name}" already exists')
-            return 
+            return
         else:
             try:
-                self._client.collections.create(name=collection_name, 
+                self._client.collections.create(name=collection_name,
                                                 properties=properties,
                                                 description=description,
                                                 **kwargs)
@@ -107,7 +108,7 @@ class WeaviateWCS:
         self._client.close()
         return
 
-    def show_all_collections(self, 
+    def show_all_collections(self,
                              detailed: bool=False,
                              max_details: bool=False
                              ) -> list[str] | dict:
@@ -128,14 +129,14 @@ class WeaviateWCS:
 
     def show_collection_config(self, collection_name: str) -> ConnectionConfig:
         '''
-        Shows all information of a specific collection. 
+        Shows all information of a specific collection.
         '''
         self._connect()
         if self._client.collections.exists(collection_name):
             collection = self.show_all_collections(max_details=True)[collection_name]
             self._client.close()
             return collection
-        else: 
+        else:
             print(f'Collection "{collection_name}" not found on host')
 
     def show_collection_properties(self, collection_name: str) -> dict | str:
@@ -147,9 +148,9 @@ class WeaviateWCS:
             collection = self.show_all_collections(max_details=True)[collection_name]
             self._client.close()
             return collection.properties
-        else: 
+        else:
             print(f'Collection "{collection_name}" not found on host')
-    
+
     def delete_collection(self, collection_name: str) -> str:
         '''
         Deletes a collection (index) on the Weaviate instance, if it exists.
@@ -162,9 +163,9 @@ class WeaviateWCS:
                 print(f'Collection "{collection_name}" deleted')
             except Exception as e:
                 print(f'Error deleting collection, due to: {e}')
-        else: 
+        else:
             print(f'Collection "{collection_name}" not found on host')
-    
+
     def get_doc_count(self, collection_name: str) -> str:
         '''
         Returns the number of documents in a collection.
@@ -178,8 +179,8 @@ class WeaviateWCS:
             return total_count
         else:
             print(f'Collection "{collection_name}" not found on host')
-            
-    def format_response(self, 
+
+    def format_response(self,
                         response: QueryReturn,
                         ) -> list[dict]:
         '''
@@ -195,7 +196,7 @@ class WeaviateWCS:
         '''
         temp_dict = metadata.__dict__
         return {k:v for k,v in temp_dict.items() if v}
-        
+
     def keyword_search(self,
                        request: str,
                        collection_name: str,
@@ -206,7 +207,7 @@ class WeaviateWCS:
                        return_raw: bool=False
                        ) -> dict | list[dict]:
         '''
-        Executes Keyword (BM25) search. 
+        Executes Keyword (BM25) search.
 
         Args
         ----
@@ -238,7 +239,7 @@ class WeaviateWCS:
         # response = response.with_where(where_filter).do() if where_filter else response.do()
         if return_raw:
             return response
-        else: 
+        else:
             return self.format_response(response)
 
     def vector_search(self,
@@ -251,9 +252,9 @@ class WeaviateWCS:
                       device: str='cuda:0' if cuda.is_available() else 'cpu'
                       ) -> dict | list[dict]:
         '''
-        Executes vector search using embedding model defined on instantiation 
+        Executes vector search using embedding model defined on instantiation
         of WeaviateClient instance.
-        
+
         Args
         ----
         request: str
@@ -277,20 +278,20 @@ class WeaviateWCS:
         response = collection.query.near_vector(near_vector=query_vector,
                                                 limit=limit,
                                                 filters=filter,
-                                                return_metadata=MetadataQuery(distance=True),                                                               
+                                                return_metadata=MetadataQuery(distance=True),
                                                 return_properties=return_properties)
         #  response = response.with_where(where_filter).do() if where_filter else response.do()
         if return_raw:
             return response
-        else: 
-            return self.format_response(response)    
-    
+        else:
+            return self.format_response(response)
+
     def _create_query_vector(self, query: str, device: str) -> list[float]:
         '''
         Creates embedding vector from text query.
         '''
         return self.get_openai_embedding(query) if self._openai_model else self.model.encode(query, device=device).tolist()
-    
+
     def get_openai_embedding(self, query: str) -> list[float]:
         '''
         Gets embedding from OpenAI API for query.
@@ -300,7 +301,7 @@ class WeaviateWCS:
             return embedding['data'][0]['embedding']
         else:
            raise ValueError(f'No embedding found for query: {query}')
-        
+
     def hybrid_search(self,
                       request: str,
                       collection_name: str,
@@ -314,7 +315,7 @@ class WeaviateWCS:
                      ) -> dict | list[dict]:
         '''
         Executes Hybrid (Keyword + Vector) search.
-        
+
         Args
         ----
         request: str
@@ -353,10 +354,10 @@ class WeaviateWCS:
                                            return_properties=return_properties)
         if return_raw:
             return response
-        else: 
+        else:
             return self.format_response(response)
-        
-        
+
+
 class WeaviateIndexer:
 
     def __init__(self,
@@ -366,7 +367,7 @@ class WeaviateIndexer:
         Class designed to batch index documents into Weaviate. Instantiating
         this class will automatically configure the Weaviate batch client.
         '''
-    
+
         self._client = client._client
 
     def _connect(self):
@@ -376,8 +377,8 @@ class WeaviateIndexer:
         if not self._client.is_connected():
             self._client.connect()
 
-    def create_collection(self, 
-                          collection_name: str, 
+    def create_collection(self,
+                          collection_name: str,
                           properties: list[Property],
                           description: str=None,
                           **kwargs
@@ -403,18 +404,18 @@ class WeaviateIndexer:
             print(f'Error creating collection, due to: {e}')
 
     def batch_index_data(self,
-                         data: list[dict], 
+                         data: list[dict],
                          collection_name: str,
                          error_threshold: float=0.01,
-                         vector_property: str='content_embedding', 
+                         vector_property: str='content_embedding',
                          unique_id_field: str='doc_id',
                          properties: list[Property]=None,
                          collection_description: str=None,
                          **kwargs
                          ) -> dict:
         '''
-        Batch function for fast indexing of data onto Weaviate cluster. 
-        
+        Batch function for fast indexing of data onto Weaviate cluster.
+
         Args
         ----
         data: list[dict]
@@ -433,11 +434,11 @@ class WeaviateIndexer:
             List of properties to create the collection with. Required if collection does not exist.
         collection_description: str=None
             Description of the collection. Optional parameter.
-        
+
         Returns
         -------
         dict
-            Dictionary containing error information if any with the following keys: 
+            Dictionary containing error information if any with the following keys:
             ['num_errors', 'error_messages', 'doc_ids']
         '''
         self._connect()
@@ -445,7 +446,7 @@ class WeaviateIndexer:
             print(f'Collection "{collection_name}" not found on host, creating Collection first...')
             if properties is None:
                 raise ValueError(f'Tried to create Collection <{collection_name}> but no properties were provided.')
-            self.create_collection(collection_name=collection_name, 
+            self.create_collection(collection_name=collection_name,
                                    properties=properties,
                                    description=collection_description,
                                    **kwargs)
@@ -457,7 +458,7 @@ class WeaviateIndexer:
 
         start = time.perf_counter()
         completed_job = True
-        
+
         with collection.batch.dynamic() as batch:
             for doc in tqdm(data):
                 batch.add_object(properties={k:v for k,v in doc.items() if k != vector_property},
@@ -465,17 +466,17 @@ class WeaviateIndexer:
                 if batch.number_errors > error_threshold_size:
                     print('Upload errors exceed error_threshold...')
                     completed_job = False
-                    break 
+                    break
         end = time.perf_counter() - start
         print(f'Processing finished in {round(end/60, 2)} minutes.')
-        
+
         failed_objects = collection.batch.failed_objects
         if any(failed_objects):
             error_messages = [obj.message for obj in failed_objects]
-            doc_ids = [obj.object_.properties.get(unique_id_field, 'Not Found') for obj in failed_objects] 
+            doc_ids = [obj.object_.properties.get(unique_id_field, 'Not Found') for obj in failed_objects]
         else:
             error_messages, doc_ids = [], []
-        error_object = {'num_errors':batch.number_errors, 
+        error_object = {'num_errors':batch.number_errors,
                         'error_messages': error_messages,
                         'doc_ids': doc_ids}
         if not completed_job:
@@ -486,7 +487,7 @@ class WeaviateIndexer:
         else:
             print('Batch job completed with zero errors.')
         return error_object
-            
+
 
 @dataclass
 class SearchFilter(Filter):
@@ -506,6 +507,6 @@ class SearchFilter(Filter):
 
     def exact_match(self):
         return self.by_property(self.property).equal(self.query_value)
-    
+
     def fuzzy_match(self):
         return self.by_property(self.property).like(f'*{self.query_value}*')
