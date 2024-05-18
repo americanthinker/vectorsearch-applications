@@ -17,7 +17,6 @@ from src.llm.prompt_templates import (
     huberman_system_message,
     question_answering_prompt_series,
     generate_prompt_series,
-    ui_introduction_message
 )
 from src.llm.llm_utils import load_azure_openai
 from app_functions import validate_token_threshold
