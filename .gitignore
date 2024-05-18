@@ -9,14 +9,14 @@ __pycache__/
 # hiding
 notebooks/experimental/
 src/pipelines/
-src/llm/azure_aad.py 
+src/llm/azure_aad.py
 
 # Large Files
 models/
 eval_results/
 data/raw/
 data/videos/
-data/*.parquet
+data/processed/*.parquet
 answer_key
 notebooks/videos
 notebooks/transcripts
@@ -42,6 +42,7 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+.vscode/
 MANIFEST
 
 # PyInstaller
