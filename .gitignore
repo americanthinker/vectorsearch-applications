@@ -69,6 +69,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+notebooks/.temp-deepeval-cache.json
 
 # Translations
 *.mo

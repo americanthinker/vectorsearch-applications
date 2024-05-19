@@ -13,6 +13,7 @@ from src.reranker import ReRanker
 #standard library imports
 import json
 import time
+import torch.mps
 import uuid
 import os
 import re
@@ -32,7 +33,7 @@ class QueryContextGenerator:
     '''
     Class designed for the generation of query/context pairs using a
     Generative LLM. The LLM is used to generate questions from a given
-    corpus of text. The query/context pairs can be used to fine-tune 
+    corpus of text. The query/context pairs can be used to fine-tune
     an embedding model using a MultipleNegativesRankingLoss loss function
     or can be used to create evaluation datasets for retrieval models.
 
@@ -41,7 +42,7 @@ class QueryContextGenerator:
     llm: LLM
         LLM object used for generating questions from a given corpus
     '''
-    def __init__(self, 
+    def __init__(self,
                  llm: LLM,
                  system_message: str=None,
                  user_message: str=None
@@ -52,7 +53,7 @@ class QueryContextGenerator:
         self.user_message = user_message
 
     def _clean_validate_data(self,
-                             data: list[dict], 
+                             data: list[dict],
                              valid_fields: list[str]=['content', 'summary', 'guest', 'doc_id', 'title'],
                              total_chars: int=None
                              #TODO: Use HF datasets as return type for data
@@ -60,7 +61,7 @@ class QueryContextGenerator:
         '''
         Strip original data chunks so they only contain valid_fields.
         Remove any chunks less than total_chars in size. Prevents LLM
-        from asking questions from sparse content. 
+        from asking questions from sparse content.
         '''
         if total_chars == None or total_chars < 25:
             contents = [d['content'] for d in data]
@@ -74,16 +75,16 @@ class QueryContextGenerator:
 
     def train_val_split(self,
                         data: list[dict],
-                        n_train_questions: int, 
-                        n_val_questions: int, 
+                        n_train_questions: int,
+                        n_val_questions: int,
                         n_questions_per_chunk: int=2,
                         total_chars: int=None
                         ) -> tuple[list[dict], list[dict]]:
         '''
-        Splits corpus into training and validation sets.  Training and 
+        Splits corpus into training and validation sets.  Training and
         validation samples are randomly selected from the corpus. total_chars
-        parameter is set based on pre-analysis of average doc length in the 
-        training corpus. 
+        parameter is set based on pre-analysis of average doc length in the
+        training corpus.
         '''
         clean_data = self._clean_validate_data(data, total_chars=total_chars)
         random.shuffle(clean_data)
@@ -112,7 +113,7 @@ class QueryContextGenerator:
                 if finding:
                     questions[i] = ''
         return questions
-    
+
     def generate_qa_embedding_pairs(self,
                                     data: list[dict],
                                     generate_prompt_tmpl: str,
@@ -135,7 +136,7 @@ class QueryContextGenerator:
         clean_data = self._clean_validate_data(data, total_chars=total_chars)
         random.shuffle(clean_data)
         counter = 0
-        
+
         while len(question_bank) < num_total_questions:
             chunk = clean_data[counter]
             summary = chunk['summary']
@@ -143,21 +144,21 @@ class QueryContextGenerator:
             transcript = chunk['content']
             doc_id = chunk['doc_id']
             counter += 1
-            assist_message = generate_prompt_tmpl.format(summary=summary, 
+            assist_message = generate_prompt_tmpl.format(summary=summary,
                                                          guest=guest,
                                                          transcript=transcript,
                                                          num_questions_per_chunk=num_questions_per_chunk)
             try:
-                response = self.llm.chat_completion(system_message, 
-                                                    assist_message, 
-                                                    temperature=1.0, 
+                response = self.llm.chat_completion(system_message,
+                                                    assist_message,
+                                                    temperature=1.0,
                                                     max_tokens=num_questions_per_chunk*50,
                                                     raw_response=False
                                                    )
             except Exception as e:
                 print(e)
                 continue
-                
+
             result = response.strip().split("\n")
             questions = [
                 re.sub(r"^\d+[\).\s]", "", question).strip() for question in result
@@ -185,7 +186,7 @@ class QueryContextGenerator:
                 print('No questions retrieved for this chunk')
             if len(question_bank) % int((num_total_questions * 0.2)) == 0 and len(question_bank) != 0:
                 print(f'{len(question_bank)} questions generated')
-                
+
         # construct dataset
         return dict(queries=queries, corpus=corpus, relevant_docs=relevant_docs)
 
@@ -228,16 +229,16 @@ class QueryContextGenerator:
                                                             qa_flavor=qa_flavors[qa_flavor]
                                                             )
             try:
-                response = self.llm.chat_completion(system_message, 
-                                                    user_message, 
-                                                    temperature=1.0, 
+                response = self.llm.chat_completion(system_message,
+                                                    user_message,
+                                                    temperature=1.0,
                                                     max_tokens=50,
                                                     raw_response=False
                                                    )
             except Exception as e:
                 print(e)
                 continue
-                
+
             result = response.strip()
             # questions = [
             #     re.sub(r"^\d+[\).\s]", "", question).strip() for question in result
@@ -252,9 +253,9 @@ class QueryContextGenerator:
                 valid_system_message = 'You are an expert at determining the quality of questions generated from a given text.'
                 valid_user_message = qa_validation_prompt.format(title=title, transcript=transcript, question=question)
                 try:
-                    valid_response = self.llm.chat_completion(valid_system_message, 
-                                                              valid_user_message, 
-                                                              temperature=1.0, 
+                    valid_response = self.llm.chat_completion(valid_system_message,
+                                                              valid_user_message,
+                                                              temperature=1.0,
                                                               max_tokens=8,
                                                               raw_response=False
                                                               )
@@ -268,7 +269,7 @@ class QueryContextGenerator:
                     if flavor_counter % quarter == 0 and flavor_counter != num_total_questions:
                         qa_flavor += 1
                         logger.info(f'Changing QA Flavor: at count {flavor_counter}, using qa_flavor {qa_flavor}')
-        
+
                     if len(question_bank) < num_total_questions:
                         corpus[doc_id] = transcript
                         question_bank.append(question)
@@ -279,7 +280,7 @@ class QueryContextGenerator:
                     print('No questions retrieved for this chunk')
                 if len(question_bank) % int((num_total_questions * 0.2)) == 0 and len(question_bank) != 0:
                     print(f'{len(question_bank)} questions generated')
-                
+
         # construct dataset
         return dict(queries=queries, corpus=corpus, relevant_docs=relevant_docs)
 
@@ -318,14 +319,14 @@ class QueryContextGenerator:
             if capture_token_count:
                 total_token_count += get_token_count(prompt)
             try:
-                response = self.llm.chat_completion(system_message, 
-                                                    prompt, 
-                                                    temperature=1.0, 
+                response = self.llm.chat_completion(system_message,
+                                                    prompt,
+                                                    temperature=1.0,
                                                     max_tokens=150,
                                                     raw_response=False,
                                                     response_format={ "type": "json_object" }
                                                     )
-                
+
                 try:
                     loaded = json.loads(response)
                     if self._check_valid_keys(loaded):
@@ -345,21 +346,21 @@ class QueryContextGenerator:
         if capture_token_count:
             logger.info(f'Total Token Count: {total_token_count}')
         return valid_json_triplet
-    
 
-    def _check_valid_keys(self, 
-                          sample: dict, 
+
+    def _check_valid_keys(self,
+                          sample: dict,
                           valid_keys: list[str]=['positive', 'hard_negative']
                           ) -> list[dict]:
         if len(sample) != 2:
-            return False 
+            return False
         for key in valid_keys:
             if key not in sample.keys():
                 return False
         return True
-    
+
             # continue
-                
+
             # result = response.strip().split("\n")
             # questions = [
             #     re.sub(r"^\d+[\).\s]", "", question).strip() for question in result
@@ -387,12 +388,12 @@ class QueryContextGenerator:
             #     print('No questions retrieved for this chunk')
             # if len(question_bank) % int((num_total_questions * 0.2)) == 0 and len(question_bank) != 0:
             #     print(f'{len(question_bank)} questions generated')
-                
+
         # # construct dataset
         # return dict(queries=queries, corpus=corpus, relevant_docs=relevant_docs)
 
-def execute_evaluation(dataset: dict, 
-                       collection_name: str, 
+def execute_evaluation(dataset: dict,
+                       collection_name: str,
                        retriever: WeaviateWCS,
                        reranker: ReRanker=None,
                        alpha: float=0.5,
@@ -407,7 +408,7 @@ def execute_evaluation(dataset: dict,
                        user_def_params: dict=None
                        ) -> dict | tuple[dict, list[dict]]:
     '''
-    Given a dataset, a retriever, and a reranker, evaluate the performance of the retriever and reranker. 
+    Given a dataset, a retriever, and a reranker, evaluate the performance of the retriever and reranker.
     Returns a dict of kw, vector, and hybrid hit rates and mrr scores. If inlude_miss_info is True, will
     also return a list of kw and vector responses and their associated queries that did not return a hit.
 
@@ -418,7 +419,7 @@ def execute_evaluation(dataset: dict,
     collection_name: str
         Name of Class on Weaviate host to be used for retrieval
     retriever: WeaviateWCS
-        WeaviateWCS object to be used for retrieval 
+        WeaviateWCS object to be used for retrieval
     reranker: ReRanker
         ReRanker model to be used for results reranking
     alpha: float=0.5
@@ -443,7 +444,7 @@ def execute_evaluation(dataset: dict,
         list of properties to be returned from Weaviate host for display in response
     dir_outpath: str='./eval_results'
         Directory path for saving results.  Directory will be created if it does not
-        already exist. 
+        already exist.
     include_miss_info: bool=False
         Option to include queries and their associated search response values
         for queries that are "total misses"
@@ -452,11 +453,11 @@ def execute_evaluation(dataset: dict,
         Will be automatically added to the results_dict if correct type is passed.
     '''
     reranker_name = reranker.model_name if reranker else "None"
-    
-    results_dict = {'n':retrieve_limit, 
+
+    results_dict = {'n':retrieve_limit,
                     'top_k': top_k,
                     'alpha': alpha,
-                    'Retriever': retriever.model_name_or_path, 
+                    'Retriever': retriever.model_name_or_path,
                     'Ranker': reranker_name,
                     'chunk_size': chunk_size,
                     'query_props': query_properties,
@@ -466,19 +467,20 @@ def execute_evaluation(dataset: dict,
     search_type = ['kw', 'vector', 'hybrid'] if search_type == ['all'] else search_type
     results_dict = _add_metrics(results_dict, search_type)
     results_dict = add_params(results_dict, user_def_params) if user_def_params else results_dict
-    
+
     start = time.perf_counter()
     miss_info_list = []
+    torch.mps.empty_cache()
     for query_id, q in tqdm(dataset['queries'].items(), 'Queries'):
         results_dict['total_questions'] += 1
         hit = False
         #make Keyword, Vector, and Hybrid calls to Weaviate host
         try:
             if 'hybrid' in search_type:
-                hybrid_doc_ids,hybrid_response = get_doc_ids('hybrid', retriever, q, collection_name, reranker, return_properties, 
+                hybrid_doc_ids,hybrid_response = get_doc_ids('hybrid', retriever, q, collection_name, reranker, return_properties,
                                                  retrieve_limit, top_k, alpha, query_properties)
             if 'kw' in search_type:
-                kw_doc_ids,kw_response = get_doc_ids('kw', retriever, q, collection_name, reranker, return_properties, 
+                kw_doc_ids,kw_response = get_doc_ids('kw', retriever, q, collection_name, reranker, return_properties,
                                          retrieve_limit, top_k, query_properties=query_properties)
             if 'vector' in search_type:
                 vector_doc_ids,vector_response = get_doc_ids('vector', retriever, q, collection_name, reranker,
@@ -486,7 +488,7 @@ def execute_evaluation(dataset: dict,
 
             #extract doc_id for scoring purposes
             doc_id = dataset['relevant_docs'][query_id]
-     
+
             #increment hit_rate counters and mrr scores
             if 'hybrid_doc_ids' in locals():
                 if doc_id in hybrid_doc_ids:
@@ -509,13 +511,13 @@ def execute_evaluation(dataset: dict,
                 results_dict['total_misses'] += 1
                 response_misses = []
                 if 'hybrid_response' in locals():
-                    hybrid_miss_info = _create_miss_info('hybrid', q, hybrid_response, dataset, doc_id)
+                    hybrid_miss_info = _create_miss_info('hybrid', q, hybrid_response, dataset, doc_id, reranker=reranker)
                     response_misses.append(hybrid_miss_info)
                 if 'kw_response' in locals():
-                    kw_miss_info = _create_miss_info('kw', q, kw_response, dataset, doc_id)
+                    kw_miss_info = _create_miss_info('kw', q, kw_response, dataset, doc_id, reranker=reranker)
                     response_misses.append(kw_miss_info)
                 if 'vector_response' in locals():
-                    vector_miss_info = _create_miss_info('vector', q, vector_response, dataset, doc_id)
+                    vector_miss_info = _create_miss_info('vector', q, vector_response, dataset, doc_id, reranker=reranker)
                     response_misses.append(vector_miss_info)
                 miss_info_list.append(response_misses)
 
@@ -526,16 +528,16 @@ def execute_evaluation(dataset: dict,
     #use raw counts to calculate final scores
     calc_hit_rate_scores(results_dict, search_type=search_type)
     calc_mrr_scores(results_dict, search_type=search_type)
-    
+
     end = time.perf_counter() - start
     print(f'Total Processing Time: {round(end/60, 2)} minutes')
     record_results(results_dict, chunk_size, dir_outpath=dir_outpath, as_text=True)
-    
+
     if include_miss_info:
         return results_dict, miss_info_list
     return results_dict
 
-def calc_hit_rate_scores(results_dict: dict[str, str | int], 
+def calc_hit_rate_scores(results_dict: dict[str, str | int],
                          search_type: Literal['kw', 'vector', 'hybrid', 'all']=['all']
                          ) -> None:
     '''
@@ -569,8 +571,8 @@ def create_dir(dir_path: str) -> None:
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
 
-def record_results(results_dict: dict[str, str | int], 
-                   chunk_size: int, 
+def record_results(results_dict: dict[str, str | int],
+                   chunk_size: int,
                    dir_outpath: str='./eval_results',
                    as_text: bool=False
                    ) -> None:
@@ -596,30 +598,30 @@ def record_results(results_dict: dict[str, str | int],
     if as_text:
         with open(path, 'a') as f:
             f.write(f"{results_dict}\n")
-    else: 
+    else:
         with open(path, 'w') as f:
             json.dump(results_dict, f, indent=4)
 
-def get_doc_ids(search_mode: str, 
+def get_doc_ids(search_mode: str,
                 retriever: WeaviateWCS,
-                query: str, 
-                collection_name: str, 
-                reranker: ReRanker, 
-                return_properties: list[str], 
+                query: str,
+                collection_name: str,
+                reranker: ReRanker,
+                return_properties: list[str],
                 retrieve_limit: int,
                 top_k: int,
                 alpha: float=None,
                 query_properties: list[str]=None
                 ) -> list[str]:
     if search_mode == 'hybrid':
-        response = retriever.hybrid_search(request=query, collection_name=collection_name, query_properties=query_properties, 
-                                           alpha=alpha,limit=retrieve_limit,return_properties=return_properties)  
+        response = retriever.hybrid_search(request=query, collection_name=collection_name, query_properties=query_properties,
+                                           alpha=alpha,limit=retrieve_limit,return_properties=return_properties)
     elif search_mode == 'kw':
-        response = retriever.keyword_search(request=query, collection_name=collection_name, query_properties=query_properties, 
+        response = retriever.keyword_search(request=query, collection_name=collection_name, query_properties=query_properties,
                                             limit=retrieve_limit, return_properties=return_properties)
     elif search_mode == 'vector':
-        response = retriever.vector_search(request=query, collection_name=collection_name, limit=retrieve_limit, 
-                                           return_properties=return_properties)  
+        response = retriever.vector_search(request=query, collection_name=collection_name, limit=retrieve_limit,
+                                           return_properties=return_properties)
     if reranker:
         response = reranker.rerank(response, query, top_k=top_k)
     doc_ids = {result['doc_id']:i for i, result in enumerate(response[:top_k], 1)}
@@ -638,7 +640,7 @@ def _check_search_type_param(search_type: list) -> None:
     if count == 0:
         raise ValueError(f'Please use one of {accepted_search_types}. Received {search_type}')
 
-def _add_metrics(results_dict: dict, 
+def _add_metrics(results_dict: dict,
                  search_type: Literal['kw', 'vector', 'hybrid', 'all']=['all']
                  ) -> dict:
     '''
@@ -649,27 +651,30 @@ def _add_metrics(results_dict: dict,
     search_type = ['kw', 'vector', 'hybrid'] if search_type == ['all'] else search_type
     for prefix in search_type:
         if prefix in accepted_search_types:
-            results_dict = {**results_dict, 
+            results_dict = {**results_dict,
                             f'{prefix}_hit_rate': 0,
                             f'{prefix}_mrr': 0}
     return results_dict
 
-def _create_miss_info(search_type: str, 
-                      query: str, 
-                      response: list[dict], 
-                      dataset: dict, 
-                      doc_id: str) -> dict:
+def _create_miss_info(search_type: str,
+                      query: str,
+                      response: list[dict],
+                      dataset: dict,
+                      doc_id: str,
+                      reranker=None) -> dict:
     '''
     Creates miss_info dict for queries that do not return a hit
     '''
-    miss_info = {'query': query, 
+    miss_info = {'query': query,
                  'answer': dataset['corpus'][doc_id],
                  'answer_doc_id': doc_id,
                  f'{search_type}_response': response}
+    if reranker:
+        miss_info['query_answer_cross_score'] = reranker.cross_enc_score(query, dataset['corpus'][doc_id])
     return miss_info
 
-def add_params(results_dict: dict, 
-               param_options: dict, 
+def add_params(results_dict: dict,
+               param_options: dict,
               ) -> dict:
     '''
     Helper function that adds parameters to the results_dict:
@@ -682,7 +687,7 @@ def add_params(results_dict: dict,
     if param_options and isinstance(param_options, dict):
         results_dict = {**results_dict, **param_options}
     return results_dict
-    
+
 
 
 
