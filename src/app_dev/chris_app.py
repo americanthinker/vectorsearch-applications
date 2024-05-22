@@ -27,7 +27,6 @@ from src.conversation import Conversation, Message
 from src.app_dev.query import (
     CompletedQueryQueue,
     CompletedQuery,
-    parse_context_results,
     parse_llm_response
 )
 
@@ -141,7 +140,7 @@ def set_new_conversations():
 def process_user_input(user_input):
     """Process the user input and generate the assistant response."""
     if user_input:
-        # 1. Submit user input with previous context to LLM for possible rewrite
+        # 1. Submit user input with previous chat history to LLM for possible rewrite if query is vague or ambiguous.
         context_queue = st.session_state[LLM_CONTEXT_QUEUE]
         query_rewrite_prompt = context_queue.generate_prompt(user_input)
         llm_rewrite_response = llm.chat_completion(huberman_system_message,
