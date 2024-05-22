@@ -171,18 +171,15 @@ def process_user_input(user_input):
             llm_verbosity_level=llm_verbsoity
         )
 
-        # 5. Parse context results for adding to the context queue
-        parsed_context_results = parse_context_results(valid_results)
-
-        # 6. Generate context series
+        # 5. Generate context series
         context_series = generate_prompt_series(llm_rewrite_query_text, valid_results, llm_verbsoity)
         
-        # 7. Add messages to conversations
+        # 6. Add messages to conversations
         st.session_state[UI_CONVERSATION_KEY].add_message(
             Message(role="user", content=user_input)
         )
 
-        # 8. Generate assistant response
+        # 7. Generate assistant response
         with st.chat_message(name="assistant", avatar=huberman_icon):
             gpt_answer = st.write_stream(
                 chat(
@@ -200,15 +197,14 @@ def process_user_input(user_input):
                     st.markdown(f"{i}. **{doc[0]}**: &nbsp; &nbsp; page {doc[1]}")
             st.session_state[TITLES], st.session_state[PAGES] = [], []
 
-        # 9. Add assistant response to the conversation
+        # 8. Add assistant response to the conversation
         st.session_state[UI_CONVERSATION_KEY].add_message(
             Message(role="assistant", content=gpt_answer)
         )
 
-        # 10. Add the completed query to the context queue
+        # 9. Add the completed query to the context queue
         completed_query = CompletedQuery(
             user_query=user_input,
-            context_results_list=parsed_context_results,
             llm_answer=gpt_answer,
             llm_revised_query=llm_rewrite_query_text if llm_rewrite_query_type != "Original" else None
         )
