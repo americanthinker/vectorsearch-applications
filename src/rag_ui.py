@@ -45,16 +45,18 @@ turbo = "gpt-3.5-turbo-0125"
 
 reader_model_name = turbo
 data_path = "../data/huberman_labs.json"
-embedding_model_path = "BAAI/bge-base-en-v1.5"
+embedding_model_path = "../models/bge-base-finetuned-500"
 ###################################
 
 ## RETRIEVER
 retriever = get_weaviate_client(model_name_or_path=embedding_model_path)
+retriever.return_properties.append("length_seconds")
+
 # if retriever._client.is_live():
 #     logger.info('Weaviate is ready!')
 
 ## RERANKER
-reranker_path = "BAAI/bge-reranker-base"
+reranker_path = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 reranker = ReRanker(reranker_path)
 
 ## QA MODEL
@@ -98,14 +100,44 @@ def main(retriever: WeaviateWCS):
         guest_input = st.selectbox(
             "Select Guest", options=guest_list, index=None, placeholder="Select Guest"
         )
-        alpha_input = None
-        retrieval_limit = None
-        reranker_topk = None
-        temperature_input = None
-        verbosity = None
+
+        alpha_input = st.slider(
+            "Alpha Input:",
+            min_value=0.0,
+            max_value=1.0,
+            value=0.5,
+            step=0.01,
+        )
+        retrieval_limit = st.slider(
+            "Retrieval Limit:",
+            min_value=10,
+            max_value=200,
+            value=10,
+            step=10,
+        )
+        reranker_topk = st.slider(
+            "Reranker TopK:",
+            min_value=1,
+            max_value=20,
+            value=3,
+            step=1,
+        )
+        temperature_input = st.slider(
+            "Temperature Input:",
+            min_value=0.0,
+            max_value=2.0,
+            value=0.5,
+            step=0.01,
+        )
+        verbosity = st.slider(
+            "Verbosity:",
+            min_value=0,
+            max_value=2,
+            value=1,
+            step=1,
+        )
 
     # retriever.return_properties.append('expanded_content')
-
     ##############################
     ##### SETUP MAIN DISPLAY #####
     ##############################
@@ -116,10 +148,6 @@ def main(retriever: WeaviateWCS):
     with col1:
         query = st.text_input("Enter your question: ")
         st.write("\n\n\n\n\n")
-        if query:
-            st.write(
-                "This app is not currently functioning as intended. Uncomment lines 100-172 to enable Q&A functionality."
-            )
     ########################
     ##### SEARCH + LLM #####
     ########################
@@ -131,9 +159,11 @@ def main(retriever: WeaviateWCS):
             Filter.by_property(name="guest").equal(guest_input) if guest_input else None
         )
 
-        hybrid_response = None
+        hybrid_response = retriever.hybrid_search(
+            query, collection_name, alpha=alpha_input
+        )
 
-        ranked_response = None
+        ranked_response = reranker.rerank(hybrid_response, query, top_k=reranker_topk)
         logger.info(f"# RANKED RESULTS: {len(ranked_response)}")
 
         token_threshold = 2500  # generally allows for 3-5 results of chunk_size 256
