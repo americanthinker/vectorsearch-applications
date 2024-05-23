@@ -11,7 +11,7 @@ def load_podcast_data(dataset_name: str='huberman_labs.json') -> list[dict]:
        downloads data direct from Public course repo.
     '''
     try:
-        path = f'/content/{dataset_name}'
+        path = f'../data/{dataset_name}'
         with open(path) as f:
             data = json.load(f)
         return data
