@@ -5,8 +5,11 @@ import tiktoken
 from time import sleep
 from loguru import logger
 from src.llm.llm_interface import LLM
-from src.llm.prompt_templates import (context_block, question_answering_prompt_series, 
-                                      generate_prompt_series, verbosity_options, huberman_system_message)
+from src.llm.prompt_templates import huberman_system_message, generate_prompt_series
+from src.database.weaviate_interface_v4 import WeaviateWCS
+from src.database.database_utils import get_weaviate_client
+from src.reranker import ReRanker
+from tiktoken import Encoding, get_encoding
 import streamlit as st  
 
 @st.cache_data
@@ -14,6 +17,26 @@ def load_data(data_path: str) -> dict | list[dict]:
     with open(data_path, 'r') as f:
         data = json.load(f)
     return data
+
+## RETRIEVER
+@st.cache_resource
+def get_retriever(model_name_or_path: str) -> WeaviateWCS:
+    return get_weaviate_client(model_name_or_path=model_name_or_path)
+
+# Cache reranker
+@st.cache_resource
+def get_reranker() -> ReRanker:
+    return ReRanker()
+
+# Cache LLM
+@st.cache_resource
+def get_llm(model_name: str='gpt-3.5-turbo-0125') -> LLM:
+    return LLM(model_name)
+
+## Cache encoding model
+@st.cache_resource
+def get_encoding_model(model_name) -> Encoding:
+    return get_encoding(model_name)
 
 def convert_seconds(seconds: int) -> str:
     """
@@ -27,7 +50,7 @@ def validate_token_threshold(ranked_results: list[dict],
                              tokenizer: tiktoken.Encoding, 
                              token_threshold: int,
                              llm_verbosity_level: Literal[0, 1, 2]=0,
-                             content_field: str='content', 
+                             content_field: str='content',
                              verbose: bool = False
                              ) -> list[dict]:
         """
@@ -39,7 +62,10 @@ def validate_token_threshold(ranked_results: list[dict],
         combined prompt tokens are below the threshold. This function does not take into
         account every token passed to the LLM, but it is a good approximation.
         """
-        user_message = generate_prompt_series(query=query, results=ranked_results, verbosity_level=llm_verbosity_level)
+        user_message = generate_prompt_series(query=query, 
+                                              results=ranked_results, 
+                                              verbosity_level=llm_verbosity_level,
+                                              content_key=content_field)
         user_len = len(tokenizer.encode(user_message))
         system_len = len(tokenizer.encode(system_message))
         # context_len = _get_batch_length(ranked_results, tokenizer, content_field=content_field)
@@ -60,17 +86,6 @@ def validate_token_threshold(ranked_results: list[dict],
         if verbose:
             logger.info(f'Total Final Token Count: {token_count}')
         return ranked_results
-
-def _get_batch_length(ranked_results: list[dict], 
-                      tokenizer: tiktoken.Encoding, 
-                      content_field: str='content'
-                      ) -> int:
-    '''
-    Convenience function to get the length in tokens of a batch of results 
-    '''
-    contexts = tokenizer.encode_batch([r[content_field] for r in ranked_results])
-    context_len = sum(list(map(len, contexts)))
-    return context_len
 
 def stream_chat(
                 llm: LLM,
