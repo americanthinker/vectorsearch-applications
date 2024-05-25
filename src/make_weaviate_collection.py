@@ -27,7 +27,7 @@ def strip_special_characters(input_string):
 class CollectionMaker:
     def __init__(
         self,
-        data_path: str = "data/huberman_labs.json",
+        data_path: str = "../data/huberman_labs.json",
         endpoint: str = os.environ["WEAVIATE_ENDPOINT"],
         api_key: str = os.environ["WEAVIATE_API_KEY"],
     ):
@@ -155,3 +155,5 @@ class CollectionMaker:
         indexer = WeaviateIndexer(client)
 
         batch_object = indexer.batch_index_data(joined_docs, collection_name)
+
+        client.close()
