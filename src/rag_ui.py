@@ -41,32 +41,58 @@ st.set_page_config(
 
 # Example models
 turbo = "gpt-3.5-turbo-0125"
-# claude = 'claude-3-haiku-20240307'
+claude = "claude-3-haiku-20240307"
+cohere = "command-r"
 
-reader_model_name = turbo
 data_path = "../data/huberman_labs.json"
-embedding_model_path = "../models/bge-base-finetuned-500"
+# embedding_model_path = "../models/bge-base-finetuned-500"
+embedding_model_path = "all-MiniLM-L6-v2"
 ###################################
 
 ## RETRIEVER
 retriever = get_weaviate_client(model_name_or_path=embedding_model_path)
-retriever.return_properties.append("length_seconds")
 
-# if retriever._client.is_live():
-#     logger.info('Weaviate is ready!')
+if retriever._client.is_live():
+    logger.info("Weaviate is ready!")
 
 ## RERANKER
-reranker_path = "cross-encoder/ms-marco-MiniLM-L-6-v2"
-reranker = ReRanker(reranker_path)
+reranker_paths = ["cross-encoder/ms-marco-MiniLM-L-6-v2", "BAAI/bge-reranker-base"]
+rerankers = {rp: ReRanker(rp) for rp in reranker_paths}
 
 ## QA MODEL
-llm = LLM(turbo, api_key=os.getenv("OPENAI_API_KEY"))
+llm1 = LLM(turbo, api_key=os.getenv("OPENAI_API_KEY"))
+llms = {turbo: llm1}
+llm_options = [turbo]
+try:
+    llm2 = LLM(claude, api_key=os.getenv("ANTHROPIC_API_KEY"))
+    llms[claude] = llm2
+    llm_options.append(claude)
+except:
+    pass
+try:
+    llm3 = LLM(cohere, api_key=os.getenv("COHERE_API_KEY"))
+    llms[cohere] = llm3
+    llm_options.append(cohere)
+except:
+    pass
 
 ## TOKENIZER
 encoding = get_encoding("cl100k_base")
 
 ## Display properties
-display_properties = None
+display_properties = [
+    "guest",
+    "title",
+    "summary",
+    "content",
+    "expanded_content",
+    "video_id",
+    "doc_id",
+    "episode_url",
+    "thumbnail_url",
+    "length_seconds",
+]
+content_fields = ["content", "expanded_content"]
 
 ## Data
 data = load_data(data_path)
@@ -75,11 +101,8 @@ data = load_data(data_path)
 guest_list = sorted(list(set([d["guest"] for d in data])))
 
 # best practice is to dynamically load collections from weaviate using client.show_all_collections()
-available_collections = [
-    "Huberman_bge_finetuned_500_128",
-    "Huberman_bge_finetuned_500_256",
-    "Huberman_bge_finetuned_500_512",
-]
+
+available_collections = retriever.show_all_collections()
 
 ## COST COUNTER
 if not st.session_state.get("cost_counter"):
@@ -94,11 +117,25 @@ def main(retriever: WeaviateWCS):
         collection_name = st.selectbox(
             "Collection Name:",
             options=available_collections,
-            index=None,
             placeholder="Select Collection Name",
         )
+
+        llm = llms[
+            st.selectbox(
+                "Reader Model:", options=llm_options, placeholder="Select Reader Model"
+            )
+        ]
+
         guest_input = st.selectbox(
             "Select Guest", options=guest_list, index=None, placeholder="Select Guest"
+        )
+
+        reranker = rerankers[
+            st.selectbox("Select reranker model:", options=reranker_paths, index=0)
+        ]
+
+        content_field = st.selectbox(
+            "Use Expanded Content Window?", options=content_fields, index=0
         )
 
         alpha_input = st.slider(
@@ -108,17 +145,18 @@ def main(retriever: WeaviateWCS):
             value=0.5,
             step=0.01,
         )
+
         retrieval_limit = st.slider(
             "Retrieval Limit:",
             min_value=10,
             max_value=200,
-            value=10,
+            value=50,
             step=10,
         )
         reranker_topk = st.slider(
             "Reranker TopK:",
             min_value=1,
-            max_value=20,
+            max_value=10,
             value=3,
             step=1,
         )
@@ -127,15 +165,10 @@ def main(retriever: WeaviateWCS):
             min_value=0.0,
             max_value=2.0,
             value=0.5,
-            step=0.01,
+            step=0.1,
         )
-        verbosity = st.slider(
-            "Verbosity:",
-            min_value=0,
-            max_value=2,
-            value=1,
-            step=1,
-        )
+
+        verbosity = st.selectbox("Verbosity:", options=[0, 1, 2], index=1)
 
     # retriever.return_properties.append('expanded_content')
     ##############################
@@ -154,20 +187,25 @@ def main(retriever: WeaviateWCS):
     if query and not collection_name:
         raise ValueError("Please first select a collection name")
     if query:
+        print(collection_name, temperature_input, reranker_topk, content_field)
         # make hybrid call to weaviate
         guest_filter = (
             Filter.by_property(name="guest").equal(guest_input) if guest_input else None
         )
 
         hybrid_response = retriever.hybrid_search(
-            query, collection_name, alpha=alpha_input
+            query,
+            collection_name,
+            alpha=alpha_input,
+            filter=guest_filter,
+            limit=retrieval_limit,
+            return_properties=display_properties,
         )
 
         ranked_response = reranker.rerank(hybrid_response, query, top_k=reranker_topk)
         logger.info(f"# RANKED RESULTS: {len(ranked_response)}")
 
         token_threshold = 2500  # generally allows for 3-5 results of chunk_size 256
-        content_field = "content"
 
         # validate token count is below threshold
         valid_response = validate_token_threshold(
@@ -188,7 +226,10 @@ def main(retriever: WeaviateWCS):
             st.markdown("----")
             # generate LLM prompt
             prompt = generate_prompt_series(
-                query=query, results=valid_response, verbosity_level=verbosity
+                query=query,
+                results=valid_response,
+                verbosity_level=verbosity,
+                content_key=content_field,
             )
             if make_llm_call:
                 with st.chat_message(
@@ -231,7 +272,7 @@ def main(retriever: WeaviateWCS):
                             url=episode_url,
                             guest=hit["guest"],
                             title=title,
-                            content=ranked_response[i]["content"],
+                            content=ranked_response[i][content_field],
                             length=time_string,
                         ),
                         unsafe_allow_html=True,
