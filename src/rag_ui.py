@@ -48,8 +48,8 @@ claude = "claude-3-haiku-20240307"
 cohere = "command-r"
 
 data_path = "../data/huberman_labs.json"
-# embedding_model_path = "../models/bge-base-finetuned-500"
-embedding_model_path = "all-MiniLM-L6-v2"
+embedding_model_path = "../models/bge-base-finetuned-500"
+# embedding_model_path = "all-MiniLM-L6-v2"
 ###################################
 
 ## RETRIEVER
@@ -233,6 +233,14 @@ def main(retriever: WeaviateWCS):
                 hybrid_response, query, top_k=reranker_topk
             )
             logger.info(f"# RANKED RESULTS: {len(ranked_response)}")
+
+            if content_field == "expanded_content" and all(
+                rr[content_field] is None for rr in ranked_response
+            ):
+                e = RuntimeError(
+                    "Expanded Content is empty. Switch expanded content off or use a collection with expanded content."
+                )
+                st.exception(e)
 
             token_threshold = 2500  # generally allows for 3-5 results of chunk_size 256
 
