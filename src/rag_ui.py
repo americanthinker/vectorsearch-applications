@@ -16,8 +16,8 @@ load_dotenv(find_dotenv(), override=True)
 import importlib.util
 import subprocess
 
-if importlib.util.find_spec(semantic_router):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", semantic_router])
+if importlib.util.find_spec("semantic-router"):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "semantic-router"])
 
 
 from tiktoken import get_encoding
