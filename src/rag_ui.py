@@ -1,3 +1,10 @@
+#### Readme: this app does the following:
+### (1) Has a very of knobs to turn to modify the retrieval and generation
+### (2) Implements text2sql with a semantic router
+### (3) Allows you choose between different responder models, which critique the response
+### of the original llm given the prompt it was given, and suggest some additional lines of inquiry.
+
+
 import os
 import sys
 
@@ -5,6 +12,13 @@ sys.path.append("../")
 from dotenv import load_dotenv, find_dotenv
 
 load_dotenv(find_dotenv(), override=True)
+
+import importlib.util
+import subprocess
+
+if importlib.util.find_spec(semantic_router):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", semantic_router])
+
 
 from tiktoken import get_encoding
 from weaviate.classes.query import Filter
@@ -248,7 +262,6 @@ def main(retriever: WeaviateWCS):
     if query and not collection_name:
         raise ValueError("Please first select a collection name")
     if query:
-        print(collection_name, temperature_input, reranker_topk, content_field)
         # make hybrid call to weaviate
         guest_filter = (
             Filter.by_property(name="guest").equal(guest_input) if guest_input else None
@@ -345,7 +358,6 @@ def main(retriever: WeaviateWCS):
                             temperature=temperature_input,
                         )
                         responder_string_completion = st.write_stream(responder_stream)
-                print(responder_prompt)
                 call_cost1 = completion_cost(
                     completion=reader_string_completion,
                     model=llm_name,
