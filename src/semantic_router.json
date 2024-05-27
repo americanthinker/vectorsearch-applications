@@ -1,0 +1,34 @@
+{
+    "encoder_type": "huggingface",
+    "encoder_name": "BAAI/bge-base-en",
+    "routes": [
+        {
+            "name": "sql",
+            "utterances": [
+                "What are the titles of all the episodes featuring Andrew Huberman?",
+                "How many episodes have a summary that mentions \"neuroscience\"?",
+                "List the guests who have appeared on the podcast more than once.",
+                "What is the title of the most viewed episode?",
+                "How many episodes have over 100,000 views?"
+            ],
+            "description": null,
+            "function_schemas": null,
+            "llm": null,
+            "score_threshold": 0.5
+        },
+        {
+            "name": "regular",
+            "utterances": [
+                "What conclusions are drawn about the impact of REM sleep on learning and memory consolidation?",
+                "What dietary strategies does Dr. Rhonda Patrick discuss to enhance cognitive function and delay neurodegenerative diseases?",
+                "What insights does Dr. Andrew Huberman provide about the role of breathwork in modulating the stress response?",
+                "What key takeaways does Dr. Peter Attia provide about exercise and its effects on brain health in his episode on longevity?",
+                "What is the difference between healthspan and longevity?"
+            ],
+            "description": null,
+            "function_schemas": null,
+            "llm": null,
+            "score_threshold": 0.5
+        }
+    ]
+}
