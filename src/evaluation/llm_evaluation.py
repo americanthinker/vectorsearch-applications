@@ -4,6 +4,7 @@ from deepeval.test_case import LLMTestCaseParams, LLMTestCase
 from deepeval.evaluate import TestResult
 from deepeval import evaluate
 
+from azure_aad import get_or_refresh_token
 from anthropic import Anthropic, AsyncAnthropic
 from cohere import Client, AsyncClient
 from openai import AzureOpenAI, AsyncAzureOpenAI
@@ -120,13 +121,14 @@ class CustomAzureOpenAI(DeepEvalBaseLLM):
         self.model = deployment_name
 
     def load_model(self, async_mode: bool=False) -> AzureOpenAI | AsyncAzureOpenAI:
+        token = get_or_refresh_token()
         if async_mode:
             return AsyncAzureOpenAI(azure_endpoint=os.getenv('AZURE_OPENAI_ENDPOINT'),
-                                    api_key=os.getenv('AZURE_OPENAI_API_KEY'),
+                                    azure_ad_token=token,
                                     api_version=os.getenv('AZURE_OPENAI_API_VERSION'),
                                     )
         return AzureOpenAI(azure_endpoint=os.getenv('AZURE_OPENAI_ENDPOINT'),
-                           api_key=os.getenv('AZURE_OPENAI_API_KEY'),
+                           azure_ad_token=token,
                            api_version=os.getenv('AZURE_OPENAI_API_VERSION'),
                            )
 
