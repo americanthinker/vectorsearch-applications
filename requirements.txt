@@ -15,7 +15,7 @@ jupyterlab==4.0.11
 jupyterlab-pygments==0.2.2
 jupyterlab-widgets==3.0.9
 jupyterlab_server==2.24.0
-litellm==1.34.42
+litellm==1.40.16
 llama-hub==0.0.72
 llama-index==0.10.13
 loguru==0.7.0
