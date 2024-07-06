@@ -35,6 +35,6 @@ streamlit==1.33.0
 tiktoken
 tokenizers==0.15.0
 torch==2.0.1
-tqdm==4.66.1
+tqdm==4.66.3
 transformers
 weaviate-client==4.5.4
