@@ -6,7 +6,7 @@ deepeval==0.21.34
 ipykernel
 ipython
 ipywidgets
-jupyterlab==4.2.5
+jupyterlab>=4.2.5
 litellm==1.40.16
 llama-hub==0.0.72
 llama-index==0.10.13
@@ -21,7 +21,7 @@ python-dotenv==1.0.0
 rank-bm25==0.2.2
 requests==2.32.2
 requests-oauthlib==1.3.1
-rich==13.7.0
+rich>=13.7.0
 sentence-transformers==2.2.2
 streamlit==1.33.0
 tiktoken
@@ -29,4 +29,4 @@ tokenizers==0.15.0
 torch==2.2.0
 tqdm==4.66.3
 transformers
-weaviate-client==4.5.4
+weaviate-client>=4.5.4
