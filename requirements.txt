@@ -2,7 +2,7 @@ anthropic
 beautifulsoup4
 cohere
 datasets==2.14.3
-deepeval==0.21.34
+deepeval>=1.4.7
 ipykernel
 ipython
 ipywidgets
@@ -22,7 +22,7 @@ rank-bm25==0.2.2
 requests==2.32.2
 requests-oauthlib==1.3.1
 rich>=13.7.0
-sentence-transformers==2.2.2
+sentence-transformers>=3.2.1
 streamlit==1.37.0
 tiktoken
 tokenizers==0.15.0
