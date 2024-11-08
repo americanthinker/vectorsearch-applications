@@ -26,7 +26,7 @@ rich
 sentence-transformers==3.2.1
 streamlit==1.37.0
 tiktoken==0.8.0
-tokenizers==0.15.0
+tokenizers==0.20.0
 torch==2.2.0
 tqdm==4.66.3
 transformers==4.45.2
