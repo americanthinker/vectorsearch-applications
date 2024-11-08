@@ -29,4 +29,4 @@ tokenizers==0.15.0
 torch==2.2.0
 tqdm==4.66.3
 transformers
-weaviate-client>=4.5.4
+weaviate-client==4.5.4
