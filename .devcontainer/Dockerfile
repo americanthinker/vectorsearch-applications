@@ -16,7 +16,8 @@ WORKDIR /rag_app
 # Copy and install Python requirements
 COPY requirements.txt /rag_app/
 RUN pip install uv 
-RUN uv venv && source .venv/bin/activate
+RUN uv venv 
+RUN source .venv/bin/activate
 RUN uv pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application code into the container
