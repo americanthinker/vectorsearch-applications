@@ -1,6 +1,5 @@
 from sentence_transformers import CrossEncoder
 from torch.nn import Sigmoid
-from typing import List, Union
 import numpy as np
 from loguru import logger
 
@@ -26,12 +25,12 @@ class ReRanker(CrossEncoder):
         self.activation_fct = Sigmoid()
 
     def _cross_encoder_score(self, 
-                             results: List[dict], 
+                             results: list[dict], 
                              query: str, 
                              hit_field: str='content',
                              apply_sigmoid: bool=True,
                              return_scores: bool=False
-                             ) -> Union[np.array, None]:
+                             ) -> np.array:
         '''
         Given a list of hits from a Retriever:
             1. Scores hits by passing query and results through CrossEncoder model. 
@@ -49,12 +48,12 @@ class ReRanker(CrossEncoder):
         if return_scores:return cross_scores
 
     def rerank(self, 
-               results: List[dict], 
+               results: list[dict], 
                query: str, 
                top_k: int=10, 
                apply_sigmoid: bool=True,
                threshold: float=None
-               ) -> List[dict]:
+               ) -> list[dict]:
         '''
         Given a list of hits from a Retriever:
             1. Scores hits by passing query and results through CrossEncoder model. 
