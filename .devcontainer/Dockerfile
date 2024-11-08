@@ -21,8 +21,8 @@ WORKDIR /rag_app
 COPY pyproject.toml /rag_app/
 RUN pip install uv 
 # RUN uv venv --python 3.10
-RUN uv sync 
-# RUN uv pip install --no-cache-dir -r requirements.txt
+# RUN uv sync 
+RUN uv pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application code into the container
 COPY . /rag_app/
