@@ -3,6 +3,9 @@ FROM mcr.microsoft.com/devcontainers/python:3.10
 
 # Set environment variables
 ENV PIP_DISABLE_PIP_VERSION_CHECK=on
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -14,10 +17,10 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /rag_app
 
 # Copy and install Python requirements
-COPY requirements.txt /rag_app/
+# COPY requirements.txt .
 COPY pyproject.toml /rag_app/
 RUN pip install uv 
-RUN uv venv --python 3.10
+# RUN uv venv --python 3.10
 RUN uv sync 
 # RUN uv pip install --no-cache-dir -r requirements.txt
 
