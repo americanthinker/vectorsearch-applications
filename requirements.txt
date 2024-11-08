@@ -6,8 +6,8 @@ deepeval
 ipykernel
 ipython
 ipywidgets
-jupyterlab>=4.2.5
-litellm==1.44.8
+jupyterlab
+litellm
 llama-hub==0.0.72
 llama-index==0.10.13
 loguru==0.7.0
