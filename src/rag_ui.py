@@ -34,10 +34,11 @@ st.set_page_config(page_title="Huberman Labs",
 # turbo = 'gpt-3.5-turbo-0125'
 # claude = 'claude-3-haiku-20240307'
 
+ICON_DIR = './app_assets/'
 reader_model_name = None
 collection_name = None
 data_path = '../data/huberman_labs.json'
-embedding_model_path = 'put your fine-tuned model here'
+embedding_model_path = 'put your fine-tuned embedding model here'
 ###################################
 
 ## RETRIEVER
@@ -88,7 +89,7 @@ def main(retriever: WeaviateWCS):
     ##############################
     ##### SETUP MAIN DISPLAY #####
     ##############################
-    st.image('./app_assets/hlabs_logo.png', width=400)
+    st.image(f'{ICON_DIR}/hlabs_logo.png', width=400)
     st.subheader("Search with the Huberman Lab podcast:")
     st.write('\n')
     col1, _ = st.columns([7,3])
@@ -96,7 +97,8 @@ def main(retriever: WeaviateWCS):
         query = st.text_input('Enter your question: ')
         st.write('\n\n\n\n\n')
         if query:
-            st.write('This app is not currently functioning as intended. Uncomment lines 100-172 to enable Q&A functionality.')
+            st.write('This app is not currently functioning as intended. Uncomment lines 104-172 to enable Q&A functionality.')
+
     ########################
     ##### SEARCH + LLM #####
     ########################
@@ -132,7 +134,7 @@ def main(retriever: WeaviateWCS):
     #         # generate LLM prompt
     #         prompt = generate_prompt_series(query=query, results=valid_response, verbosity_level=verbosity)
     #         if make_llm_call:
-    #             with st.chat_message('Huberman Labs', avatar='./app_assets/huberman_logo.png'):
+    #             with st.chat_message('Huberman Labs', avatar=f'{ICON_DIR}/huberman_logo.png'):
     #                 stream_obj = stream_chat(llm, prompt, max_tokens=250, temperature=temperature_input)
     #                 st.write_stream(stream_obj) # https://docs.streamlit.io/develop/api-reference/write-magic/st.write_stream
             
