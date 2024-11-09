@@ -1,0 +1,40 @@
+[project]
+name = "vectorsearch-applications"
+version = "0.1.0"
+description = "Project for building RAG applications"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "anthropic>=0.39.0",
+    "beautifulsoup4>=4.12.3",
+    "cohere>=5.11.3",
+    "datasets>=3.1.0",
+    "deepeval==1.5.0",
+    "ipykernel>=6.29.5",
+    "ipython>=8.29.0",
+    "ipywidgets>=8.1.5",
+    "jupyterlab==4.3.0",
+    "litellm==1.52.2",
+    "llama-hub==0.0.79",
+    "llama-index==0.11.22",
+    "loguru>=0.7.2",
+    "matplotlib-inline>=0.1.7",
+    "matplotlib>=3.9.2",
+    "nest-asyncio>=1.6.0",
+    "openai>=1.54.3",
+    "pandas>=2.2.3",
+    "pyarrow>=18.0.0",
+    "python-dotenv>=1.0.1",
+    "rank-bm25>=0.2.2",
+    "requests>=2.32.3",
+    "requests-oauthlib>=2.0.0",
+    "rich>=13.9.4",
+    "torch==2.2.0",
+    "tqdm>=4.67.0",
+    "sentence-transformers>=3.2.1",
+    "streamlit>=1.40.0",
+    "tiktoken>=0.8.0",
+    "tokenizers>=0.20.3",
+    "transformers>=4.46.2",
+    "weaviate-client>=4.9.3",
+]

@@ -3,6 +3,9 @@ FROM mcr.microsoft.com/devcontainers/python:3.10
 
 # Set environment variables
 ENV PIP_DISABLE_PIP_VERSION_CHECK=on
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
