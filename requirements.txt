@@ -8,7 +8,6 @@ ipython
 ipywidgets
 jupyterlab==4.3.0
 litellm==1.52.2
-llama-hub==0.0.79
 llama-index==0.11.22
 loguru
 matplotlib
