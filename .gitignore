@@ -11,6 +11,7 @@ notebooks/sqlite3.db
 notebooks/experimental/
 src/pipelines/
 src/llm/azure_aad.py 
+answers/
 
 # Large Files
 models/
