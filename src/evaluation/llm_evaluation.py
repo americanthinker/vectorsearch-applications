@@ -297,7 +297,7 @@ class PollingEvaluation:
         responses = evaluate(test_cases, [ac_metric], print_results=False, show_indicator=show_eval_progress)
         if return_raw:
             return responses
-        eval_responses = [load_eval_response(r.metrics[0], r) for r in responses]
+        eval_responses = [load_eval_response(r.metrics_data[0], r) for r in responses.test_results]
         scores = [r.score for r in eval_responses]
         cost = [r.cost for r in eval_responses if r.cost]
         cost = sum(cost) if any(cost) else 'N/A'
