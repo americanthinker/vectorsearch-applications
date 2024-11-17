@@ -1,4 +1,4 @@
-from weaviate.auth import AuthApiKey
+from weaviate.classes.init import Auth
 from weaviate.collections.classes.internal import (MetadataReturn, QueryReturn,
                                                    MetadataQuery)
 import weaviate
@@ -7,7 +7,6 @@ from weaviate.classes.query import Filter
 from weaviate.config import ConnectionConfig
 from openai import OpenAI
 from sentence_transformers import SentenceTransformer
-from typing import Any
 from torch import cuda
 from tqdm import tqdm
 import time
@@ -41,7 +40,6 @@ class WeaviateWCS:
                  model_name_or_path: str='sentence-transformers/all-MiniLM-L6-v2',
                  embedded: bool=False,
                  openai_api_key: str=None,
-                 skip_init_checks: bool=False,
                  **kwargs
                 ):
 
@@ -49,10 +47,8 @@ class WeaviateWCS:
         if embedded:
             self._client = weaviate.connect_to_embedded(**kwargs)
         else: 
-            auth_config = AuthApiKey(api_key=api_key) 
             self._client = weaviate.connect_to_wcs(cluster_url=endpoint, 
-                                                   auth_credentials=auth_config, 
-                                                   skip_init_checks=skip_init_checks)   
+                                                   auth_credentials=Auth.api_key(api_key)) 
         self.model_name_or_path = model_name_or_path
         self._openai_model = False
         if self.model_name_or_path == 'text-embedding-ada-002':
@@ -279,7 +275,6 @@ class WeaviateWCS:
                                                 filters=filter,
                                                 return_metadata=MetadataQuery(distance=True),                                                               
                                                 return_properties=return_properties)
-        #  response = response.with_where(where_filter).do() if where_filter else response.do()
         if return_raw:
             return response
         else: 
