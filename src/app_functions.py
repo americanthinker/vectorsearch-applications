@@ -7,7 +7,6 @@ from loguru import logger
 from src.llm.llm_interface import LLM
 from src.llm.prompt_templates import huberman_system_message, generate_prompt_series
 from src.database.weaviate_interface_v4 import WeaviateWCS
-from src.database.database_utils import get_weaviate_client
 from src.reranker import ReRanker
 from tiktoken import Encoding, get_encoding
 import streamlit as st  
@@ -20,8 +19,8 @@ def load_data(data_path: str) -> dict | list[dict]:
 
 ## RETRIEVER
 @st.cache_resource
-def get_retriever(model_name_or_path: str) -> WeaviateWCS:
-    return get_weaviate_client(model_name_or_path=model_name_or_path)
+def get_retriever(endpoint: str, api_key: str, model_name_or_path: str) -> WeaviateWCS:
+    return WeaviateWCS(endpoint, api_key, model_name_or_path)
 
 # Cache reranker
 @st.cache_resource
