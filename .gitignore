@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 .deepeval*
+.Trash-*
 
 # C extensions
 *.so
