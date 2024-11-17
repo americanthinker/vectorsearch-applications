@@ -1,17 +1,16 @@
-from dotenv import load_dotenv, find_dotenv
-envs = load_dotenv(find_dotenv(), override=True)
-
 import sys
 import os
+import json
 sys.path.append('../')
+
+from dotenv import load_dotenv, find_dotenv
+envs = load_dotenv(find_dotenv(), override=True)
 
 from deepeval import evaluate
 from deepeval.metrics import AnswerRelevancyMetric, FaithfulnessMetric
 from deepeval.test_case import LLMTestCase
 from deepeval.dataset import EvaluationDataset
 
-
-from src.database.database_utils import get_weaviate_client
 from src.database.weaviate_interface_v4 import WeaviateWCS
 from src.llm.llm_interface import LLM
 from src.llm.prompt_templates import huberman_system_message, generate_prompt_series
@@ -38,7 +37,8 @@ questions = ["Give a brief explanation of how brain neuroplasticity works",
             ]
 
 logger.info('Setting constants...')
-client = get_weaviate_client()
+embedding_model = 'sentence-transformers/all-MiniLM-L6-v2'
+client = WeaviateWCS(endpoint=os.getenv('WEAVIATE_ENDPOINT'), api_key=os.getenv('WEAVIATE_API_KEY'), model_name_or_path=embedding_model), 
 turbo = LLM(model_name='gpt-3.5-turbo-0125')
 collection_name = 'Huberman_minilm_128'
 arm, fm = AnswerRelevancyMetric(model='gpt-4', threshold=0.7), FaithfulnessMetric(model='gpt-4', threshold=0.7)
@@ -139,12 +139,12 @@ async def aget_answer_bundle( query: str,
     assist_message = generate_prompt_series(query, context, summary_key='short_description')
 
     #generate answers from model being evaluated
-    answer = await answer_llm.achat_completion(huberman_system_prompt, assist_message)
+    answer = await answer_llm.achat_completion(huberman_system_message, assist_message)
     answer = format_llm_response(answer)
 
     #create ground truth answers
     if ground_truth_llm:
-        ground_truth = format_llm_response(ground_truth_llm.chat_completion(huberman_system_prompt, assist_message))
+        ground_truth = format_llm_response(ground_truth_llm.chat_completion(huberman_system_message, assist_message))
         return query, contexts, answer, ground_truth
     return query, contexts, answer
 
@@ -174,7 +174,6 @@ evaluation = evaluate(eval_dataset, metrics=[fm], print_results=False)
 for line in evaluation:
     logger.info(vars(line.metrics[0]))
 
-import json
 try:
     logger.info('Saving as json...')
     with open('temp_results.json', 'w') as f:

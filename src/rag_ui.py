@@ -11,7 +11,6 @@ from loguru import logger
 import streamlit as st
 
 from src.database.weaviate_interface_v4 import WeaviateWCS
-from src.database.database_utils import get_weaviate_client
 from src.llm.llm_interface import LLM
 from src.reranker import ReRanker
 from src.llm.prompt_templates import generate_prompt_series, huberman_system_message
