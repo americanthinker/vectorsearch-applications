@@ -15,7 +15,7 @@ Students are expected to have the following technical skills prior to enrolling.
 1. Students will need access to their own compute environment, whether locally or remote.  There are no hard requirements for RAM or CPU processing power, but in general the more punch the better. 
 2. Students will need accounts with the following organizations:
     - Either an [OpenAI](https://openai.com) account **(RECOMMENDED)** or another LLM provider of their choice.  Students can choose to use an open source LLM if desired, however, the codebase is not currently optimized for open source LLM support.   
-    - An account with [weaviate.io](https://weaviate.io).  The current iteration of this course will use Weaviate as a sparse and dense vector database.  Weaviate offers free cloud instance cluster resources for 14 days, with the option to extend the instance an additional 14 days (as of April 2024).
+    - An account with [weaviate.io](https://weaviate.io).  The current iteration of this course will use Weaviate as a sparse and dense vector database.  Weaviate offers free cloud instance cluster resources for 14 days, with the option to extend the instance an additional 14 days (as of November 2024).
     - A standard [Github](https://github.com/) account in order to fork this repo, clone a copy, and submit commits to the fork if desired throughout the course. 
 
 # Setup
