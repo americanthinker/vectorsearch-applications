@@ -1,6 +1,9 @@
 import json
 import urllib.request
 import os
+from loguru import logger 
+from contextlib import contextmanager
+from time import time
 
 def load_podcast_data(dataset_name: str='huberman_labs.json') -> list[dict]:
     '''
@@ -32,3 +35,20 @@ def load_podcast_data(dataset_name: str='huberman_labs.json') -> list[dict]:
                 print(f'Data cannot be loaded from source, please move data file to one of these paths to run this test:\n\
     1. "/content/{dataset_name}"   --> if you are in Google Colab\n\
     2. "../data/{dataset_name}"      --> if you are in a local environment\n')
+                
+@contextmanager
+def timer(log_template_str: str | None = None):
+    """Context manager for timing code blocks."""
+    t0 = time()
+    try:
+        yield
+    finally:
+        elapsed = time() - t0
+        if elapsed >= 120:
+            time_str = f'{elapsed/60:.2f} minutes'
+        else:
+            time_str = f'{elapsed:.2f} seconds'
+        if log_template_str:
+            logger.info(log_template_str.format(time=time_str))
+        else:
+            logger.info(time_str)

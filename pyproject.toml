@@ -29,7 +29,7 @@ dependencies = [
     "requests>=2.32.3",
     "requests-oauthlib>=2.0.0",
     "rich>=13.9.4",
-    "torch==2.2.0",
+    "torch>=2.2.0",
     "tqdm>=4.67.0",
     "sentence-transformers>=3.2.1",
     "streamlit>=1.40.0",
