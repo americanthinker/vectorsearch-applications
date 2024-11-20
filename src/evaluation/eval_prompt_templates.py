@@ -1,3 +1,5 @@
+from pydantic import BaseModel, Field
+
 qa_generation_prompt = '''
 Huberman Lab episode guest and transcript are below:
 
@@ -23,28 +25,52 @@ qa_flavors = ['be highly semantically related. If I were to measure the cosine s
               'not contain any keyword overlap between the two texts. A comparison of the two texts would show that they share no keywords.',
               'not contain any keyword overlap between the two texts. A comparison of the two texts would show that they share no keywords.']
 
-dataset_generation_prompt = '''
-Huberman Lab episode guest, title, and transcript are below:
+dataset_generation_system_prompt = '''
+Your primary task in life is to generate questions and answers solely about the Huberman Lab podcast
+The Huberman Lab podcast is hosted by Dr. Andrew Huberman, a neuroscientist and tenured professor of neurobiology 
+and ophthalmology at Stanford School of Medicine. The podcast discusses neuroscience and science-based tools, 
+including how our brain and its connections with the organs of our body control our perceptions, our behaviors, 
+and our health, as well as existing and emerging tools for measuring and changing how our nervous system works. 
+The podcast is frequently ranked in the top 10 of all podcasts globally and is often ranked #1 in the categories 
+of Science, Education, and Health & Fitness.
 
----------------------
-Guest: {guest}
----------------------
-Title: {title}
----------------------
-Given the Guest and Title of the episode as context use the following snippet of episode transcript \
-and not prior knowledge, generate questions that can be answered by the transcript section: 
+Your task is to create questions and answers to those questions about the Huberman Lab podcast only using the context provided in the user message.
+Only use the context provided to answer the question. Do not use any external knowledge or resources to answer the question.
+'''
+
+dataset_generation_user_prompt2 = '''
+Transcript chunk from a Huberman Lab podcast episode is below. Use the following snippet of episode transcript \
+and not prior knowledge, generate a question that can be answered by the transcript section: 
 
 ---------------------
 Transcript: {transcript}
 ---------------------
 
-Your task is to create an interesting and thought-provoking question that can be answered with the information provided in the transcript.
-Follow these rules explicitly:\n
-    1. The question should start with Why, How, or What, and be a question that you would find interesting to discuss with others.
+1. Your task is to create an interesting and thought-provoking question that can be answered with the information provided in the transcript.
+Follow these question-generation rules explicitly:\n
+    1. The question should start with Why, How, or What, and be a question that you would find interesting to discuss with others. The preference is for questions that start with Why or How. 
     2. Do not make any reference to the transcript or episode when generating the question(s), simply generate the question. \
-       In other words, do not include the words "transcript", "excerpt", or "episode", in the gernerated question.
-    3. The question generated and the transcript chunk should {qa_flavor}.
+       In other words, do not include the words "transcript", "excerpt", or "episode", in the generated question.
+    3. The question generated must contain an answer found within the transcript.
+    4. There should not be any keyword overlap between the two query and the transcript. A comparison of the two texts would show that they share no keywords.
+    5. If you cannot create a question that meets the above criteria, simply state that you cannot generate a question.
+2. Once you have generated a question, provide the answer to the question. 
+   1. The answer should be concise and answer the question directly without exposition. 
+   2. Return your output in the following format:
+    {{
+        "question": "Why is the sky blue?",
+        "answer": "The sky is blue because of Rayleigh scattering."
+    }}
+
 '''
+
+class QAGenerationResponse(BaseModel):
+    question: str = Field(description='The question generaated from the transcript provided.  The question should start with Why, How, or What, and be a question that you would find interesting to discuss with others.')
+    answer: str = Field(description='The answer to the question generated from the transcript provided.  The answer should be concise and answer the question directly without exposition.')
+
+class QAValidationResponse(BaseModel):
+    validation: int = Field(description='This is a binary response field, only acceptable answers are either a "1" or a "0".')
+    reasoning: str = Field(description='The reasoning behind the validation response.  This should provide insight into why the question is or is not answerable by the text and why the answer is or is not correct.')
 
 qa_triplet_generation_prompt = '''
 You will be provided with a snippet of the Huberman Lab podcast transcript and the guest on the show.
@@ -81,17 +107,32 @@ Transcript: {transcript}
 Response: 
 
 '''
+qa_validation_system_prompt = '''
+Your primary goal in life is to provide Quality Assurance of the questions and answers generated about the Huberman Lab podcast.
+The Huberman Lab podcast is hosted by Dr. Andrew Huberman, a neuroscientist and tenured professor of neurobiology
+and ophthalmology at Stanford School of Medicine. The podcast discusses neuroscience and science-based tools,
+including how our brain and its connections with the organs of our body control our perceptions, our behaviors,
+and our health, as well as existing and emerging tools for measuring and changing how our nervous system works.
+The podcast is frequently ranked in the top 10 of all podcasts globally and is often ranked #1 in the categories
+of Science, Education, and Health & Fitness.
 
-qa_validation_prompt = '''
-The following is a snippet of the Huberman Lab podcast from the episode titled "{title}": 
+Your task is to validate the questions and answers generated about the Huberman Lab podcast. You will be provided with a snippet of the Huberman Lab podcast 
+transcript and a question generated from the transcript along with an answer to the question. You will ensure that the question can be answered by the text and that the answer provided is correct.
+'''
+
+qa_validation_user_prompt = '''
+The following is a snippet of the Huberman Lab podcast along with a question generated from the transcript and an answer to the question: 
 ---------------------
 Transcript: {transcript}
----------------------
-Given the information provided in the transcript, determine if the following question is answerable by the text. 
-If the question can be answered by the text, respond with 1, otherwise respond with 0.
-A response of 1 indicates that the question can be answered by the transcript, while a response of 0 indicates that the question cannot be answered by the transcript.
-Do not respond with any other information other than a single digit, either 1 or 0. Do not provide any additional context or explanation.
 Question: {question}
+Answer: {answer}
 ---------------------
-Response:
+Your task is as follows:
+    1. Given the information provided in the transcript, determine if the question is answerable by the text. If the question can be answered by the text then proceed to step 2, otherwise respond with a 0.
+    2. Given that the question is answerable by the text, determine if the answer provided is correct. If the answer is correct, respond with a 1. If the answer is incorrect, respond with a 0.
+Your output should be in the following JSON format:
+{{
+    "validation": 1,
+    "reasoning": "The question can be answered by the text and the answer provided is correct because it correctly states the main facts."
+}}
 '''

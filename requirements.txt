@@ -25,7 +25,7 @@ sentence-transformers
 streamlit
 tiktoken
 tokenizers
-torch==2.2.0
+torch
 tqdm
 transformers
 weaviate-client
