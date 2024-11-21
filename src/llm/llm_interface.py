@@ -41,7 +41,30 @@ class LLM:
             #if both base and version are present, assume user is using Azure OpenAI API
             self.model_name = f"azure/{self.model_name}"
 
-  
+    def _handle_response(self,
+                         response: CustomStreamWrapper | ModelResponse, 
+                         raw_response: bool
+                         ) -> str | CustomStreamWrapper | ModelResponse:
+        """Handles response formatting into a string or returns original raw response."""
+        if raw_response:
+            return response
+        try:
+            return response.choices[0].message.content
+        except Exception as e:
+            print(f'Error: {e}')
+            return response
+    
+    def _create_message_block(self, 
+                              system_message: str, 
+                              user_message: str
+                              ) -> list[dict[str, str]]:
+        """Creates a message block for the model."""
+        messages =  [
+            {'role': 'system', 'content': system_message},
+            {'role': 'user', 'content': user_message}
+                    ]
+        return messages
+    
     def chat_completion(self, 
                         system_message: str,
                         user_message: str='',
@@ -69,18 +92,7 @@ class LLM:
         raw_response: bool
             If True, returns the raw model response.
         '''
-        #reformat roles for claude models
-        initial_role = 'user' if self.model_name.startswith('claude') else 'system'
-        secondary_role = 'assistant' if self.model_name.startswith('claude') else 'user'
-        #handle temperature for claude models
-        if self.model_name.startswith('claude'):
-            temperature = temperature/2
-
-        messages =  [
-            {'role': initial_role, 'content': system_message},
-            {'role': secondary_role, 'content': user_message}
-                    ]
-        
+        messages = self._create_message_block(system_message, user_message)
         response = completion(model=self.model_name,
                               messages=messages,
                               temperature=temperature,
@@ -90,9 +102,7 @@ class LLM:
                               api_base=self.api_base,
                               api_version=self.api_version,
                               **kwargs)
-        if raw_response or stream:
-            return response
-        return response.choices[0].message.content
+        return self._handle_response(response, raw_response)
     
     async def achat_completion(self, 
                                system_message: str,
@@ -121,13 +131,8 @@ class LLM:
         raw_response: bool
             If True, returns the raw model response.
         '''
-        initial_role = 'user' if self.model_name.startswith('claude') else 'system'
-        if self.model_name.startswith('claude'):
-            temperature = temperature/2
-        messages =  [
-            {'role': initial_role, 'content': system_message},
-            {'role': 'user', 'content': user_message}
-                    ]
+
+        messages =  self._create_message_block(system_message, user_message)
         response = await acompletion(model=self.model_name,
                                      messages=messages,
                                      temperature=temperature,
@@ -137,6 +142,4 @@ class LLM:
                                      api_base=self.api_base,
                                      api_version=self.api_version,
                                      **kwargs)
-        if raw_response or stream:
-            return response
-        return response.choices[0].message.content
+        return self._handle_response(response, raw_response)
