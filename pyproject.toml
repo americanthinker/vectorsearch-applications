@@ -37,4 +37,5 @@ dependencies = [
     "tokenizers>=0.20.3",
     "transformers>=4.46.2",
     "weaviate-client>=4.9.3",
+    "instructor>=1.5.2",
 ]
