@@ -447,8 +447,8 @@ class RetrievalEvaluationService:
                 miss_info_list.append(doc_id)
 
         # use raw counts to calculate final scores
-        self._calc_hit_rate_scores(results, search_type=search_type)
-        self._calc_mrr_scores(results, search_type=search_type)
+        calc_hit_rate_scores(results, search_type=search_type)
+        calc_mrr_scores(results, search_type=search_type)
 
         end = time.perf_counter() - start
         evaluation_time = f'{round(end/60, 2)} minutes'
@@ -462,56 +462,6 @@ class RetrievalEvaluationService:
             results.miss_info = miss_info_list
         results.evaluation_time = evaluation_time
         return results
-
-    def _calc_hit_rate_scores(
-        self, results: RetrievalEvaluation, search_type: Literal['kw', 'vector', 'hybrid', 'all'] = ['all']
-    ) -> None:
-        """Helper function to calculate hit rate scores."""
-        search_type = self.accepted_search_types if search_type == ['all'] else search_type
-        for prefix in search_type:
-            key = f'{prefix}_raw_hits'
-            raw_hits = getattr(results, key)
-            setattr(results, f'{prefix}_hit_rate', round(raw_hits / results.total_questions, 2))
-
-    def _calc_mrr_scores(
-        self, results: RetrievalEvaluation, search_type: Literal['kw', 'vector', 'hybrid', 'all'] = ['all']
-    ) -> None:
-        """Helper function to calculate mrr scores."""
-        search_type = self.accepted_search_types if search_type == ['all'] else search_type
-        for prefix in search_type:
-            key = f'{prefix}_mrr'
-            mrr_value = getattr(results, key)
-            setattr(results, key, round(mrr_value / results.total_questions, 2))
-
-    def create_dir(self, dir_path: str) -> None:
-        """Creates new directory if it does not exist, including intermediate directories if necessary."""
-        if not os.path.exists(dir_path):
-            os.makedirs(dir_path)
-
-    def _record_results(
-        self,
-        results: RetrievalEvaluation,
-        chunk_size: int,
-        dir_outpath: str = './eval_results',
-    ) -> None:
-        """Write results to output file in either txt or json format.
-
-        Args:
-        -----
-        results: dict[str, str | int]
-            Dictionary containing results of evaluation
-        chunk_size: int
-            Size of text chunks in tokens
-        dir_outpath: str
-            Path to output directory.  Directory only, filename is hardcoded
-            as part of this function.
-        as_text: bool
-            If True, write results as text file.  If False, write as json file.
-        """
-        self.create_dir(dir_outpath)
-        time_marker = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
-        path = os.path.join(dir_outpath, f'retrieval_eval_{chunk_size}_{time_marker}.json')
-        FileIO.save_as_json(path, results.model_dump())
 
     def _add_metrics(self, results_model: RetrievalEvaluation, search_type: list[str]) -> None:
         """Helper function to add metrics to results."""
@@ -534,3 +484,60 @@ class RetrievalEvaluationService:
             for k, v in param_options.items():
                 setattr(results, k, v)
 
+
+def calc_hit_rate_scores(
+    results: RetrievalEvaluation | dict, search_type: Literal['kw', 'vector', 'hybrid', 'all'] = ['all']
+) -> None:
+    """Helper function to calculate hit rate scores."""
+    search_type = [member.value for member in SearchTypeEnum] if search_type == ['all'] else search_type
+    for prefix in search_type:
+        key = f'{prefix}_raw_hits'
+        raw_hits = getattr(results, key) if isinstance(results, RetrievalEvaluation) else results[key]
+        if isinstance(results, RetrievalEvaluation):
+            setattr(results, f'{prefix}_hit_rate', round(raw_hits / results.total_questions, 2))
+        else: 
+            results[f'{prefix}_hit_rate'] = round(raw_hits / results['total_questions'], 2)
+
+def calc_mrr_scores(
+    results: RetrievalEvaluation | dict, search_type: Literal['kw', 'vector', 'hybrid', 'all'] = ['all']
+) -> None:
+    """Helper function to calculate mrr scores."""
+    search_type = [member.value for member in SearchTypeEnum] if search_type == ['all'] else search_type
+    for prefix in search_type:
+        key = f'{prefix}_mrr'
+        mrr_value = getattr(results, key) if isinstance(results, RetrievalEvaluation) else results[key]
+        if isinstance(results, RetrievalEvaluation):
+            setattr(results, key, round(mrr_value / results.total_questions, 2))
+        else: 
+            results[key] = round(mrr_value / results['total_questions'], 2)
+
+def create_dir(dir_path: str) -> None:
+    """Creates new directory if it does not exist, including intermediate directories if necessary."""
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+
+def record_results(
+        results: RetrievalEvaluation | dict,
+        chunk_size: int,
+        dir_outpath: str = './eval_results',
+    ) -> None:
+        """Write results to output file in either txt or json format.
+
+        Args:
+        -----
+        results: dict[str, str | int]
+            Dictionary containing results of evaluation
+        chunk_size: int
+            Size of text chunks in tokens
+        dir_outpath: str
+            Path to output directory.  Directory only, filename is hardcoded
+            as part of this function.
+        as_text: bool
+            If True, write results as text file.  If False, write as json file.
+        """
+        create_dir(dir_outpath)
+        time_marker = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+        path = os.path.join(dir_outpath, f'retrieval_eval_{chunk_size}_{time_marker}.json')
+        if isinstance(results, RetrievalEvaluation):
+            results = results.model_dump()
+        FileIO.save_as_json(path, results)
