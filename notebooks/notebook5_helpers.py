@@ -1,21 +1,14 @@
 from src.llm.prompt_templates import huberman_system_message, generate_prompt_series
+from src.evaluation.retrieval_evaluation import record_results
+from src.evaluation.llm_evaluation import EvalResponse
 from src.llm.llm_interface import LLM
+from deepeval.models.base_model import DeepEvalBaseLLM
 from typing import Literal
 import asyncio
 
 
-def generate_project2_submission_file(eval_dict: dict, 
-                                      outpath: str='./project2_submission.txt',
-                                      response_key: str='responses'
-                                      ) -> None:
-    '''
-    Generates a text file for Project 2 submission.  Writes all key-value pairs
-    except for the response_key.  Default response_key is 'responses'.
-    '''
-    with open(outpath, 'w') as f:
-        for key, value in eval_dict.items():
-            if key != response_key:
-                f.write(f'{key}: {value}\n')
+def record_project2_submission(results):
+    return record_results(results, chunk_size=None)
 
 async def async_llm_call(llm: LLM,
                           query: str,
@@ -111,3 +104,12 @@ def sync_llm_calls(llm: LLM,
     if show_cost:
         print(f'Total cost for {len(ranked_results)} API calls: ${round(total_cost,4)}.')
     return responses
+
+def get_model_cost(eval_responses: list[EvalResponse]):
+    cost = [r.cost for r in eval_responses if r.cost]
+    cost = round(sum(cost),2) if any(cost) else 'N/A'
+    return cost 
+
+def get_model_name(evaluation_llm: str | DeepEvalBaseLLM) -> str: 
+    """Returns model name in string format based on Class of evaluation_llm"""
+    return evaluation_llm.model if isinstance(evaluation_llm, DeepEvalBaseLLM) else evaluation_llm
