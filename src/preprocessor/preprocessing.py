@@ -1,9 +1,7 @@
 import os
 import json
 import pandas as pd
-from typing import List, Union
 from loguru import logger
-import pandas as pd
 import pathlib
 
 
@@ -17,7 +15,7 @@ class FileIO:
     @classmethod
     def save_as_parquet(cls,
                         file_path: str, 
-                        data: Union[List[dict], pd.DataFrame], 
+                        data: dict | pd.DataFrame, 
                         overwrite: bool=False) -> None:
         '''
         Saves DataFrame to disk as a parquet file.  Removes the index. 
@@ -27,7 +25,7 @@ class FileIO:
         file_path : str
             Output path to save file, if not included "parquet" will be appended
             as file extension.
-        data : Union[List[dict], pd.DataFrame]
+        data : list[dict] | pd.DataFrame
             Data to save as parquet file. If data is a list of dicts, it will be
             converted to a DataFrame before saving.
         overwrite : bool
@@ -41,7 +39,7 @@ class FileIO:
         data.to_parquet(file_path, index=False)
         logger.info(f'DataFrame saved as parquet file here: {file_path}')
         
-    def _convert_toDataFrame(data: List[dict]) -> pd.DataFrame:
+    def _convert_toDataFrame(data: list[dict]) -> pd.DataFrame:
         return pd.DataFrame().from_dict(data)
 
     def _rename_file_extension(file_path: str, extension: str):
@@ -67,7 +65,7 @@ class FileIO:
             pathlib.Path(dir_structure).mkdir(parents=True, exist_ok=True)
     
     @staticmethod
-    def load_parquet(file_path: str, verbose: bool=True) -> List[dict]:
+    def load_parquet(file_path: str, verbose: bool=True) -> list[dict]:
         '''
         Loads parquet from disk, converts to pandas DataFrame as intermediate
         step and outputs a list of dicts (docs).
@@ -96,7 +94,7 @@ class FileIO:
     @classmethod
     def save_as_json(cls, 
                      file_path: str, 
-                     data: Union[List[dict], dict], 
+                     data: list[dict] | dict, 
                      indent: int=4,
                      overwrite: bool=False
                      ) -> None:

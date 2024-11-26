@@ -31,7 +31,12 @@ from math import ceil
 
 #misc
 from tqdm import tqdm
-from src.data_models import SearchTypeEnum, RetrievalEvaluation, EvaluationDataset
+from src.data_models import (
+    SearchTypeEnum, 
+    GenerationEvaluation,
+    RetrievalEvaluation, 
+    EvaluationDataset
+)
 from src.preprocessor.preprocessing import FileIO
 from pydantic import BaseModel
 
@@ -517,8 +522,8 @@ def create_dir(dir_path: str) -> None:
         os.makedirs(dir_path)
 
 def record_results(
-        results: RetrievalEvaluation | dict,
-        chunk_size: int,
+        results: RetrievalEvaluation | GenerationEvaluation | dict,
+        chunk_size: int | None = None,
         dir_outpath: str = './eval_results',
     ) -> None:
         """Write results to output file in either txt or json format.
@@ -537,7 +542,21 @@ def record_results(
         """
         create_dir(dir_outpath)
         time_marker = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
-        path = os.path.join(dir_outpath, f'retrieval_eval_{chunk_size}_{time_marker}.json')
-        if isinstance(results, RetrievalEvaluation):
-            results = results.model_dump()
+        if isinstance(results, dict):
+            if not chunk_size:
+                raise ValueError('Chunk size must be provided for retrieval evaluation')
+            path = os.path.join(dir_outpath, f'retrieval_eval_{chunk_size}_{time_marker}.json')
+        else:
+            # at this point results is assumed to be a RetrievalEvaluation or GenerationEvaluation object
+            results: dict = results.model_dump()
+            generation_key = 'reader_model'
+            # this is a hack to determine if we are dealing with a generation or retrieval evaluation
+            # if 'reader_model' is in the results, then we are dealing with a generation evaluation
+            # would prefer to use isinstance, but custome Classes are not being recognized 
+            if generation_key in results.keys():
+                path = os.path.join(dir_outpath, f'generation_eval_{time_marker}.json')
+            else:
+                if not chunk_size:
+                    raise ValueError('Chunk size must be provided for retrieval evaluation')
+                path = os.path.join(dir_outpath, f'retrieval_eval_{chunk_size}_{time_marker}.json')
         FileIO.save_as_json(path, results)

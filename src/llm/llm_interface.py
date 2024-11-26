@@ -8,7 +8,7 @@ class LLM:
     Primary APIs supported are OpenAI and Anthropic.
     '''
     # non-exhaustive list of supported models 
-    # these models were tested and are known to work with the LLM class (April 2024)
+    # these models were tested and are known to work with the LLM class (November 2024)
     valid_models = {'openai': [
                         "gpt-4o",
                         "gpt-4o-mini"

@@ -12,15 +12,24 @@ from src.reranker import ReRanker
 from src.database.weaviate_interface_v4 import WeaviateWCS
 from src.llm.llm_interface import LLM
 from src.llm.prompt_templates import huberman_system_message, generate_prompt_series, create_context_blocks
+
 from tqdm.asyncio import tqdm_asyncio 
 from tqdm import tqdm
 from dataclasses import dataclass
 from typing import Literal, Any, Optional
+from enum import Enum
 from math import ceil
 import numpy as np
 import os
 
+class CustomAPIKeyValues(Enum):
+    cohere = 'COHERE_API_KEY'
+    anthropic = 'ANTHROPIC_API_KEY'
+
 class CustomCohere(DeepEvalBaseLLM):
+
+    accepted_model_types = ['command-r', 'command-r-plus']
+
     """
     Creates a custom evaluation model interface that uses the Cohere API
     for evaluation of metrics. 
@@ -28,17 +37,18 @@ class CustomCohere(DeepEvalBaseLLM):
 
     def __init__(
                 self,
-                model: Literal['command-r', 'command-r-plus']
+                model: Literal['command-r', 'command-r-plus'],
+                api_key: str | None = None 
                 ) -> None:
-        self.accepted_model_types = ['command-r', 'command-r-plus']
         if model not in self.accepted_model_types:
             raise ValueError(f'{model} is not found in {self.accepted_model_types}. Retry with acceptable model type')
         self.model = model
+        self._api_key = _handle_api_key(CustomAPIKeyValues.cohere.value, api_key)
 
     def load_model(self, async_mode: bool=False) -> Client | AsyncClient:
         if async_mode:
-            return AsyncClient(api_key=os.getenv('COHERE_API_KEY'))
-        return Client(api_key=os.getenv('COHERE_API_KEY'))
+            return AsyncClient(api_key=self._api_key)
+        return Client(api_key=self._api_key)
 
     def generate(self, prompt: str) -> str:
         client = self.load_model()
@@ -58,23 +68,27 @@ class CustomCohere(DeepEvalBaseLLM):
         return self.model
     
 class CustomAnthropic(DeepEvalBaseLLM):
+
+    accepted_model_types = ['claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 'claude-3-opus-20240229']
+
     """
     Creates a custom evaluation model interface that uses the Anthropic API 
     for evaluation of metrics. 
     """
     def __init__(
                 self,
-                model: Literal['claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 'claude-3-opus-20240229']
+                model: Literal['claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 'claude-3-opus-20240229'],
+                api_key: str | None = None
                 ):
-        self.accepted_model_types = ['claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 'claude-3-opus-20240229']
         if model not in self.accepted_model_types:
             raise ValueError(f'{model} is not found in {self.accepted_model_types}. Retry with acceptable model type')
         self.model = model
+        self._api_key = _handle_api_key(CustomAPIKeyValues.anthropic.value, api_key)
 
     def load_model(self, async_mode: bool=False) -> AsyncAnthropic | Anthropic:
         if async_mode:
-            return AsyncAnthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
-        return Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
+            return AsyncAnthropic(api_key=self._api_key)
+        return Anthropic(api_key=self._api_key)
 
     def generate(self, prompt: str) -> str:
         client = self.load_model()
@@ -160,13 +174,26 @@ class CustomAzureOpenAI(DeepEvalBaseLLM):
 
     def get_model_name(self) -> str:
         return self.model
-    
+
+def _handle_api_key(env_value: CustomAPIKeyValues, api_key: str | None = None) -> str:
+    if not api_key:
+        try:
+            return os.environ[env_value]
+        except KeyError:
+            raise ValueError(f'Default api_key expects {env_value} environment variable. Check that you have this variable or pass in another api_key.')
+    return api_key
 
 class AnswerCorrectnessMetric(GEval):
     '''
     Custom metric to determine correctness of an LLM generated answer
-    as related to the retrieval context. Takes in LLM model string as 
-    single param. 
+    as related to the retrieval context. 
+
+    Args:
+    -----
+    evaluation_model: str | DeepEvalBaseLLM
+        Accepts an OpenAI model name as a string or an instance of a custom DeepEvalBaseLLM.
+    threshold: float
+        The threshold at which the metric score will determine if the answer is correct or not.
     '''
     name = 'AnswerCorrectness'
     evaluation_steps=[  'Compare the actual output with the retrieval context to verify factual accuracy.',
@@ -176,11 +203,12 @@ class AnswerCorrectnessMetric(GEval):
                         'If there is not enough information in the retrieval context to correctly answer the input, and the actual output indicates that the input cannot be answered with the provided context, then return a score of 10.']
     evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.RETRIEVAL_CONTEXT]
 
-    def __init__(self, model: str | DeepEvalBaseLLM) -> None:
-        self.model = model
+    def __init__(self, evaluation_model: str | DeepEvalBaseLLM, threshold: float = 0.8) -> None:
+        self.model = evaluation_model
         super().__init__(name=self.name,
                          evaluation_steps=self.evaluation_steps,
                          model=self.model,
+                         threshold=threshold,
                          evaluation_params=self.evaluation_params)
 
 @dataclass
@@ -190,7 +218,6 @@ class EvalResponse:
     metric: str
     cost: float
     eval_model: str
-    eval_steps: Optional[list[str]] = None
     verdicts: Optional[list[str]] = None    
     input: Optional[str] = None
     actual_output: Optional[str] = None
@@ -198,7 +225,6 @@ class EvalResponse:
 
     def to_dict(self) -> dict:
         return self.__dict__
-
 
 def load_eval_response(metric: BaseMetric | AnswerCorrectnessMetric,
                        test_case: LLMTestCase | TestResult,
@@ -217,10 +243,9 @@ def load_eval_response(metric: BaseMetric | AnswerCorrectnessMetric,
                         metric=metric.__class__.__name__,
                         cost=metric.evaluation_cost, 
                         eval_model=metric.evaluation_model,
-                        eval_steps=metric.evaluation_steps if metric.__dict__.get('evaluation_steps') else None,
                         verdicts=metric.verdicts if metric.__dict__.get('verdicts') else None,
-                        input=test_case.input if return_context_data else None,
-                        actual_output=test_case.actual_output if return_context_data else None,
+                        input=test_case.input,
+                        actual_output=test_case.actual_output,
                         retrieval_context=test_case.retrieval_context if return_context_data else None
                         )
 
@@ -258,13 +283,13 @@ class TestCaseGenerator:
     async def acreate_test_cases(self,
                                  queries: list[str],
                                  collection_name: str,
-                                 limit: int=200,
+                                 retrieve_limit: int=200,
                                  top_k: int=3
                                  ) -> list[LLMTestCase]:
         '''
         Creates a list of LLM Test Cases based on query retrievals. 
         '''
-        reranked_results = self.retrieve_results(queries, collection_name, limit, top_k)
+        reranked_results = self.retrieve_results(queries, collection_name, retrieve_limit, top_k)
         user_messages = [generate_prompt_series(queries[i], rerank) for i, rerank in enumerate(reranked_results)]
         actual_outputs = await self.aget_actual_outputs(user_messages)
         retrieval_contexts = [create_context_blocks(rerank) for rerank in reranked_results]
@@ -285,7 +310,7 @@ class PollingEvaluation:
     def evaluate_answer_correctness(self,
                                     test_cases: list[LLMTestCase],
                                     model: str | DeepEvalBaseLLM,
-                                    show_eval_progress: bool=False,
+                                    threshhold: float=0.8,
                                     return_raw: bool=False
                                     ) -> dict[str, Any]:
         '''
@@ -293,8 +318,8 @@ class PollingEvaluation:
         over a list of test cases.
         '''
         model_name = model if isinstance(model, str) else model.model
-        ac_metric = AnswerCorrectnessMetric(model=model)
-        responses = evaluate(test_cases, [ac_metric], print_results=False, show_indicator=show_eval_progress)
+        ac_metric = AnswerCorrectnessMetric(model=model, threshold=threshhold)
+        responses = evaluate(test_cases, [ac_metric], print_results=False, verbose_mode=False, show_indicator=False)
         if return_raw:
             return responses
         eval_responses = [load_eval_response(r.metrics_data[0], r) for r in responses.test_results]
@@ -320,6 +345,7 @@ class PollingEvaluation:
         test_cases = self._check_test_case_types(test_cases)
         num_batches = ceil(len(test_cases)/self.batch_size)
         model_names = [model if isinstance(model, str) else model.model for model in models]
+        print(f'Model Names: {model_names}')
         results_dict = {name: {'results':[], 'scores': [], 'cost_per_batch': []} for name in model_names}
         for i in range(num_batches):
             batch = test_cases[i*self.batch_size:(i+1)*self.batch_size]

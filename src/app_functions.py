@@ -1,8 +1,7 @@
-import time
 import json
 from typing import Literal, Generator, Any
 import tiktoken 
-from time import sleep
+from time import sleep, time, strftime, gmtime
 from loguru import logger
 from src.llm.llm_interface import LLM
 from src.llm.prompt_templates import huberman_system_message, generate_prompt_series
@@ -10,6 +9,8 @@ from src.database.weaviate_interface_v4 import WeaviateWCS
 from src.reranker import ReRanker
 from tiktoken import Encoding, get_encoding
 import streamlit as st  
+from contextlib import contextmanager
+
 
 @st.cache_data
 def load_data(data_path: str) -> dict | list[dict]:
@@ -41,7 +42,7 @@ def convert_seconds(seconds: int) -> str:
     """
     Converts seconds to a string of format Hours:Minutes:Seconds
     """
-    return time.strftime("%H:%M:%S", time.gmtime(seconds))
+    return strftime("%H:%M:%S", gmtime(seconds))
 
 def validate_token_threshold(ranked_results: list[dict],
                              query: str,
@@ -195,3 +196,20 @@ def search_result(i: int,
             {content}
         </div>
     """
+
+@contextmanager
+def timer(log_template_str: str | None = None):
+    """Context manager for timing code blocks."""
+    t0 = time()
+    try:
+        yield
+    finally:
+        elapsed = time() - t0
+        if elapsed >= 120:
+            time_str = f'{elapsed/60:.2f} minutes'
+        else:
+            time_str = f'{elapsed:.2f} seconds'
+        if log_template_str:
+            logger.info(log_template_str.format(time=time_str))
+        else:
+            logger.info(time_str)

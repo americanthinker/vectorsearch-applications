@@ -20,7 +20,7 @@ Question:\n
 Answer: 
 '''
 
-question_answering_prompt_series = '''
+question_answering_user_message = '''
 Your task is to synthesize and reason over a series of transcripts of an interview between Andrew Huberman and his guest(s).
 After your synthesis, use the series of transcripts to answer the below question.  The series will be in the following format:\n
 ```
@@ -42,7 +42,10 @@ state that you cannot answer the question with the provided context.
 ------------------------
 Answer:
 '''
-verbosity_options = ['concisely', 'use about four sentences', 'with as much detail as possible, within the limits of the context']
+verbosity_options = {0: 'concisely', 
+                     1: 'use about four sentences', 
+                     2: 'with as much detail as possible, within the limits of the context'
+    }
 
 context_block = '''
 Show Summary: {summary}
@@ -72,7 +75,8 @@ def generate_prompt_series(query: str,
                            verbosity_level: Literal[0, 1, 2]=0,
                            summary_key: str='summary',
                            guest_key: str='guest',
-                           content_key: str='content'
+                           content_key: str='content',
+                           base_user_prompt: str=question_answering_user_message
                            ) -> str:
     """
     Generates a prompt for an LLM by joining the context blocks of the top results.
@@ -90,5 +94,5 @@ def generate_prompt_series(query: str,
         raise ValueError(f'verbosity_level must be an integer: {verbosity_levels}')
     verbosity = verbosity_options[verbosity_level]
     context_series = f'\n'.join(create_context_blocks(results, summary_key, guest_key, content_key)).strip()
-    prompt = question_answering_prompt_series.format(question=query, series=context_series, verbosity=verbosity)
+    prompt = base_user_prompt.format(question=query, series=context_series, verbosity=verbosity)
     return prompt
