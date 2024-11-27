@@ -37,5 +37,5 @@ dependencies = [
     "weaviate-client>=4.9.3",
     "instructor>=1.5.2",
     "accelerate>=1.1.1",
-    "deepeval==1.1.5",
+    "deepeval==1.5.2",
 ]

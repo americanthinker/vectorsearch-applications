@@ -718,7 +718,7 @@ wheels = [
 
 [[package]]
 name = "deepeval"
-version = "1.1.5"
+version = "1.5.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docx2txt" },
@@ -745,9 +745,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6d/b9/733abea99cd5d298af3dc42317d85bf17ab4a78213dbd38b6dd04c02502c/deepeval-1.1.5.tar.gz", hash = "sha256:157934ecbd84e3d90431fdb16716f3159a199b196bae61c9cf360bbb7c4797c7", size = 249531 }
+sdist = { url = "https://files.pythonhosted.org/packages/25/94/a8ed0cdca842330e8dc0746a579732ee305ebad200436132dd6fcb0f1ea7/deepeval-1.5.2.tar.gz", hash = "sha256:affdf2a357576cc19e31f45178cb1748dca75210da6bec715e6beddf63551145", size = 306672 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f8/b9/4fa606d91ce655a3105a5b9b15e3fc4b6644571bb803aa9cad9ca4ccb56f/deepeval-1.1.5-py3-none-any.whl", hash = "sha256:f8cf90a541338d08c6603edfce5888e4285ef52c95f2c5e7e495fd2a38111f48", size = 367458 },
+    { url = "https://files.pythonhosted.org/packages/30/8c/79859a4849546fd93bced26c6ffd0394c6b2fa3d6f0ae37159daccacfa63/deepeval-1.5.2-py3-none-any.whl", hash = "sha256:5c837f976b05d5aac39f2345b1c1118e5669ad6a16e2508b5cdb454610278689", size = 464941 },
 ]
 
 [[package]]
@@ -3383,6 +3383,83 @@ wheels = [
 ]
 
 [[package]]
+name = "rag-applications"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "accelerate" },
+    { name = "anthropic" },
+    { name = "beautifulsoup4" },
+    { name = "cohere" },
+    { name = "datasets" },
+    { name = "deepeval" },
+    { name = "instructor" },
+    { name = "ipykernel" },
+    { name = "ipython" },
+    { name = "ipywidgets" },
+    { name = "jupyterlab" },
+    { name = "litellm" },
+    { name = "llama-index-core" },
+    { name = "loguru" },
+    { name = "matplotlib" },
+    { name = "matplotlib-inline" },
+    { name = "nest-asyncio" },
+    { name = "openai" },
+    { name = "pandas" },
+    { name = "pyarrow" },
+    { name = "python-dotenv" },
+    { name = "rank-bm25" },
+    { name = "requests" },
+    { name = "requests-oauthlib" },
+    { name = "rich" },
+    { name = "sentence-transformers" },
+    { name = "streamlit" },
+    { name = "tiktoken" },
+    { name = "tokenizers" },
+    { name = "torch" },
+    { name = "tqdm" },
+    { name = "transformers" },
+    { name = "weaviate-client" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "accelerate", specifier = ">=1.1.1" },
+    { name = "anthropic", specifier = ">=0.39.0" },
+    { name = "beautifulsoup4", specifier = ">=4.12.3" },
+    { name = "cohere", specifier = ">=5.11.3" },
+    { name = "datasets", specifier = ">=3.1.0" },
+    { name = "deepeval", specifier = "==1.5.2" },
+    { name = "instructor", specifier = ">=1.5.2" },
+    { name = "ipykernel", specifier = ">=6.29.5" },
+    { name = "ipython", specifier = ">=8.29.0" },
+    { name = "ipywidgets", specifier = ">=8.1.5" },
+    { name = "jupyterlab", specifier = "==4.3.0" },
+    { name = "litellm", specifier = "==1.52.2" },
+    { name = "llama-index-core", specifier = "==0.12.2" },
+    { name = "loguru", specifier = ">=0.7.2" },
+    { name = "matplotlib", specifier = ">=3.9.2" },
+    { name = "matplotlib-inline", specifier = ">=0.1.7" },
+    { name = "nest-asyncio", specifier = ">=1.6.0" },
+    { name = "openai", specifier = ">=1.54.3" },
+    { name = "pandas", specifier = ">=2.2.3" },
+    { name = "pyarrow", specifier = ">=18.0.0" },
+    { name = "python-dotenv", specifier = ">=1.0.1" },
+    { name = "rank-bm25", specifier = ">=0.2.2" },
+    { name = "requests", specifier = ">=2.32.3" },
+    { name = "requests-oauthlib", specifier = ">=2.0.0" },
+    { name = "rich", specifier = ">=13.9.4" },
+    { name = "sentence-transformers", specifier = ">=3.2.1" },
+    { name = "streamlit", specifier = ">=1.40.0" },
+    { name = "tiktoken", specifier = ">=0.8.0" },
+    { name = "tokenizers", specifier = ">=0.20.3" },
+    { name = "torch", specifier = ">=2.2.0" },
+    { name = "tqdm", specifier = ">=4.67.0" },
+    { name = "transformers", specifier = ">=4.46.2" },
+    { name = "weaviate-client", specifier = ">=4.9.3" },
+]
+
+[[package]]
 name = "ragas"
 version = "0.2.6"
 source = { registry = "https://pypi.org/simple" }
@@ -4364,83 +4441,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/64/07/91582d69320f6f6daaf2d8072608a4ad8884683d4840e7e4f3a9dbdcc639/validators-0.34.0.tar.gz", hash = "sha256:647fe407b45af9a74d245b943b18e6a816acf4926974278f6dd617778e1e781f", size = 70955 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6e/78/36828a4d857b25896f9774c875714ba4e9b3bc8a92d2debe3f4df3a83d4f/validators-0.34.0-py3-none-any.whl", hash = "sha256:c804b476e3e6d3786fa07a30073a4ef694e617805eb1946ceee3fe5a9b8b1321", size = 43536 },
-]
-
-[[package]]
-name = "vectorsearch-applications"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "accelerate" },
-    { name = "anthropic" },
-    { name = "beautifulsoup4" },
-    { name = "cohere" },
-    { name = "datasets" },
-    { name = "deepeval" },
-    { name = "instructor" },
-    { name = "ipykernel" },
-    { name = "ipython" },
-    { name = "ipywidgets" },
-    { name = "jupyterlab" },
-    { name = "litellm" },
-    { name = "llama-index-core" },
-    { name = "loguru" },
-    { name = "matplotlib" },
-    { name = "matplotlib-inline" },
-    { name = "nest-asyncio" },
-    { name = "openai" },
-    { name = "pandas" },
-    { name = "pyarrow" },
-    { name = "python-dotenv" },
-    { name = "rank-bm25" },
-    { name = "requests" },
-    { name = "requests-oauthlib" },
-    { name = "rich" },
-    { name = "sentence-transformers" },
-    { name = "streamlit" },
-    { name = "tiktoken" },
-    { name = "tokenizers" },
-    { name = "torch" },
-    { name = "tqdm" },
-    { name = "transformers" },
-    { name = "weaviate-client" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "accelerate", specifier = ">=1.1.1" },
-    { name = "anthropic", specifier = ">=0.39.0" },
-    { name = "beautifulsoup4", specifier = ">=4.12.3" },
-    { name = "cohere", specifier = ">=5.11.3" },
-    { name = "datasets", specifier = ">=3.1.0" },
-    { name = "deepeval", specifier = "==1.1.5" },
-    { name = "instructor", specifier = ">=1.5.2" },
-    { name = "ipykernel", specifier = ">=6.29.5" },
-    { name = "ipython", specifier = ">=8.29.0" },
-    { name = "ipywidgets", specifier = ">=8.1.5" },
-    { name = "jupyterlab", specifier = "==4.3.0" },
-    { name = "litellm", specifier = "==1.52.2" },
-    { name = "llama-index-core", specifier = "==0.12.2" },
-    { name = "loguru", specifier = ">=0.7.2" },
-    { name = "matplotlib", specifier = ">=3.9.2" },
-    { name = "matplotlib-inline", specifier = ">=0.1.7" },
-    { name = "nest-asyncio", specifier = ">=1.6.0" },
-    { name = "openai", specifier = ">=1.54.3" },
-    { name = "pandas", specifier = ">=2.2.3" },
-    { name = "pyarrow", specifier = ">=18.0.0" },
-    { name = "python-dotenv", specifier = ">=1.0.1" },
-    { name = "rank-bm25", specifier = ">=0.2.2" },
-    { name = "requests", specifier = ">=2.32.3" },
-    { name = "requests-oauthlib", specifier = ">=2.0.0" },
-    { name = "rich", specifier = ">=13.9.4" },
-    { name = "sentence-transformers", specifier = ">=3.2.1" },
-    { name = "streamlit", specifier = ">=1.40.0" },
-    { name = "tiktoken", specifier = ">=0.8.0" },
-    { name = "tokenizers", specifier = ">=0.20.3" },
-    { name = "torch", specifier = ">=2.2.0" },
-    { name = "tqdm", specifier = ">=4.67.0" },
-    { name = "transformers", specifier = ">=4.46.2" },
-    { name = "weaviate-client", specifier = ">=4.9.3" },
 ]
 
 [[package]]
