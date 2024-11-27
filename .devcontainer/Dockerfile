@@ -19,7 +19,6 @@ WORKDIR /rag_app
 # Copy and install Python requirements
 COPY requirements.txt /rag_app/
 RUN pip install --no-cache-dir -r requirements.txt
-RUN python -m ipykernel install --user --name=rag_env --display-name=rag_env
 
 # Copy the rest of the application code into the container
 COPY . /rag_app/
