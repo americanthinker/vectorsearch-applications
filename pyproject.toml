@@ -1,5 +1,5 @@
 [project]
-name = "vectorsearch-applications"
+name = "rag-applications"
 version = "0.1.0"
 description = "Project for building RAG applications"
 readme = "README.md"
@@ -9,7 +9,6 @@ dependencies = [
     "beautifulsoup4>=4.12.3",
     "cohere>=5.11.3",
     "datasets>=3.1.0",
-    "deepeval==1.5.0",
     "ipykernel>=6.29.5",
     "ipython>=8.29.0",
     "ipywidgets>=8.1.5",
@@ -38,4 +37,5 @@ dependencies = [
     "weaviate-client>=4.9.3",
     "instructor>=1.5.2",
     "accelerate>=1.1.1",
+    "deepeval==1.1.5",
 ]
