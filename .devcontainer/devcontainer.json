@@ -22,6 +22,5 @@
 			"label": "Jupyter Notebook",
 			"onAutoForward": "openBrowser"
 		}
-	},
-	"postStartCommand": "python -m ipykernel install --user --name=rag_env --display-name=rag_env"
+	}
 }
