@@ -29,11 +29,18 @@ class WeaviateWCS:
     model_name_or_path: str='sentence-transformers/all-MiniLM-L6-v2'
         The name or path of the SentenceTransformer model to use for vector search.
         Will also support OpenAI text-embedding-ada-002 model.  This param enables 
-        the use of most leading models on MTEB Leaderboard: 
+        the use of most open source models on MTEB Leaderboard: 
         https://huggingface.co/spaces/mteb/leaderboard
+
+    embedded: bool=False
+        If True, connects to an embedded Weaviate instance.
+
     openai_api_key: str=None
         The API key for the OpenAI API. Only required if using OpenAI text-embedding-ada-002 model.
     '''    
+
+    OPENAI_EMBEDDING_MODELS = ['text-embedding-3-small', 'text-embedding-3-large', 'text-embedding-ada-002']
+
     def __init__(self, 
                  endpoint: str=None,
                  api_key: str=None,
@@ -48,14 +55,13 @@ class WeaviateWCS:
             self._client = weaviate.connect_to_embedded(**kwargs)
         else: 
             self._client = weaviate.connect_to_wcs(cluster_url=endpoint, 
-                                                   auth_credentials=Auth.api_key(api_key)) 
+                                                   auth_credentials=Auth.api_key(api_key),
+                                                   skip_init_checks=True) 
         self.model_name_or_path = model_name_or_path
-        self._openai_model = False
-        if self.model_name_or_path == 'text-embedding-ada-002':
+        if self.model_name_or_path in self.OPENAI_EMBEDDING_MODELS:
             if not openai_api_key:
                 raise ValueError(f'OpenAI API key must be provided to use this model: {self.model_name_or_path}')
             self.model = OpenAI(api_key=openai_api_key)
-            self._openai_model = True
         else: 
             self.model = SentenceTransformer(self.model_name_or_path) if self.model_name_or_path else None
 
@@ -284,7 +290,10 @@ class WeaviateWCS:
         '''
         Creates embedding vector from text query.
         '''
-        return self.get_openai_embedding(query) if self._openai_model else self.model.encode(query, device=device).tolist()
+        if self.model_name_or_path in self.OPENAI_EMBEDDING_MODELS:
+            return self.get_openai_embedding(query)  
+        else:
+            return self.model.encode(query, device=device).tolist()
     
     def get_openai_embedding(self, query: str) -> list[float]:
         '''
