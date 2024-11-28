@@ -1,11 +1,14 @@
 from src.llm.prompt_templates import huberman_system_message, generate_prompt_series
 from src.evaluation.retrieval_evaluation import record_results
+from src.preprocessor.preprocessing import FileIO as FileIO   # make available in notebooks from preprocessing.py
 from src.evaluation.llm_evaluation import EvalResponse
 from src.llm.llm_interface import LLM
+
+from datasets import Dataset
 from deepeval.models.base_model import DeepEvalBaseLLM
 from typing import Literal
 import asyncio
-
+import random
 
 def record_project2_submission(results):
     return record_results(results, chunk_size=None)
@@ -113,3 +116,17 @@ def get_model_cost(eval_responses: list[EvalResponse]):
 def get_model_name(evaluation_llm: str | DeepEvalBaseLLM) -> str: 
     """Returns model name in string format based on Class of evaluation_llm"""
     return evaluation_llm.model if isinstance(evaluation_llm, DeepEvalBaseLLM) else evaluation_llm
+
+############################################################################################################
+## NOTEBOOK 6 HELPERS
+############################################################################################################
+def data_key_check(raw_data_dict: list[dict]) -> Dataset:
+    '''
+    Checks to ensure that the raw data dictionary contains the required keys for the finetuning process.
+    Does not iterate through the entire dataset, but rather checks a single random datapoint.
+    '''
+    required_keys = ['positive', 'hard_negative', 'anchor']
+    sample_datapoint = raw_data_dict[random.randint(0,len(raw_data_dict)-1)]
+    for key in required_keys:
+        if key not in sample_datapoint:
+            raise ValueError(f'Sample datapoint does not contain required key --> "{key}". Check to ensure you have a correctly formatted raw dataset with the following keys --> {required_keys}')
