@@ -9,11 +9,10 @@ from src.evaluation.eval_prompt_templates import (
     qa_validation_user_prompt,
     qa_validation_system_prompt
 )
-from src.llm.llm_utils import get_token_count
 from src.llm.llm_interface import LLM
 from src.reranker import ReRanker
 from instructor import from_litellm
-from litellm import completion
+from litellm import completion, ModelResponse
 
 #standard library imports
 import json
@@ -246,55 +245,53 @@ class QueryContextGenerator:
         or can be used to create an evaluation dataset for retrieval models.
         """
         output_path = output_path if output_path else './qa_triplets.json'
-        default_system_message = '''
+        triplet_system_message = '''
         You are a machine learning expert who specializes in generating datasets for fine-tuning embedding models.\n
         You are particularly adept at generating sentence triplets for use in a Multiple Negatives Ranking Loss function.
         '''
-        system_message = self.system_message if self.system_message else default_system_message
-        user_message = self.user_message if self.user_message else qa_triplet_generation_prompt
-        if user_message != qa_triplet_generation_prompt:
-            logger.warning('You are using a custome user message, which will require a "guest" and "transcript" field in your prompt.')
-        valid_json_triplet = []
+        valid_json_triplets = []
         clean_data = self._clean_validate_data(data, total_chars=total_chars)
         random.shuffle(clean_data)
         counter = 0
         total_token_count = 0
         progress = tqdm(total=num_total_samples, desc='QA Triplets')
-        while len(valid_json_triplet) < num_total_samples:
+        while len(valid_json_triplets) < num_total_samples:
             chunk = clean_data[counter]
             counter += 1
             guest, transcript, doc_id  = chunk['guest'], chunk['content'], chunk['doc_id']
-            prompt = user_message.format(guest=guest,transcript=transcript)
-            if capture_token_count:
-                total_token_count += get_token_count(prompt)
+            user_message = qa_triplet_generation_prompt.format(guest=guest,transcript=transcript)
             try:
-                response = self.llm.chat_completion(system_message, 
-                                                    prompt, 
-                                                    temperature=1.0, 
-                                                    max_tokens=150,
-                                                    raw_response=False,
-                                                    response_format={ "type": "json_object" }
-                                                    )
+                response: str | ModelResponse =  self.llm.chat_completion(  triplet_system_message, 
+                                                                            user_message,
+                                                                            temperature=1.0, 
+                                                                            max_tokens=150,
+                                                                            raw_response=capture_token_count,
+                                                                            response_format={ "type": "json_object" }
+                                                                            )
                 
                 try:
-                    loaded = json.loads(response)
+                    if capture_token_count:
+                        total_token_count += response.usage.total_tokens
+                        loaded = json.loads(response.choices[0].message.content)
+                    else:
+                        loaded = json.loads(response)
                     if self._check_valid_keys(loaded):
                         loaded['anchor'] = transcript
                         loaded['anchor_doc_id'] = doc_id
-                        valid_json_triplet.append(loaded)
+                        valid_json_triplets.append(loaded)
                         with open(output_path, 'w') as f:
-                            json.dump(valid_json_triplet, f, indent=4)
+                            json.dump(valid_json_triplets, f, indent=4)
                         progress.update(1)
                 except json.JSONDecodeError:
-                    logger.error('Response is not JSON')
+                    logger.error('Response is not valid JSON')
                     logger.info(response)
                     continue
             except Exception as e:
-                logger.info(e)
+                logger.info(f'Error with initial LLM call due to {e}')
                 continue
         if capture_token_count:
             logger.info(f'Total Token Count: {total_token_count}')
-        return valid_json_triplet
+        return valid_json_triplets
     
 
     def _check_valid_keys(self, 
